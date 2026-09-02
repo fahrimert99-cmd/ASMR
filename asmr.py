@@ -84,6 +84,10 @@ PRESETLER = {
         ],
     },
 }
+# "somine" README ve dokumantasyonda kullanilir; "ates" preset'ini paylasir
+# (ikisi de sicak/ates hissi verir). Boylece --tema somine, hazir sominе
+# gorsel istemlerini ve dogru ambient sesi kullanir.
+PRESETLER["somine"] = {"tip": "ates", "gorseller": list(PRESETLER["ates"]["gorseller"])}
 # Pembe/kahve gurultu icin beyaz'in sakin gorsellerini paylas.
 PRESETLER["pembe"] = {"tip": "pembe", "gorseller": PRESETLER["beyaz"]["gorseller"]}
 PRESETLER["kahve"] = {"tip": "kahve", "gorseller": PRESETLER["beyaz"]["gorseller"]}

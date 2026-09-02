@@ -146,4 +146,6 @@ altyazi:
 yukleme:
   aktif: false                 # true yapinca YouTube'a yukler
   gizlilik: "private"          # private | unlisted | public
+  kategori_id: "22"            # 22 = People & Blogs (ASMR icin uygun); 24 = Entertainment
+  cocuk_icin: false            # ASMR icin false (true olursa yorumlar kapanir, cocuk icerigi)
   client_secret: "config/client_secret.json"   # Google Cloud'dan indireceginiz dosya
