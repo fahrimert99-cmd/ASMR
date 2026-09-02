@@ -1,0 +1,149 @@
+# ------------------------------------------------------------------
+# Bu dosyayi kopyalayin -> ayarlar.yaml olarak kaydedin ve doldurun.
+# ayarlar.yaml .gitignore'dadir; API anahtarlariniz GitHub'a gitmez.
+# ------------------------------------------------------------------
+
+senaryo:
+  saglayici: "claude"           # "claude" | "gemini" | "groq"
+  claude_api_key: "BURAYA_CLAUDE_ANAHTARINIZ"  # https://console.anthropic.com
+  model: "claude-haiku-4-5"     # ucuz + hizli, yapilandirilmis JSON senaryo icin yeterli
+  gemini_api_key: "BURAYA_GEMINI_ANAHTARINIZ"  # https://aistudio.google.com (ucretsiz, yedek)
+  gemini_model: "gemini-2.5-flash"    # Gemini yedege dustugunde kullanilacak model
+  groq_api_key: ""              # https://console.groq.com (ucretsiz). Doldurursaniz
+                                # Claude/Gemini kotasi/hatasi durumunda otomatik yedek olur.
+  dil: "tr"
+
+seslendirme:
+  motor: "edge"                # "edge" (bedava, anahtarsiz) | "xtts" (yerel klon) | "kullanici" (kendi ses dosyaniz)
+  # NOT: karakterler.json'da bir karaktere "ses_motoru": "xtts" eklerseniz sadece
+  # o karakter icin bu genel motoru gecersiz kilar (orn. tek bir karakteri
+  # klonlanmis sesle, digerlerini edge-tts ile seslendirmek icin).
+  hiz: "+0%"
+sahne:
+  # "pollinations" : bedava, anahtarsiz AI gorsel (sabit)
+  # "yerel_sd"     : yerel Stable Diffusion (diffusers, GPU onerilir, sabit)
+  # "pexels_foto"  : Pexels stok FOTOGRAFI (sabit, gercek foto)
+  # "pexels_video" : Pexels stok VIDEOSU (HAREKETLI arka plan)
+  motor: "pollinations"
+  cozunurluk: "1280x720"
+  stil: "3D Pixar animation movie style background, soft cinematic lighting, colorful, highly detailed, no text, high quality"
+  # --- yalnizca motor: "pexels_foto" / "pexels_video" icin ---
+  # Ucretsiz anahtar: https://www.pexels.com/api/  (PEXELS_API_KEY ortam
+  # degiskeni de kullanilabilir; GitHub Actions'ta secret olarak ekleyin).
+  # Pexels basarisiz olursa/anahtar yoksa otomatik Pollinations'a duser.
+  pexels_api_key: ""
+  # --- yalnizca motor: "yerel_sd" icin ---
+  sd_model: "stabilityai/stable-diffusion-xl-base-1.0"  # HF model kimligi
+  adim: 30                     # cikarim adimi (yuksek = kaliteli/yavas)
+  yonlendirme: 7.5             # guidance_scale (prompt'a baglilik)
+  negatif_prompt: "text, watermark, signature, blurry, lowres, deformed"
+  # seed: 42                   # (opsiyonel) tekrarlanabilir sonuc icin
+
+animasyon:
+  # "basit"        : dudak senkronu YOK, gorsel+ses -> video (kurulum/GPU gerekmez,
+  #                  garanti calisir; once uctan uca test icin bunu kullanin)
+  # "sadtalker"    : yerel SadTalker ile dudak senkronu (ayrica kurulum ister)
+  # "sadtalker_hf" : SadTalker'i UZAK bir Hugging Face Space uzerinden calistirir
+  #                  (yerel GPU/kurulum gerekmez; hata olursa "basit"e duser)
+  # "wav2lip"      : alternatif dudak senkronu
+  motor: "basit"
+  sadtalker_yolu: "./SadTalker"   # SadTalker kurulum klasoru (yerel/Colab)
+  # --- yalnizca motor: "sadtalker_hf" icin ---
+  hf_space: "kevinwang676/SadTalker"   # kullanilacak Gradio Space
+  hf_token: ""                          # ozel/ZeroGPU Space'ler icin HF token
+                                        # (bos ise HF_TOKEN ortam degiskeni denenir)
+  # hf_api_name: "/test"                # (ops.) belirli endpoint; bos ise otomatik secilir
+  # hf_retries: 2                       # (ops.) rate-limit ("too many requests") olunca tekrar deneme
+  # hf_bekleme: 15                      # (ops.) denemeler arasi saniye
+  # hf_params:                          # (ops.) endpoint'in ekstra parametreleri (ad -> deger)
+  #   preprocess: "full"
+  #   still_mode: true
+  #   use_enhancer: true
+  # NOT: SadTalker calismazsa (public Space kuyruk/rate-limit) otomatik "basit"
+  # motora dusulur; "basit" artik gorsele yavas zoom (Ken Burns) uygular, boylece
+  # video yine de "slayt gibi" durmaz.
+
+montaj:
+  cozunurluk: [1280, 720]
+  fps: 24
+  arka_plan_muzik: ""          # sesler/muzik.mp3 gibi (opsiyonel)
+
+# --- Masalname (uyku masali videosu; python masal.py) ---
+# Cizgi filmden bagimsizdir. Tek sakin anlatici + storybook illustrasyon +
+# tam ekran yavas Ken Burns akis. Gorseller AI (Pollinations) ile uretilir.
+masal:
+  # --- anlatici sesi ---
+  ses_motoru: "edge"          # "edge" (bedava) | "elevenlabs" (daha dogal, ucretli anahtar)
+  ses: "tr-TR-EmelNeural"      # edge motoru sesi (erkek icin: tr-TR-AhmetNeural)
+  hiz: "-8%"                   # edge tempo (yavas). Ornek: "-12%" daha yavas
+  pitch: "+0Hz"
+  # --- ElevenLabs (yalnizca ses_motoru: "elevenlabs" icin) ---
+  # ONEMLI: AKSAN sesin KENDISINDEN gelir. Turkce/dogal tinlamasi icin
+  # ElevenLabs Voice Library'den TURKCE bir ses secip ID'sini buraya yazin.
+  # (Ingilizce bir ses Turkce okursa yabanci aksanli/kotu olur.)
+  eleven_voice_id: "AtCqglsS9sXaXLbu0Zco"   # <-- TURKCE bir ses ID'si ile degistirin
+  eleven_model: "eleven_multilingual_v2"     # Turkce destekli, ifadeli model
+  # eleven_dil: "tr"          # (ops.) yalnizca turbo/flash v2.5 modelleri telaffuzu zorlar
+  # eleven_api_key: ""        # veya ELEVENLABS_API_KEY ortam degiskeni (secret)
+  # Masal anlatimi tonu (bos birakilirsa asagidaki masalsi varsayilanlar kullanilir):
+  # eleven_ayar:
+  #   stability: 0.40         # dusuk -> daha ifadeli/vurgulu (masal gibi)
+  #   similarity_boost: 0.85
+  #   style: 0.35             # anlatim tonu
+  #   use_speaker_boost: true
+  #   speed: 0.92             # uyku temposu (hafif yavas)
+  # NOT: ElevenLabs ucretlidir/kotalidir; anahtar yoksa veya kota biterse
+  # otomatik edge-tts'e dusulur (uretim durmaz).
+  gecis_sn: 0.8               # sahneler arasi yumusak crossfade suresi (sn)
+  altyazi: true               # anlatim metnini ekrana altyazi olarak bindir
+  sahne_sn: 35                # her sahne ~kac sn (buyuk -> gorsel yavas degisir, sakin)
+  fps: 15                     # masal videosu kare/sn (dusuk -> cok daha hizli render)
+  muzik: "auto"               # "auto" (kendi urettigimiz uyku muzigi) | "yok"
+  muzik_seviye: 0.18          # fon muzik seviyesi (0-1). Duyulmuyorsa artir
+  intro: true                 # acilis karti (masal basligi) goster
+  outro: true                 # kapanis karti ("Iyi geceler" + kanal adi) goster
+  kanal_adi: "Masalname"      # kapanis kartinda gorunecek kanal adi
+  # intro_sn: 4               # (ops.) acilis karti suresi
+  # outro_sn: 5               # (ops.) kapanis karti suresi
+  # fon_muzik: "sesler/ninni.mp3"  # (ops.) kendi muzik dosyaniz (verilmezse auto uretilir)
+
+# --- ASMR (uzun rahatlama/uyku videosu; python asmr.py) ---
+# Cizgi film/masaldan bagimsizdir. Telifsiz, kodla uretilen ambient ses ortami
+# (yagmur/okyanus/ates/gece/ruzgar/gurultu) + sakinlestirici gorseller uzerinde
+# yavas Ken Burns akis. Ses ve gorsel tamamen bedava/anahtarsiz uretilir.
+asmr:
+  tip: "yagmur"               # ambient ses tipi: yagmur | okyanus | ates | gece | ruzgar | beyaz | pembe | kahve
+  gorsel_sayisi: 4            # kac farkli gorsel uretilsin (dongude sirayla akar)
+  sahne_sn: 40               # her gorsel ~kac sn ekranda kalir (buyuk -> daha sakin)
+  gecis_sn: 2.0              # gorseller arasi yumusak crossfade suresi (sn)
+  fps: 12                    # dusuk fps -> cok daha hizli render (yavas akista fark yok)
+  hareket: "yavas"           # "yavas" (Ken Burns zoom) | "sabit" (hareketsiz, en hizli render)
+  loop_sure: 120             # ambient ses loop uzunlugu (sn); dosyaya tekrar yazilir
+  ambient_seviye: 0.85       # ambient ses seviyesi (anlatim varken kismen dususe uygun 0-1)
+  # --- opsiyonel yumusak anlatim (edge-tts) ---
+  anlatim_ses: "tr-TR-EmelNeural"   # anlatim sesi (erkek: tr-TR-AhmetNeural)
+  anlatim_hiz: "-12%"        # cok yavas, sakin tempo
+  anlatim_pitch: "+0Hz"
+  anlatim_seviye: 1.0        # anlatim ses seviyesi (0-1)
+  anlatim_baslangic: 3.0     # anlatim, videonun kacinci sn'sinde baslasin
+  kanal_adi: "ASMR"
+
+# --- Klip birlestirme (kullanici kliplerinden uzun ASMR; python birlestir.py) ---
+# Repoya (klipler/ klasoru) yuklenen gunluk video klipleri yumusak gecisle
+# birlestirilir ve hedef sureye DONGULENIR. Kaynak uretmez; hazir klipleri isler.
+klip:
+  sure: 1800                  # hedef sure (sn): 1800 = 30 dk, 3600 = 60 dk
+  gecis_sn: 0.8              # klipler arasi yumusak crossfade suresi (sn); 0 = sert kesim
+  fps: 24                    # cikti kare/sn
+  ses: "koru"                # "koru" (klip sesi) | "ambient_ekle" (altina ambient) | "ambient_degistir"
+  ambient_tip: "yagmur"      # ses ambient_* ise: yagmur | okyanus | ates | gece | ruzgar | beyaz
+  loop_sure: 120             # ambient loop uzunlugu (sn)
+
+altyazi:
+  aktif: true
+  model: "small"               # faster-whisper model boyutu: tiny/base/small/medium
+
+yukleme:
+  aktif: false                 # true yapinca YouTube'a yukler
+  gizlilik: "private"          # private | unlisted | public
+  client_secret: "config/client_secret.json"   # Google Cloud'dan indireceginiz dosya

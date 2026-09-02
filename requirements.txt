@@ -1,0 +1,21 @@
+# ASMR uretim sistemi - Python bagimliliklari
+
+# --- Ambient ses + montaj (cekirdek) ---
+numpy                    # telifsiz ambient ses uretimi (asmr_ses / uyku_muzik)
+moviepy                  # video montaj / birlestirme
+imageio-ffmpeg           # ffmpeg saglar
+Pillow                   # gorsel isleme
+
+# --- Sahne / gorsel (asmr.py sifirdan uretim icin) ---
+requests                 # Pollinations.ai / Pexels cagrilari
+
+# --- Anlatim (opsiyonel yumusak anlatim) ---
+edge-tts                 # Microsoft ucretsiz TTS (Turkce sesler)
+
+# --- Ayar dosyasi ---
+pyyaml
+
+# --- YouTube'a yukleme (opsiyonel) ---
+google-api-python-client
+google-auth-oauthlib
+google-auth-httplib2
