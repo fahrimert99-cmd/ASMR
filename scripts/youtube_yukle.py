@@ -6,10 +6,10 @@ YOUTUBE_TOKEN_JSON ve YOUTUBE_OAUTH_JSON env değişkenlerini kullanır.
 
 Kullanım (workflow içinden):
     python scripts/youtube_yukle.py \
-        --video cikti/son_video.mp4 \
-        --baslik "Pixar Çizgi Film - Bölüm 1" \
-        --aciklama "Otomatik üretildi." \
-        --etiketler "Çizgi Film,Pixar,AI,Otonom"
+        --video cikti/asmr-yagmur/asmr.mp4 \
+        --baslik "ASMR - Yağmur | Rahatlama & Uyku" \
+        --aciklama "Telifsiz ambient ASMR." \
+        --etiketler "asmr,rahatlama,uyku,relaxing,sleep"
 
 Gereksinimler:
     pip install google-auth-oauthlib google-auth-httplib2 google-api-python-client
@@ -174,10 +174,11 @@ def main():
     p = argparse.ArgumentParser(description="Videoyu YouTube'a yükle")
     p.add_argument("--video",     required=True,  help="MP4 dosya yolu")
     p.add_argument("--baslik",    required=True,  help="Video başlığı")
-    p.add_argument("--aciklama",  default="Bu video yapay zekâ ile otomatik üretilmiştir. 🤖✨\n\n"
-                                          "#AI #Pixar #ÇizgiFilm #OtonomVideo",
+    p.add_argument("--aciklama",  default="Telifsiz ambient ASMR — rahatlama ve uyku için. "
+                                          "Yapay zekâ ile otomatik üretildi. 🤖✨\n\n"
+                                          "#asmr #rahatlama #uyku #relaxing #sleep",
                    help="Video açıklaması")
-    p.add_argument("--etiketler", default="AI,Pixar,Çizgi Film,Otonom,YouTube",
+    p.add_argument("--etiketler", default="asmr,rahatlama,uyku,relaxing,sleep,meditation",
                    help="Virgülle ayrılmış etiketler")
     p.add_argument("--gizlilik", default="public",
                    choices=["public", "private", "unlisted"],

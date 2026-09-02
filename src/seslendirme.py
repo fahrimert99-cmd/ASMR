@@ -1,28 +1,13 @@
 """
-Seslendirme.
-Her replik icin sirali bir ses dosyasi (001.mp3, 002.mp3 ...) ve edge-tts
-kelime zamanlamasindan turetilen bir .srt altyazi uretir.
+Seslendirme (ASMR opsiyonel yumusak anlatim).
 
-3 mod:
-  - "edge"      : Microsoft edge-tts (bedava, anahtarsiz, Turkce sesler)
-  - "xtts"      : Coqui XTTS-v2 ile kendi ses orneginizden klonlama (yerel)
-  - "kullanici" : sesler/ altina onceden koydugunuz hazir ses dosyalari
-
-edge modunda ses profili (voice/rate/pitch) karakterler.json'daki 'ses_profili'
-alanindan okunur; yoksa 'tts_ses' ve ayar varsayilanlarina duser.
+edge-tts (Microsoft; bedava, anahtarsiz, Turkce sesler) ile tek akista hem mp3
+sesini hem de kelime zamanlamasindan turetilen bir .srt altyazi uretir.
+asmr.py bu modulun `_edge_seslendir` fonksiyonunu kullanir.
 """
 import asyncio
 import time
 from pathlib import Path
-
-
-def _ses_profili(karakter: dict, ayar: dict):
-    """Karakterin edge-tts profilini (voice, rate, pitch) cozer."""
-    prof = karakter.get("ses_profili") or {}
-    voice = prof.get("voice") or karakter.get("tts_ses", "tr-TR-AhmetNeural")
-    rate = prof.get("rate", ayar["seslendirme"].get("hiz", "+0%"))
-    pitch = prof.get("pitch", "+0Hz")
-    return voice, rate, pitch
 
 
 def _srt_zaman(sn: float) -> str:
@@ -95,71 +80,3 @@ def _edge_seslendir(metin, voice, rate, pitch, mp3_hedef, srt_hedef, deneme: int
                 time.sleep(2 ** i)  # 1s, 2s, ...
 
     raise RuntimeError(f"edge-tts {deneme} denemede basarisiz oldu: {son_hata}")
-
-
-def _xtts(metin: str, ornek_wav: str, hedef: Path):
-    """Coqui XTTS-v2 ile ses klonlama. Kurulum: pip install coqui-tts
-    (orijinal "TTS" paketi 2024'te durduruldu; coqui-tts devam eden forkudur,
-    ayni "from TTS.api import TTS" importunu kullanir)."""
-    from TTS.api import TTS
-    tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2")
-    tts.tts_to_file(text=metin, speaker_wav=ornek_wav, language="tr",
-                    file_path=str(hedef))
-
-
-def replik_seslendir(replik: dict, karakter: dict, ayar: dict, mp3_hedef: Path) -> Path:
-    """Tek bir replik icin ses dosyasi (edge modunda ayrica .srt) uretir ve
-    ses dosyasinin yolunu dondurur.
-
-    Karakterde 'ses_motoru' tanimliysa (orn. klonlanmis sesi olan tek bir
-    karakter) o motor kullanilir; tanimli degilse ayarlardaki genel motora
-    duser. Boylece bazi karakterler XTTS klonlama kullanirken, ornegi olmayan
-    digerleri edge-tts'te kalabilir.
-    """
-    motor = karakter.get("ses_motoru") or ayar["seslendirme"]["motor"]
-    metin = replik["metin"]
-    mp3_hedef = Path(mp3_hedef)
-
-    if motor == "edge":
-        voice, rate, pitch = _ses_profili(karakter, ayar)
-        _edge_seslendir(metin, voice, rate, pitch, mp3_hedef,
-                        mp3_hedef.with_suffix(".srt"))
-        return mp3_hedef
-    if motor == "xtts":
-        try:
-            _xtts(metin, karakter["ses"], mp3_hedef)
-            return mp3_hedef
-        except Exception as e:
-            # TTS paketi kurulu degil (orn. yerelde Python 3.14) veya klonlama
-            # basarisiz oldu -> uretimi durdurmadan edge-tts'e dus.
-            print(f"[ses yedegi] xtts basarisiz ({e}), edge-tts'e donuluyor...")
-            voice, rate, pitch = _ses_profili(karakter, ayar)
-            _edge_seslendir(metin, voice, rate, pitch, mp3_hedef,
-                            mp3_hedef.with_suffix(".srt"))
-            return mp3_hedef
-    if motor == "kullanici":
-        # Hazir ses dosyalarini kullanici klasore koyar; var olan dosyayi
-        # isaret ederiz (replikte "ses_dosyasi" alani beklenir).
-        return Path(replik["ses_dosyasi"])
-
-    raise ValueError(f"Bilinmeyen seslendirme motoru: {motor}")
-
-
-def senaryoyu_seslendir(senaryo: dict, karakterler: dict, ayar: dict, cikti: Path) -> dict:
-    """Tum repliklere sirali ses (001.mp3, 002.mp3 ...) ve edge modunda .srt
-    uretir; her replige 'ses_yolu' (ve varsa 'srt_yolu') ekler."""
-    ses_dizin = Path(cikti) / "ses"
-    ses_dizin.mkdir(parents=True, exist_ok=True)
-
-    sayac = 0
-    for sahne in senaryo["sahneler"]:
-        for replik in sahne["replikler"]:
-            sayac += 1
-            mp3_hedef = ses_dizin / f"{sayac:03d}.mp3"
-            karakter = karakterler[replik["karakter"]]
-            replik["ses_yolu"] = str(
-                replik_seslendir(replik, karakter, ayar, mp3_hedef))
-            srt = mp3_hedef.with_suffix(".srt")
-            if srt.exists():
-                replik["srt_yolu"] = str(srt)
-    return senaryo

@@ -54,7 +54,7 @@ python birlestir.py --klasor klipler --sure 3600  # 60 dk
 ## 🚀 Kurulum
 
 ```bash
-git clone https://github.com/asilmertkimya-png/ASMR.git
+git clone https://github.com/fahrimert99-cmd/ASMR.git
 cd ASMR
 pip install -r requirements.txt
 
@@ -96,10 +96,9 @@ Eklemezseniz video her zaman Artifacts'te hazır bekler.
     ├── asmr_ses.py          # Telifsiz ambient ses üreteci (numpy)
     ├── asmr_montaj.py       # ASMR montajı (Ken Burns + ffmpeg döngü)
     ├── klip_montaj.py       # Klipleri birleştir + ffmpeg döngü
+    ├── gorsel_montaj.py     # Ken Burns / yumuşak geçiş yardımcıları (ortak)
     ├── sahne.py             # Pollinations/Pexels görsel üretimi
-    ├── seslendirme.py       # edge-tts anlatım
-    ├── uyku_muzik.py        # yumuşak müzik üreteci (yardımcı)
-    ├── masal_montaj.py      # Ken Burns / geçiş yardımcıları
+    ├── seslendirme.py       # edge-tts yumuşak anlatım (opsiyonel)
     ├── video_araci.py       # moviepy 1.x/2.x uyumluluk katmanı
     └── yukleme.py           # YouTube'a yükleme
 ```

@@ -12,7 +12,7 @@ Adimlar:  ambient ses ortami (asmr_ses; telifsiz, kod uretimi) +
           sakinlestirici gorseller (Pollinations/Pexels) -> yavas Ken Burns
           dongu montaji -> (opsiyonel) YouTube'a yukleme.
 
-Cizgi film (main.py) ve masal (masal.py) hatlarindan bagimsizdir; ayni
+Kliplerden birlestirme (birlestir.py) hattindan bagimsizdir; ayni
 config/ayarlar.yaml'i kullanir, 'asmr' bolumunu okur.
 """
 import argparse

@@ -5,7 +5,7 @@ Uzun (30-60+ dk) bir ASMR videosunu VERIMLI uretir:
 
   1. Gorsellerden kisa bir "temel" sessiz video kurulur: her gorsel tam ekran,
      yavas Ken Burns hareketiyle akar ve yumusak crossfade ile birbirine baglanir
-     (masal_montaj yardimcilari yeniden kullanilir).
+     (gorsel_montaj yardimcilari yeniden kullanilir).
   2. Bu kisa temel video, ffmpeg ile HEDEF sureye kadar KOPYALANARAK (yeniden
      kodlanmadan) dongulenir -> 60 dk'lik video birkac dakikalik render ile olusur.
   3. Ambient ses ortami (asmr_ses) tum sureye doselenir; istege bagli yumusak
@@ -21,7 +21,7 @@ from pathlib import Path
 from src.video_araci import (
     moviepy_yukle, sure_ver, ses_ver, ses_olcek, kirp,
 )
-from src.masal_montaj import _ken_burns, _gecis_uygula, _font_bul, _kart
+from src.gorsel_montaj import _ken_burns, _gecis_uygula
 
 
 def _ffmpeg_yolu() -> str:

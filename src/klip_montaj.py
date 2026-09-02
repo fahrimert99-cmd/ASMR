@@ -10,8 +10,8 @@ Ses modlari (config: klip.ses):
   - "ambient_ekle"     : klip sesinin ALTINA telifsiz ambient doselenir
   - "ambient_degistir" : klip sesi kaldirilir, yerine telifsiz ambient konur
 
-Bu modul cizgi film / masal / asmr (Pollinations) hatlarindan bagimsizdir;
-kaynak gorsel/ses uretmez, kullanicinin hazir kliplerini isler.
+Bu modul sifirdan uretim (asmr.py) hattindan bagimsizdir; kaynak gorsel/ses
+uretmez, kullanicinin hazir kliplerini isler.
 """
 import re
 import shutil
@@ -19,7 +19,7 @@ import subprocess
 from pathlib import Path
 
 from src.video_araci import moviepy_yukle, boyutlandir
-from src.masal_montaj import _gecis_uygula
+from src.gorsel_montaj import _gecis_uygula
 
 VIDEO_UZANTILARI = {".mp4", ".mov", ".webm", ".mkv", ".m4v", ".avi"}
 
