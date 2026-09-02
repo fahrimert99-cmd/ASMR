@@ -1,0 +1,31 @@
+# --- Gizli ayarlar / kimlik bilgileri (ASLA commit edilmez) ---
+config/ayarlar.yaml
+config/token.json
+config/client_secret.json
+config/*_secret*.json
+token.json
+*.pem
+
+# --- Uretim ciktilari ---
+cikti/
+*.mp4
+*.wav
+*.mp3
+*.srt
+# Kullanicinin yukledigi kaynak klipler haric tutulmaz (repoya girmesi beklenir).
+!klipler/**
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.env
+
+# --- IDE / isletim sistemi ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
