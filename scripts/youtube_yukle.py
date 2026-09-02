@@ -6,10 +6,10 @@ YOUTUBE_TOKEN_JSON ve YOUTUBE_OAUTH_JSON env değişkenlerini kullanır.
 
 Kullanım (workflow içinden):
     python scripts/youtube_yukle.py \
-        --video cikti/son_video.mp4 \
-        --baslik "Pixar Çizgi Film - Bölüm 1" \
-        --aciklama "Otomatik üretildi." \
-        --etiketler "Çizgi Film,Pixar,AI,Otonom"
+        --video cikti/asmr-yagmur/asmr.mp4 \
+        --baslik "ASMR - Yağmur | Rahatlama & Uyku" \
+        --aciklama "Telifsiz ambient ASMR." \
+        --etiketler "asmr,rahatlama,uyku,relaxing,sleep"
 
 Gereksinimler:
     pip install google-auth-oauthlib google-auth-httplib2 google-api-python-client
@@ -173,32 +173,64 @@ def video_yukle(
 def main():
     p = argparse.ArgumentParser(description="Videoyu YouTube'a yükle")
     p.add_argument("--video",     required=True,  help="MP4 dosya yolu")
-    p.add_argument("--baslik",    required=True,  help="Video başlığı")
-    p.add_argument("--aciklama",  default="Bu video yapay zekâ ile otomatik üretilmiştir. 🤖✨\n\n"
-                                          "#AI #Pixar #ÇizgiFilm #OtonomVideo",
+    p.add_argument("--meta",      default="",     help="video_meta.py'nin ürettiği "
+                   "meta.json (baslik/aciklama/etiketler). CLI argümanları bunu ezer.")
+    p.add_argument("--baslik",    default="",     help="Video başlığı (--meta yoksa gerekli)")
+    p.add_argument("--aciklama",  default="Telifsiz ambient ASMR — rahatlama ve uyku için. "
+                                          "Yapay zekâ ile otomatik üretildi. 🤖✨\n\n"
+                                          "#asmr #rahatlama #uyku #relaxing #sleep",
                    help="Video açıklaması")
-    p.add_argument("--etiketler", default="AI,Pixar,Çizgi Film,Otonom,YouTube",
+    p.add_argument("--etiketler", default="asmr,rahatlama,uyku,relaxing,sleep,meditation",
                    help="Virgülle ayrılmış etiketler")
-    p.add_argument("--gizlilik", default="public",
+    p.add_argument("--gizlilik", default="unlisted",
                    choices=["public", "private", "unlisted"],
-                   help="Gizlilik ayarı (varsayılan: public)")
+                   help="Gizlilik ayarı (varsayılan: unlisted = önce inceleme)")
     args = p.parse_args()
 
+    # meta.json varsa başlık/açıklama/etiket oradan gelir; --baslik verilirse ezer.
+    baslik, aciklama = args.baslik, args.aciklama
     etiket_listesi = [e.strip() for e in args.etiketler.split(",") if e.strip()]
+    if args.meta:
+        meta = json.loads(Path(args.meta).read_text(encoding="utf-8"))
+        baslik = args.baslik or meta.get("baslik", "")
+        aciklama = meta.get("aciklama", aciklama)
+        if meta.get("etiketler"):
+            etiket_listesi = meta["etiketler"]
+    if not baslik:
+        print("❌ HATA: Başlık yok (--baslik veya --meta gerekli).")
+        sys.exit(1)
+
     video_id = video_yukle(
         video_yolu=args.video,
-        baslik=args.baslik,
-        aciklama=args.aciklama,
+        baslik=baslik,
+        aciklama=aciklama,
         etiketler=etiket_listesi,
         gizlilik=args.gizlilik,
     )
+
+    video_url = f"https://www.youtube.com/watch?v={video_id}"
+    studio_url = f"https://studio.youtube.com/video/{video_id}/edit"
 
     # GitHub Actions için video ID'sini GITHUB_OUTPUT'a yaz
     github_output = os.environ.get("GITHUB_OUTPUT")
     if github_output:
         with open(github_output, "a", encoding="utf-8") as f:
             f.write(f"video_id={video_id}\n")
+            f.write(f"video_url={video_url}\n")
         print(f"\n📤 Video ID GitHub output'a yazıldı: video_id={video_id}")
+
+    # İnceleme için iş akışı özetine tıklanabilir bağlantı yaz.
+    ozet = os.environ.get("GITHUB_STEP_SUMMARY")
+    if ozet:
+        with open(ozet, "a", encoding="utf-8") as f:
+            f.write(f"### ✅ YouTube'a yüklendi ({args.gizlilik})\n\n")
+            f.write(f"- **İzle / Watch:** {video_url}\n")
+            f.write(f"- **Studio (düzenle/yayınla):** {studio_url}\n")
+            f.write(f"- **Video ID:** `{video_id}`\n\n")
+            if args.gizlilik == "unlisted":
+                f.write("> İnceledikten sonra yayınlamak için: **Actions → "
+                        "\"YouTube Yayınla\" → Run workflow** (video ID'yi girin) "
+                        "ya da Studio'dan herkese açık yapın.\n")
 
 
 if __name__ == "__main__":

@@ -5,7 +5,7 @@ Telif derdi olmadan, tamamen kod uretimi (numpy) ile uzun, sakinlestirici bir
 ASMR ses ortami uretir: yagmur, okyanus dalgalari, sominе/ates catirtisi,
 orman/gece (cirtlak boceKleri), ruzgar ve beyaz/pembe/kahverengi gurultu.
 Harici dosya/servis/anahtar gerektirmez; internet ve GPU olmadan her zaman
-calisir (uyku_muzik.py ile ayni felsefe).
+calisir (tamamen telifsiz, kod uretimi).
 
 Bellek dostu: uzun video icin dev bir dizi tutmak yerine, kisa ve DIKISSIZ
 (seamless) donen bir ambient "loop" (varsayilan 120 sn) uretir, ardindan bu

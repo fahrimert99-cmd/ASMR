@@ -12,7 +12,7 @@ Adimlar:  ambient ses ortami (asmr_ses; telifsiz, kod uretimi) +
           sakinlestirici gorseller (Pollinations/Pexels) -> yavas Ken Burns
           dongu montaji -> (opsiyonel) YouTube'a yukleme.
 
-Cizgi film (main.py) ve masal (masal.py) hatlarindan bagimsizdir; ayni
+Kliplerden birlestirme (birlestir.py) hattindan bagimsizdir; ayni
 config/ayarlar.yaml'i kullanir, 'asmr' bolumunu okur.
 """
 import argparse
@@ -84,6 +84,10 @@ PRESETLER = {
         ],
     },
 }
+# "somine" README ve dokumantasyonda kullanilir; "ates" preset'ini paylasir
+# (ikisi de sicak/ates hissi verir). Boylece --tema somine, hazir sominе
+# gorsel istemlerini ve dogru ambient sesi kullanir.
+PRESETLER["somine"] = {"tip": "ates", "gorseller": list(PRESETLER["ates"]["gorseller"])}
 # Pembe/kahve gurultu icin beyaz'in sakin gorsellerini paylas.
 PRESETLER["pembe"] = {"tip": "pembe", "gorseller": PRESETLER["beyaz"]["gorseller"]}
 PRESETLER["kahve"] = {"tip": "kahve", "gorseller": PRESETLER["beyaz"]["gorseller"]}

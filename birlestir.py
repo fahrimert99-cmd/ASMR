@@ -9,8 +9,8 @@ uretir. Klip sesleri KORUNUR (config klip.ses ile degistirilebilir).
     python birlestir.py --klasor klipler --sure 3600  # 60 dk
     python birlestir.py --sure 1800 --yukle           # bitince YouTube'a yukle
 
-Cizgi film (main.py) / masal (masal.py) / asmr (asmr.py) hatlarindan
-bagimsizdir; kaynak uretmez, hazir klipleri isler.
+Sifirdan uretim (asmr.py) hattindan bagimsizdir; kaynak uretmez, kullanicinin
+hazir kliplerini isler.
 """
 import argparse
 import sys

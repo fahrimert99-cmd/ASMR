@@ -16,9 +16,10 @@ from pathlib import Path
 
 import requests
 
-# Arka planlarin Pixar karakterlerle uyumlu gorunmesi icin varsayilan stil.
-VARSAYILAN_STIL = ("3D Pixar animation movie style background, soft cinematic "
-                   "lighting, colorful, highly detailed, no text, high quality")
+# Sakin, sinematik ASMR arka planlari icin varsayilan stil (asmr.py ayrica
+# kendi ASMR_STIL'ini gecebilir; bu yalnizca ayar stil vermezse kullanilir).
+VARSAYILAN_STIL = ("cinematic, soft calming atmosphere, dreamy, high quality, "
+                   "highly detailed, no text, relaxing mood")
 
 # diffusers pipeline'i pahali; bir kez yukleyip yeniden kullaniriz.
 _PIPELINE = None
@@ -132,8 +133,8 @@ def _pexels_anahtar(ayar: dict) -> str:
 
 def _pexels_sorgu(prompt: str) -> str:
     """Uzun sahne istemini kisa, stok-arama dostu anahtar kelimeye indirir.
-    Pixar stili gibi eklentiler stok aramada ise yaramaz; ham istemin ilk
-    birkac kelimesini kullaniriz."""
+    Stil eklentileri (sinematic, soft lighting vb.) stok aramada ise yaramaz;
+    ham istemin ilk birkac kelimesini kullaniriz."""
     kelimeler = prompt.replace(",", " ").split()
     return " ".join(kelimeler[:6]) or "nature"
 
@@ -227,13 +228,3 @@ def arka_plan_uret(prompt: str, ayar: dict, hedef: Path) -> Path:
         return _pexels_video(prompt, ayar, hedef, en, boy)
 
     raise ValueError(f"Bilinmeyen sahne motoru: {motor}")
-
-
-def sahneleri_uret(senaryo: dict, ayar: dict, cikti: Path):
-    """Her sahne icin arka plan gorseli uretir; 'arka_plan_yolu' ekler."""
-    for i, sahne in enumerate(senaryo["sahneler"], start=1):
-        hedef = cikti / "sahne" / f"sahne_{i:02d}.jpg"
-        sahne["arka_plan_yolu"] = str(
-            arka_plan_uret(sahne["arka_plan_prompt"], ayar, hedef)
-        )
-    return senaryo

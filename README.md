@@ -54,7 +54,7 @@ python birlestir.py --klasor klipler --sure 3600  # 60 dk
 ## 🚀 Kurulum
 
 ```bash
-git clone https://github.com/asilmertkimya-png/ASMR.git
+git clone https://github.com/fahrimert99-cmd/ASMR.git
 cd ASMR
 pip install -r requirements.txt
 
@@ -73,10 +73,19 @@ cp config/ayarlar.ornek.yaml config/ayarlar.yaml   # (opsiyonel; varsayılanlar 
 - Çıktılar: ilgili çalışmanın **Artifacts** bölümünde (`asmr-video` /
   `birlesik-asmr-video`).
 
-### YouTube'a otomatik yükleme (opsiyonel)
-Repo → **Settings → Secrets and variables → Actions**'a şu sırları ekleyin:
-`YOUTUBE_OAUTH_JSON` ve `YOUTUBE_TOKEN_JSON` (kurulum: `scripts/youtube_token_al.py`).
-Eklemezseniz video her zaman Artifacts'te hazır bekler.
+### 📺 YouTube'a otomatik yükleme + günlük yönetim akışı
+Tek seferlik kurulum (OAuth) için ayrıntılı rehber: [`docs/YOUTUBE_KURULUM.md`](docs/YOUTUBE_KURULUM.md).
+Kısaca `YOUTUBE_TOKEN_JSON` ve `YOUTUBE_OAUTH_JSON` sırlarını **Settings → Secrets
+and variables → Actions**'a eklersiniz (sırlar yoksa video her zaman Artifacts'te bekler).
+
+Kurulumdan sonra günlük akış **profesyonel ve otomatiktir**:
+1. **Klip yükle** → `klipler/` klasörüne push edin.
+2. **Otomatik üretim** → iş akışı videoyu birleştirir; `scripts/video_meta.py`
+   her güne **özgün, iki dilli (TR+EN), SEO'lu** başlık/açıklama/etiket üretir.
+3. **Unlisted yükleme** → video **liste dışı** yüklenir; Actions çalışmasının
+   **Summary** bölümünde izleme bağlantısı + video ID görünür (inceleme için).
+4. **Yayınla** → **Actions → "YouTube Yayinla" → Run workflow** ile video ID'yi
+   girip **public** yaparsınız (veya Studio'dan). İstediğinizde geri alınabilir.
 
 ## 🗂️ Klasör Yapısı
 
@@ -96,10 +105,9 @@ Eklemezseniz video her zaman Artifacts'te hazır bekler.
     ├── asmr_ses.py          # Telifsiz ambient ses üreteci (numpy)
     ├── asmr_montaj.py       # ASMR montajı (Ken Burns + ffmpeg döngü)
     ├── klip_montaj.py       # Klipleri birleştir + ffmpeg döngü
+    ├── gorsel_montaj.py     # Ken Burns / yumuşak geçiş yardımcıları (ortak)
     ├── sahne.py             # Pollinations/Pexels görsel üretimi
-    ├── seslendirme.py       # edge-tts anlatım
-    ├── uyku_muzik.py        # yumuşak müzik üreteci (yardımcı)
-    ├── masal_montaj.py      # Ken Burns / geçiş yardımcıları
+    ├── seslendirme.py       # edge-tts yumuşak anlatım (opsiyonel)
     ├── video_araci.py       # moviepy 1.x/2.x uyumluluk katmanı
     └── yukleme.py           # YouTube'a yükleme
 ```

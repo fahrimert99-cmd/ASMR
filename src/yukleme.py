@@ -34,15 +34,23 @@ def _servis(ayar: dict):
 def yukle(video_yolu: str, baslik: str, aciklama: str, ayar: dict,
           etiketler=None) -> str:
     servis = _servis(ayar)
+    y = ayar.get("yukleme", {})
+    # ASMR/rahatlama icin uygun varsayilanlar: People & Blogs kategorisi,
+    # rahatlama etiketleri ve "cocuklara yonelik" KAPALI (aksi halde yorumlar
+    # kapanir ve ASMR icerigi cocuk icerigine yanlis siniflandirilirdi).
+    # Cocuk icerigi uretiyorsaniz config yukleme.cocuk_icin: true yapin.
     govde = {
         "snippet": {
             "title": baslik,
             "description": aciklama,
-            "tags": etiketler or ["cizgi film", "cocuk", "egitici"],
-            "categoryId": "1",  # Film & Animation
+            "tags": etiketler or ["asmr", "rahatlama", "uyku",
+                                  "relaxing", "sleep", "meditation"],
+            "categoryId": str(y.get("kategori_id", "22")),  # 22 = People & Blogs
+            "defaultLanguage": "tr",
+            "defaultAudioLanguage": "tr",
         },
-        "status": {"privacyStatus": ayar["yukleme"].get("gizlilik", "private"),
-                   "selfDeclaredMadeForKids": True},
+        "status": {"privacyStatus": y.get("gizlilik", "private"),
+                   "selfDeclaredMadeForKids": bool(y.get("cocuk_icin", False))},
     }
     istek = servis.videos().insert(
         part="snippet,status", body=govde,

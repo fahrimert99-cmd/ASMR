@@ -1,0 +1,100 @@
+name: ASMR
+
+# Sifirdan otonom ASMR videosu uretir (asmr.py).
+# - Her gun ~21:00 TR (18:00 UTC) otomatik
+# - Elle (workflow_dispatch): tema / sure / gorsel sayisi / anlatim secilebilir
+# Cikti: calismanin Artifacts bolumunde "asmr-video". YouTube sirlari eklinse
+# otomatik yuklenir (scripts/youtube_yukle.py).
+
+on:
+  schedule:
+    - cron: "0 18 * * *"          # her gun 18:00 UTC = ~21:00 TR
+  workflow_dispatch:
+    inputs:
+      tema:
+        description: "Tema (yagmur/okyanus/somine/gece/ruzgar/beyaz/pembe/kahve veya serbest tarif)"
+        default: "yagmur"
+      sure:
+        description: "Hedef sure (saniye; 1800=30dk, 3600=60dk)"
+        default: "1800"
+      gorsel_sayisi:
+        description: "Kac farkli gorsel uretilsin"
+        default: "4"
+      anlatim:
+        description: "Opsiyonel yumusak anlatim metni (bos = sadece ambient)"
+        default: ""
+      gizlilik:
+        description: "YouTube gizlilik (yuklenirse): unlisted (onerilen; once inceleme) | public | private"
+        default: "unlisted"
+
+concurrency:
+  group: asmr-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  uret:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    env:
+      YOUTUBE_TOKEN_JSON: ${{ secrets.YOUTUBE_TOKEN_JSON }}
+    steps:
+      - name: Depoyu al
+        uses: actions/checkout@v4
+
+      - name: Python kur
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: ffmpeg kur
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Bagimliliklar
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: ASMR videosu uret
+        run: |
+          python asmr.py \
+            --tema "${{ github.event.inputs.tema || 'yagmur' }}" \
+            --sure "${{ github.event.inputs.sure || '1800' }}" \
+            --gorsel-sayisi "${{ github.event.inputs.gorsel_sayisi || '4' }}" \
+            --anlatim "${{ github.event.inputs.anlatim || '' }}"
+
+      - name: Uretilen videoyu bul
+        id: video
+        run: |
+          yol="$(find cikti -type f -name '*.mp4' | head -n1)"
+          echo "yol=$yol" >> "$GITHUB_OUTPUT"
+          echo "Bulunan video: ${yol:-<yok>}"
+
+      - name: Videoyu Artifact olarak yukle
+        if: ${{ steps.video.outputs.yol != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: asmr-video
+          path: cikti/**/*.mp4
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Profesyonel meta veri uret (TR+EN)
+        if: ${{ steps.video.outputs.yol != '' }}
+        run: |
+          python scripts/video_meta.py \
+            --tema "${{ github.event.inputs.tema || 'yagmur' }}" \
+            --tur asmr \
+            --sure "${{ github.event.inputs.sure || '1800' }}" \
+            --cikti meta.json
+
+      - name: YouTube'a yukle (opsiyonel; secret varsa)
+        if: ${{ steps.video.outputs.yol != '' && env.YOUTUBE_TOKEN_JSON != '' }}
+        env:
+          YOUTUBE_TOKEN_JSON: ${{ secrets.YOUTUBE_TOKEN_JSON }}
+          YOUTUBE_OAUTH_JSON: ${{ secrets.YOUTUBE_OAUTH_JSON }}
+        run: |
+          python scripts/youtube_yukle.py \
+            --video "${{ steps.video.outputs.yol }}" \
+            --meta meta.json \
+            --gizlilik "${{ github.event.inputs.gizlilik || 'unlisted' }}"

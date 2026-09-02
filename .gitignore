@@ -1,0 +1,41 @@
+# --- Hassas ayar / kimlik dosyalari (ASLA repoya gitmemeli) ---
+config/ayarlar.yaml
+config/token.json
+config/client_secret.json
+token.json
+client_secret.json
+*.client_secret.json
+
+# --- Uretim ciktilari (video/ses/gorsel; buyuk ve gecici) ---
+cikti/
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.m4v
+*.avi
+*.wav
+*.mp3
+*.srt
+# Not: klipler/ altina kullanici kendi kliplerini push eder; onlar HARIC.
+!klipler/**
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.Python
+
+# --- Isletim sistemi / editor ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp

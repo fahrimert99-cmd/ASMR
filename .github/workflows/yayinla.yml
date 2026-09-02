@@ -1,0 +1,46 @@
+name: YouTube Yayinla
+
+# "unlisted" (liste disi) olarak yuklenmis bir videoyu, incelendikten sonra
+# HERKESE ACIK (public) yapar. Yalnizca elle calisir: video ID girilir.
+
+on:
+  workflow_dispatch:
+    inputs:
+      video_id:
+        description: "Yayinlanacak YouTube video ID (yukleme is akisinin ozetinde yazar)"
+        required: true
+      gizlilik:
+        description: "Hedef gizlilik: public (yayinla) | unlisted | private"
+        default: "public"
+
+jobs:
+  yayinla:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Depoyu al
+        uses: actions/checkout@v4
+
+      - name: Python kur
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Bagimliliklar
+        run: |
+          python -m pip install --upgrade pip
+          pip install google-api-python-client google-auth-oauthlib google-auth-httplib2
+
+      - name: Gizlilik durumunu guncelle
+        env:
+          YOUTUBE_TOKEN_JSON: ${{ secrets.YOUTUBE_TOKEN_JSON }}
+          YOUTUBE_OAUTH_JSON: ${{ secrets.YOUTUBE_OAUTH_JSON }}
+        run: |
+          if [ -z "$YOUTUBE_TOKEN_JSON" ]; then
+            echo "❌ YOUTUBE_TOKEN_JSON secret'i tanimli degil." >&2
+            exit 1
+          fi
+          python scripts/youtube_yayinla.py \
+            --id "${{ github.event.inputs.video_id }}" \
+            --gizlilik "${{ github.event.inputs.gizlilik || 'public' }}"
