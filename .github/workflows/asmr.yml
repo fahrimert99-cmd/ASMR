@@ -24,8 +24,8 @@ on:
         description: "Opsiyonel yumusak anlatim metni (bos = sadece ambient)"
         default: ""
       gizlilik:
-        description: "YouTube gizlilik (yuklenirse)"
-        default: "public"
+        description: "YouTube gizlilik (yuklenirse): unlisted (onerilen; once inceleme) | public | private"
+        default: "unlisted"
 
 concurrency:
   group: asmr-${{ github.ref }}
@@ -79,6 +79,15 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+      - name: Profesyonel meta veri uret (TR+EN)
+        if: ${{ steps.video.outputs.yol != '' }}
+        run: |
+          python scripts/video_meta.py \
+            --tema "${{ github.event.inputs.tema || 'yagmur' }}" \
+            --tur asmr \
+            --sure "${{ github.event.inputs.sure || '1800' }}" \
+            --cikti meta.json
+
       - name: YouTube'a yukle (opsiyonel; secret varsa)
         if: ${{ steps.video.outputs.yol != '' && env.YOUTUBE_TOKEN_JSON != '' }}
         env:
@@ -87,7 +96,5 @@ jobs:
         run: |
           python scripts/youtube_yukle.py \
             --video "${{ steps.video.outputs.yol }}" \
-            --baslik "ASMR — ${{ github.event.inputs.tema || 'yagmur' }} | Rahatlama & Uyku" \
-            --aciklama "Telifsiz ambient ASMR — rahatlama ve uyku icin. Yapay zeka ile otomatik uretildi. #asmr #rahatlama #uyku #relaxing #sleep" \
-            --etiketler "asmr,rahatlama,uyku,relaxing,sleep,meditation" \
-            --gizlilik "${{ github.event.inputs.gizlilik || 'public' }}"
+            --meta meta.json \
+            --gizlilik "${{ github.event.inputs.gizlilik || 'unlisted' }}"
