@@ -38,11 +38,13 @@ def yukle(video_yolu: str, baslik: str, aciklama: str, ayar: dict,
         "snippet": {
             "title": baslik,
             "description": aciklama,
-            "tags": etiketler or ["cizgi film", "cocuk", "egitici"],
-            "categoryId": "1",  # Film & Animation
+            "tags": etiketler or ["asmr", "rahatlama", "uyku", "relax", "ambient"],
+            "categoryId": "22",  # People & Blogs (ASMR/rahatlama icerigine uygun)
+            "defaultLanguage": "tr",
+            "defaultAudioLanguage": "tr",
         },
         "status": {"privacyStatus": ayar["yukleme"].get("gizlilik", "private"),
-                   "selfDeclaredMadeForKids": True},
+                   "selfDeclaredMadeForKids": False},
     }
     istek = servis.videos().insert(
         part="snippet,status", body=govde,

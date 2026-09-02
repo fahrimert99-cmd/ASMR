@@ -194,8 +194,11 @@ def main():
     if args.yukle or ayar.get("yukleme", {}).get("aktif"):
         from src import yukleme as m_yukleme
         print("4/4  YouTube'a yukleniyor...")
+        etiketler = ["asmr", "rahatlama", "uyku", "relax", "ambient",
+                     args.tema.strip().lower()]
         url = m_yukleme.yukle(str(video), f"{baslik} ASMR",
-                              f"{baslik}\n\n#asmr #rahatlama #uyku", ayar)
+                              f"{baslik}\n\n#asmr #rahatlama #uyku", ayar,
+                              etiketler=etiketler)
         print(f"     Yuklendi: {url}")
     else:
         print("4/4  Yukleme atlandi (--yukle ile acabilirsiniz).")
