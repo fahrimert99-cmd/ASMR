@@ -14,6 +14,21 @@ ve otomatik ElevenLabs eklentileri kaldırıldı, içeriğe göre adlandırıld�
 **Toplam: 16:26.20** · Ses: Edward (British, Dark, Seductive, Low) ·
 Ayarlar: `sp100 s50 sb75 f25`
 
+### Birleştirilmiş dosya
+
+`moskova-TAM_Edward.mp3` — üç parça tek dosyada, **16:26.20**, 15 MB.
+
+Birleştirme frame düzeyinde yapıldı (ffmpeg olmadan): üç dosya da 128 kbps /
+44.100 Hz / mono CBR olduğu için ID3 etiketleri atılıp MPEG frame'leri
+doğrudan uç uca eklendi. Yeniden kodlama yok, **kalite kaybı yok**.
+Doğrulandı: 37.753 frame, hizalanmamış bayt 0, süre parçaların toplamına eşit.
+
+**Parçalar arasında boşluk yok.** Bu bilinçli: `TAM-VIDEO.srt` sıfır boşluk
+varsayımıyla üretildi, dolayısıyla bu ses dosyasıyla senkron. Araya sessizlik
+eklerseniz altyazı kayar.
+
+Geçiş noktaları: part2 → **5:28.10**, part3 → **10:55.18**
+
 > **Düzeltilen hata:** Orijinal yüklemede ikinci ve üçüncü dosya **ikisi de
 > `SES3`** adını taşıyordu. Doğru sıra, üretim saat damgalarından
 > (13:50:36 → 13:51:37 → 13:54:33) ve karakter/süre oranlarının
