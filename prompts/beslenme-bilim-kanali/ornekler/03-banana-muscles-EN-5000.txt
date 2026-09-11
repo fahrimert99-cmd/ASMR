@@ -1,0 +1,49 @@
+You have been told this your whole life. Muscle cramp? Eat a banana. Potassium fixes it.
+
+Let me take that away first. The clinical evidence behind it is far weaker than you think. And what a banana actually does inside a muscle cell is much more interesting than the myth.
+
+A medium banana carries about four hundred and twenty milligrams of potassium. That sounds like a lot, until you learn where potassium lives. Roughly ninety eight percent of the potassium in your body is already inside your cells, not in your blood. Your blood holds a tiny fraction, and your body defends that number ferociously.
+
+So a banana is not refilling an empty tank. Something else is going on.
+
+Chewing starts it. Salivary amylase starts breaking down starch immediately, and how much starch there is depends on ripeness. A green banana is mostly resistant starch, which your own enzymes cannot digest. As it ripens, enzymes inside the fruit convert that starch into simple sugars. A spotted banana is a completely different fuel from a green one.
+
+In the small intestine, potassium crosses mostly by simple diffusion, while glucose is pulled across by a sodium dependent transporter. Both enter the blood, and within about an hour that potassium starts moving where it matters. Into your muscle cells.
+
+And here is the machine that makes it matter.
+
+Embedded in every muscle cell membrane sits a protein called the sodium potassium pump. It does one thing, relentlessly. It pushes three sodium ions out of the cell and pulls two potassium ions in. Out, in. Millions of times.
+
+This pump is expensive. At rest it consumes around a fifth of all the energy your body spends. Your cells burn that much fuel just to keep sodium outside and potassium inside.
+
+Why pay that price? Because that imbalance is a battery. More potassium inside, more sodium outside, and the interior of your muscle cell sits at roughly ninety millivolts negative. That charged, ready state is called the resting membrane potential. Your muscle is not idle. It is loaded.
+
+Now a nerve signal arrives. Sodium channels fly open, sodium floods in, and the charge collapses. That collapse is the action potential, the electrical command to contract. It races along the fiber, dives into channels called T tubules, and releases calcium from an internal store.
+
+Calcium is the trigger. It binds to the contraction machinery, uncovering the sites where protein filaments grip each other, and the fiber shortens. That is contraction.
+
+But contraction is only half a cycle. To fire again, the cell has to reset. It resets by opening potassium channels, letting potassium rush out and dragging the charge back to negative. Potassium does not cause the contraction. Potassium is what makes the next one possible.
+
+That is the real answer. Potassium is not the spark. It is the reload.
+
+Meanwhile the sugar has its own job. Insulin signals a transporter called glute four to move to the muscle cell surface, and glucose is pulled inside. Some is burned immediately. Some is chained together and stored as glycogen, your muscle's local fuel depot. Bananas also carry vitamin B six, which your body converts into a cofactor for the enzyme that breaks that glycogen back down.
+
+So what does the evidence actually say?
+
+On performance, it is surprisingly good. In controlled trials, cyclists fueled with bananas performed about the same as those using a commercial carbohydrate sports drink. Same power output, plus polyphenols the drink never had.
+
+On cramps, the picture collapses. Studies comparing blood electrolytes in athletes who cramp and those who do not have repeatedly failed to find a meaningful difference. The leading explanation today is neuromuscular. Fatigue distorts the reflex control of the muscle, inhibition drops away, and the muscle locks. And eating a banana during a cramp fails on timing alone. That potassium needs tens of minutes to be absorbed and distributed. The cramp will be over first.
+
+So, three practical rules.
+
+One. For fuel, eat it thirty to sixty minutes before training, and pick a ripe, spotted banana. The starch is already converted, so the sugar arrives faster.
+
+Two. For steadier energy, or for your gut bacteria, pick a greener one. That resistant starch reaches your colon intact and feeds them.
+
+Three. For cramps, stop relying on it. Gradual conditioning and managing fatigue do more than any single food.
+
+One serious warning. If you have kidney disease, or take medication that raises potassium, your body cannot clear excess potassium normally, and high potassium foods can become dangerous. Speak to your doctor before increasing them.
+
+None of this was really about a banana. It was about a pump that never stops, an electrical charge sitting inside every cell you own, and the difference between the spark and the reload.
+
+So which molecule should we follow next? Write a food and an organ in the comments, and we will take it apart, cell by cell.
