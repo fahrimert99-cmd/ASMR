@@ -103,3 +103,31 @@ parça toplam süreleri kesin; blok sınırları yaklaşıktır.
 Altyazıyı ekrana basacaksanız **ElevenLabs'ın kendi SRT dışa aktarımını**
 kullanın — üretim sayfasından indirilebiliyor ve örneklem düzeyinde kesindir.
 Görsel hizalama için bu dosyalar yeterlidir.
+
+---
+
+## Hangi SRT Nerede Kullanılır
+
+Montaj araçları genelde **SRT blok sayısı = görsel sayısı** şartı arar.
+Bu yüzden iki farklı amaca hizmet eden SRT'ler var:
+
+| Dosya | Blok | Kullanım |
+|---|---|---|
+| `SAHNE-59.srt` | 59 | **Otomatik montaj aracına verilecek olan.** Her blok bir görselin ekranda kalacağı süreyi kapsar. Elinizdeki 59 görselle birebir eşleşir. |
+| `SAHNE-118.srt` | 118 | B kareleri üretildikten sonra kullanılacak sürüm. Her sahne A ve B olarak ikiye bölünür. |
+| `TAM-VIDEO.srt` | 200 | **Ekrana basılacak altyazı.** Cümle bazlı, okunabilir uzunlukta. Montaj aracına verilmez. |
+| `SES1/2/3-part*.srt` | 73/64/63 | Parçaları ayrı ayrı işlemek gerekirse. |
+
+### SAHNE-59.srt özellikleri
+
+- Bloklar **kesintisiz**: her bloğun bitişi bir sonrakinin başlangıcına eşit
+  (doğrulandı), ilk blok `00:00:00,000`'da başlar, son blok `16:26,200`'de biter.
+  Görseller arasında boş kare oluşmaz.
+- Süreler, her parçanın **ölçülen gerçek süresi** içinde bölüm metinlerinin
+  karakter uzunluğuna göre dağıtıldı.
+- Kare süresi: en kısa 9,0 sn · en uzun 25,7 sn · ortalama **16,7 sn**.
+
+> **25,7 saniyelik tek görsel uzun.** 59 görsel 16,5 dakikayı doldurmak için
+> az; B kareleri üretilip `SAHNE-118.srt`'ye geçildiğinde ortalama 8,4 sn'ye
+> iner. Şimdilik montaj aracında Ken Burns / yavaş zoom açık olmalı, yoksa
+> uzun kareler donuk durur.
