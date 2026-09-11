@@ -1,0 +1,18 @@
+# Kullanici ayarlari (API anahtarlari icerir) - README bu dosyanin
+# yok sayildigini soyler; anahtarlarin repoya gitmemesi icin zorunludur.
+config/ayarlar.yaml
+config/client_secret.json
+config/token.json
+
+# Uretim ciktilari
+cikti/
+*.mp4
+*.wav
+*.mp3
+!klipler/**/*.mp4
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/

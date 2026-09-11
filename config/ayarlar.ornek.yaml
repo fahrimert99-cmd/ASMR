@@ -132,12 +132,21 @@ asmr:
 # Repoya (klipler/ klasoru) yuklenen gunluk video klipleri yumusak gecisle
 # birlestirilir ve hedef sureye DONGULENIR. Kaynak uretmez; hazir klipleri isler.
 klip:
-  sure: 1800                  # hedef sure (sn): 1800 = 30 dk, 3600 = 60 dk
+  sure: 30                    # hedef sure (sn). 30 = kisa ASMR (7 klip x 5 sn)
+                              # Uzun form icin: 1800 = 30 dk, 3600 = 60 dk
+  cozunurluk: [1920, 1080]   # bu hattin cozunurlugu (montaj.cozunurluk'u ezer).
+                              # Makro ASMR dokusu 720p'de kayboldugu icin 1080p.
   gecis_sn: 0.8              # klipler arasi yumusak crossfade suresi (sn); 0 = sert kesim
-  fps: 24                    # cikti kare/sn
+  fps: 30                    # cikti kare/sn (yavas makro hareket 30 fps'te daha akici)
   ses: "koru"                # "koru" (klip sesi) | "ambient_ekle" (altina ambient) | "ambient_degistir"
   ambient_tip: "yagmur"      # ses ambient_* ise: yagmur | okyanus | ates | gece | ruzgar | beyaz
   loop_sure: 120             # ambient loop uzunlugu (sn)
+  # --- SURE MATEMATIGI (onemli) ---
+  # Klipler crossfade ile BINDIRILEREK birlestirilir (padding=-gecis_sn), yani
+  # toplam sure = N x klip_suresi - (N-1) x gecis_sn
+  #   7 klip x 5 sn - 6 x 0.8 = 30.2 sn  -> 30 sn'ye kirpilir, TEKRAR YOK  (onerilen)
+  #   6 klip x 5 sn - 5 x 0.8 = 26.0 sn  -> eksik 4 sn dongu ile doldurulur (bas tekrar eder)
+  # Hedef sureyi temel videodan UZUN verirseniz fark -stream_loop ile tekrarlanir.
 
 altyazi:
   aktif: true

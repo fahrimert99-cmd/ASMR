@@ -129,8 +129,11 @@ def _dongule(temel_mp4, sure, hedef, fps, ses_modu="koru", ambient_yol=None):
 
 def birlestir(klip_yollari, sure, ayar, cikti) -> Path:
     """Klipleri birlestirip hedef sureye dongulenmis tek ASMR mp4'u uretir."""
-    en, boy = ayar["montaj"]["cozunurluk"]
     k = ayar.get("klip", {})
+    # Klip hatti kendi cozunurlugunu tanimlayabilir; tanimlamazsa montaj'inkine
+    # duser. Makro ASMR dokusu (gozenek, catlak, tuy) 720p'de kayboldugu icin
+    # bu hat varsayilan olarak 1080p calisir, diger hatlar yavaslamaz.
+    en, boy = k.get("cozunurluk") or ayar["montaj"]["cozunurluk"]
     fps = int(k.get("fps") or ayar["montaj"].get("fps", 24))
     gecis = float(k.get("gecis_sn", 0.8))
     ses_modu = (k.get("ses") or "koru").lower()
