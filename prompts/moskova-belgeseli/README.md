@@ -51,3 +51,55 @@ video durağanlaşır. İkinci kare seti bunu 7,8 sn'ye indiriyor.
 
 Ses üretilip **SRT** alındığında zaman planı tahminden gerçeğe çevrilir ve
 kareler blok sınırlarına birebir hizalanır.
+
+---
+
+## Üretilen Ses ve SRT (11 Eylül 2026)
+
+Seslendirme **Edward (British, Dark, Seductive, Low)** sesiyle yapıldı.
+
+| Dosya (yükleme saati) | Etiket | Süre | Parça |
+|---|---|---|---|
+| 13:50:36 | SES1 | 5:28.10 | part1 |
+| 13:51:37 | "SES3" | 5:27.08 | **part2** — etiket yanlış |
+| 13:54:33 | SES3 | 5:31.02 | part3 |
+
+**Toplam: 16:26.20**
+
+Eşleşme iki bağımsız kanıtla doğrulandı: üretim saat sırası ve karakter/süre
+oranlarının tutarlılığı (0,0825 / 0,0810 / 0,0800 — sapma %1,5).
+
+### Tempo kalibrasyonu
+
+| Ses | sn/karakter | Not |
+|---|---|---|
+| Arthur | 0,0760 | Beslenme videolarında ölçüldü |
+| **Edward** | **0,0810** | Arthur'dan ~%8 yavaş |
+
+İleride Edward için süre tahmini: `karakter × 0,0810`. Bu metin 15:15 olarak
+tahmin edilmiş, gerçekte 16:26 çıkmıştı — fark tamamen ses değişiminden.
+
+### SRT dosyaları
+
+| Dosya | Blok | Kapsam |
+|---|---|---|
+| `SES1-part1.srt` | 73 | 0'dan başlar, part1 sesi için |
+| `SES2-part2.srt` | 64 | 0'dan başlar, part2 sesi için |
+| `SES3-part3.srt` | 63 | 0'dan başlar, part3 sesi için |
+| `TAM-VIDEO.srt` | 200 | Üçü ardışık birleştirilmiş tek video için |
+
+**`TAM-VIDEO.srt` varsayımı:** parçalar arasında boşluk yok. Montajda araya
+sessizlik koyarsanız part2 zamanlarına o boşluk, part3 zamanlarına iki
+boşluğun toplamı eklenmelidir.
+
+### ⚠️ SRT'ler tahminidir
+
+Bu oturumda konuşma tanıma aracı yok. Zamanlama, brokoli ve muz
+videolarının **gerçek** ElevenLabs SRT'lerinden fit edilen tempo modeliyle
+(`süre = 0,0629 × karakter + 0,115 sn`, bloklar arası 0,72 sn) hesaplanıp
+her dosyanın **ölçülen gerçek süresine** ölçeklendi. Metin birebir doğru,
+parça toplam süreleri kesin; blok sınırları yaklaşıktır.
+
+Altyazıyı ekrana basacaksanız **ElevenLabs'ın kendi SRT dışa aktarımını**
+kullanın — üretim sayfasından indirilebiliyor ve örneklem düzeyinde kesindir.
+Görsel hizalama için bu dosyalar yeterlidir.
