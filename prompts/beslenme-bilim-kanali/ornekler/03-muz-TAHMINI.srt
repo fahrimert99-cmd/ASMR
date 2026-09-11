@@ -1,0 +1,336 @@
+1
+00:00:00,110 --> 00:00:02,768
+You have been told this your whole life.
+
+2
+00:00:03,495 --> 00:00:04,437
+Muscle cramp?
+
+3
+00:00:05,164 --> 00:00:06,107
+Eat a banana.
+
+4
+00:00:06,834 --> 00:00:08,157
+Potassium fixes it.
+
+5
+00:00:08,884 --> 00:00:10,780
+Let me take that away first.
+
+6
+00:00:11,506 --> 00:00:15,499
+The clinical evidence behind it is far weaker than you think.
+
+7
+00:00:16,226 --> 00:00:22,189
+And what a banana actually does inside a muscle cell is much more interesting than the myth.
+
+8
+00:00:22,916 --> 00:00:27,989
+A medium banana carries about four hundred and twenty milligrams of potassium.
+
+9
+00:00:28,715 --> 00:00:32,772
+That sounds like a lot, until you learn where potassium lives.
+
+10
+00:00:33,499 --> 00:00:40,414
+Roughly ninety eight percent of the potassium in your body is already inside your cells, not in your blood.
+
+11
+00:00:41,141 --> 00:00:46,341
+Your blood holds a tiny fraction, and your body defends that number ferociously.
+
+12
+00:00:47,068 --> 00:00:49,917
+So a banana is not refilling an empty tank.
+
+13
+00:00:50,644 --> 00:00:52,476
+Something else is going on.
+
+14
+00:00:53,203 --> 00:00:54,463
+Chewing starts it.
+
+15
+00:00:55,190 --> 00:01:02,106
+Salivary amylase starts breaking down starch immediately, and how much starch there is depends on ripeness.
+
+16
+00:01:02,833 --> 00:01:08,033
+A green banana is mostly resistant starch, which your own enzymes cannot digest.
+
+17
+00:01:08,760 --> 00:01:13,832
+As it ripens, enzymes inside the fruit convert that starch into simple sugars.
+
+18
+00:01:14,559 --> 00:01:18,806
+A spotted banana is a completely different fuel from a green one.
+
+19
+00:01:19,533 --> 00:01:28,228
+In the small intestine, potassium crosses mostly by simple diffusion, while glucose is pulled across by a sodium dependent transporter.
+
+20
+00:01:28,955 --> 00:01:34,981
+Both enter the blood, and within about an hour that potassium starts moving where it matters.
+
+21
+00:01:35,708 --> 00:01:37,286
+Into your muscle cells.
+
+22
+00:01:38,013 --> 00:01:40,989
+And here is the machine that makes it matter.
+
+23
+00:01:41,716 --> 00:01:47,361
+Embedded in every muscle cell membrane sits a protein called the sodium potassium pump.
+
+24
+00:01:48,088 --> 00:01:50,237
+It does one thing, relentlessly.
+
+25
+00:01:50,964 --> 00:01:55,910
+It pushes three sodium ions out of the cell and pulls two potassium ions in.
+
+26
+00:01:56,637 --> 00:01:57,262
+Out, in.
+
+27
+00:01:57,988 --> 00:01:59,249
+Millions of times.
+
+28
+00:01:59,975 --> 00:02:01,553
+This pump is expensive.
+
+29
+00:02:02,280 --> 00:02:06,845
+At rest it consumes around a fifth of all the energy your body spends.
+
+30
+00:02:07,572 --> 00:02:12,772
+Your cells burn that much fuel just to keep sodium outside and potassium inside.
+
+31
+00:02:13,499 --> 00:02:14,822
+Why pay that price?
+
+32
+00:02:15,549 --> 00:02:17,953
+Because that imbalance is a battery.
+
+33
+00:02:18,680 --> 00:02:26,676
+More potassium inside, more sodium outside, and the interior of your muscle cell sits at roughly ninety millivolts negative.
+
+34
+00:02:27,403 --> 00:02:31,777
+That charged, ready state is called the resting membrane potential.
+
+35
+00:02:32,504 --> 00:02:34,145
+Your muscle is not idle.
+
+36
+00:02:34,872 --> 00:02:35,814
+It is loaded.
+
+37
+00:02:36,541 --> 00:02:38,373
+Now a nerve signal arrives.
+
+38
+00:02:39,100 --> 00:02:43,601
+Sodium channels fly open, sodium floods in, and the charge collapses.
+
+39
+00:02:44,328 --> 00:02:49,147
+That collapse is the action potential, the electrical command to contract.
+
+40
+00:02:49,874 --> 00:02:56,853
+It races along the fiber, dives into channels called T tubules, and releases calcium from an internal store.
+
+41
+00:02:57,580 --> 00:02:59,158
+Calcium is the trigger.
+
+42
+00:02:59,885 --> 00:03:07,881
+It binds to the contraction machinery, uncovering the sites where protein filaments grip each other, and the fiber shortens.
+
+43
+00:03:08,608 --> 00:03:09,995
+That is contraction.
+
+44
+00:03:10,722 --> 00:03:13,190
+But contraction is only half a cycle.
+
+45
+00:03:13,916 --> 00:03:16,384
+To fire again, the cell has to reset.
+
+46
+00:03:17,111 --> 00:03:24,154
+It resets by opening potassium channels, letting potassium rush out and dragging the charge back to negative.
+
+47
+00:03:24,881 --> 00:03:27,602
+Potassium does not cause the contraction.
+
+48
+00:03:28,329 --> 00:03:31,369
+Potassium is what makes the next one possible.
+
+49
+00:03:32,096 --> 00:03:33,737
+That is the real answer.
+
+50
+00:03:34,464 --> 00:03:36,296
+Potassium is not the spark.
+
+51
+00:03:37,023 --> 00:03:38,219
+It is the reload.
+
+52
+00:03:38,946 --> 00:03:41,350
+Meanwhile the sugar has its own job.
+
+53
+00:03:42,077 --> 00:03:49,374
+Insulin signals a transporter called glute four to move to the muscle cell surface, and glucose is pulled inside.
+
+54
+00:03:50,101 --> 00:03:51,933
+Some is burned immediately.
+
+55
+00:03:52,660 --> 00:03:57,860
+Some is chained together and stored as glycogen, your muscle's local fuel depot.
+
+56
+00:03:58,587 --> 00:04:06,710
+Bananas also carry vitamin B six, which your body converts into a cofactor for the enzyme that breaks that glycogen back down.
+
+57
+00:04:07,437 --> 00:04:10,032
+So what does the evidence actually say?
+
+58
+00:04:10,759 --> 00:04:13,417
+On performance, it is surprisingly good.
+
+59
+00:04:14,144 --> 00:04:22,521
+In controlled trials, cyclists fueled with bananas performed about the same as those using a commercial carbohydrate sports drink.
+
+60
+00:04:23,248 --> 00:04:26,923
+Same power output, plus polyphenols the drink never had.
+
+61
+00:04:27,650 --> 00:04:29,863
+On cramps, the picture collapses.
+
+62
+00:04:30,590 --> 00:04:39,285
+Studies comparing blood electrolytes in athletes who cramp and those who do not have repeatedly failed to find a meaningful difference.
+
+63
+00:04:40,012 --> 00:04:43,115
+The leading explanation today is neuromuscular.
+
+64
+00:04:43,842 --> 00:04:49,995
+Fatigue distorts the reflex control of the muscle, inhibition drops away, and the muscle locks.
+
+65
+00:04:50,722 --> 00:04:54,461
+And eating a banana during a cramp fails on timing alone.
+
+66
+00:04:55,187 --> 00:04:59,625
+That potassium needs tens of minutes to be absorbed and distributed.
+
+67
+00:05:00,352 --> 00:05:02,311
+The cramp will be over first.
+
+68
+00:05:03,038 --> 00:05:04,806
+So, three practical rules.
+
+69
+00:05:05,533 --> 00:05:05,904
+One.
+
+70
+00:05:06,631 --> 00:05:12,466
+For fuel, eat it thirty to sixty minutes before training, and pick a ripe, spotted banana.
+
+71
+00:05:13,193 --> 00:05:17,186
+The starch is already converted, so the sugar arrives faster.
+
+72
+00:05:17,913 --> 00:05:18,283
+Two.
+
+73
+00:05:19,010 --> 00:05:23,320
+For steadier energy, or for your gut bacteria, pick a greener one.
+
+74
+00:05:24,047 --> 00:05:28,167
+That resistant starch reaches your colon intact and feeds them.
+
+75
+00:05:28,894 --> 00:05:29,391
+Three.
+
+76
+00:05:30,118 --> 00:05:32,204
+For cramps, stop relying on it.
+
+77
+00:05:32,931 --> 00:05:37,559
+Gradual conditioning and managing fatigue do more than any single food.
+
+78
+00:05:38,286 --> 00:05:39,673
+One serious warning.
+
+79
+00:05:40,400 --> 00:05:51,066
+If you have kidney disease, or take medication that raises potassium, your body cannot clear excess potassium normally, and high potassium foods can become dangerous.
+
+80
+00:05:51,792 --> 00:05:54,705
+Speak to your doctor before increasing them.
+
+81
+00:05:55,432 --> 00:05:58,026
+None of this was really about a banana.
+
+82
+00:05:58,753 --> 00:06:08,147
+It was about a pump that never stops, an electrical charge sitting inside every cell you own, and the difference between the spark and the reload.
+
+83
+00:06:08,874 --> 00:06:11,532
+So which molecule should we follow next?
+
+84
+00:06:12,259 --> 00:06:17,650
+Write a food and an organ in the comments, and we will take it apart, cell by cell.
+
