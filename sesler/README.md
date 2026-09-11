@@ -43,6 +43,7 @@ Altyazılar: `prompts/moskova-belgeseli/` altında `SES1-part1.srt`,
 | Dosya | Süre | Metin |
 |---|---|---|
 | `03-muz-kaslar_Arthur.mp3` | 6:17.65 | `prompts/beslenme-bilim-kanali/ornekler/03-banana-muscles-EN-5000.txt` |
+| `04-avokado-emilim_Edward.mp3` | 6:23.82 | `prompts/beslenme-bilim-kanali/ornekler/04-avocado-absorption-EN-5000.txt` |
 
 Ses: Arthur (Clear, Engaging, American Male Audiobook Narrator) ·
 Ayarlar: `sp100 s62 sb71 f25`
@@ -51,13 +52,25 @@ Ayarlar: `sp100 s62 sb71 f25`
 
 Süre tahminlerinde kullanılacak katsayılar (gerçek ölçümlerden):
 
-| Ses | sn/karakter | Ölçüm sayısı |
-|---|---|---|
-| Arthur | 0,0760 | 2 (brokoli 4.945 krk → 6:16, muz 4.946 krk → 6:17) |
-| Edward | 0,0810 | 3 (Moskova parçaları) |
+| Ses | sn/karakter | Aralık | Ölçüm |
+|---|---|---|---|
+| Arthur | **0,0760** | 0,0760–0,0761 | 2 (brokoli, muz) |
+| Edward | **0,0804** (ort.) | 0,0782–0,0825 | 4 (Moskova ×3, avokado) |
 
-Edward, Arthur'dan yaklaşık **%8 yavaş** okuyor. Aynı metin Edward'la
-seslendirilirse süre bu oranda uzar.
+Arthur çok kararlı; iki ölçümü neredeyse aynı. **Edward içeriğe göre
+değişiyor** — Moskova parçalarında 0,0825'e kadar çıktı, avokadoda 0,0782'ye
+indi. Avokado tahmininde 0,0810 kullanıldı ve 14 sn (%3,5) sapma oluştu.
+
+**Edward için tahmin yaparken aralık verin:** `karakter × 0,078` ile
+`karakter × 0,083` arası. Tek sayıya güvenmeyin.
 
 **Hedef süreden karakter hesabı:** `karakter = hedef_saniye ÷ katsayı`
-Örnek: Edward ile 10 dakika → 600 ÷ 0,0810 ≈ **7.400 karakter**.
+
+| Hedef | Arthur (0,0760) | Edward (0,0804 ort.) |
+|---|---|---|
+| 5 dk | 3.950 krk | 3.730 krk |
+| 6 dk | 4.740 krk | 4.480 krk |
+| 10 dk | 7.890 krk | 7.460 krk |
+| 15 dk | 11.840 krk | 11.190 krk |
+
+Edward'da ±%3 pay bırakın.
