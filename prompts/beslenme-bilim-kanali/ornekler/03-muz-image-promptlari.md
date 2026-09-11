@@ -1,12 +1,12 @@
-# Muz × Kaslar — Görsel Prompt Listesi (84 adet)
+# Muz × Kaslar — Görsel Prompt Listesi (cümle bazlı taslak)
 
-Kaynak: `03-banana-muscles-EN-5000.txt` · **cümle bazında** hazırlandı (84 cümle).
-
-> **SRT uyarısı:** Ses henüz üretilmediği için numaralar SRT bloklarına değil,
-> metnin cümlelerine karşılık gelir. Brokolide 86 cümle → 83 SRT bloğu çıkmıştı
-> (oran 0,97); burada **~81 blok** bekleniyor. ElevenLabs çok kısa cümleleri
-> (69/72/75 — "One." "Two." "Three.", 26 — "Out, in.") komşusuyla birleştirebilir.
-> SRT geldiğinde yalnızca o birkaç satır birleştirilir, listenin tamamı geçerli kalır.
+> **BU DOSYA ARTIK GEÇERSİZ.** Gerçek SRT geldi (81 blok). Kullanılacak liste:
+> [`03-muz-gorsel-zaman-plani.md`](03-muz-gorsel-zaman-plani.md) ve
+> [`03-muz-image-promptlari.txt`](03-muz-image-promptlari.txt) — ikisi de
+> SRT bloklarıyla birebir hizalı.
+>
+> Aşağıdaki 84 satırlık cümle bazlı taslak, ses üretilmeden önce hazırlanmıştı
+> ve yalnızca kayıt olarak duruyor.
 
 ## Ortak Stil Eki (her prompt'un sonuna eklenir)
 
