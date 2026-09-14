@@ -52,6 +52,42 @@ Panodaki stil kartlarının önizlemeleri, videoyu çizen işlevin **aynısıyla
 **Altyazı yalnızca bloğun kendi aralığında görünür.** Bloklar arası
 boşluklarda sahne tutulur ama yazı ekranda asılı kalmaz.
 
+## Görsel hareketi ve efekt
+
+| Görsel hareketi | |
+|---|---|
+| **Sırayla yakınlaş / uzaklaş** | Tek numaralı sahneler yakınlaşır, çift numaralılar uzaklaşır |
+| **Yavaşça yakınlaş** | Tüm sahneler %6 yakınlaşır |
+| **Yavaşça uzaklaş** | Tüm sahneler %6 uzaklaşır |
+| **Hareketsiz** | Zoom yok (en hızlı render) |
+
+"Sırayla" varsayılandır: tek yönlü hareket uzun bir belgeselde tekdüze
+hissettirir.
+
+| Görsel efekt | |
+|---|---|
+| **Sinematik kontrast** | Kontrast ve doygunluk artışı + vinyet |
+| **Sıcak ton** / **Soğuk ton** | Renk sıcaklığı kaydırması |
+| **Siyah beyaz** | Gri tonlama + kontrast |
+| **Yalnız vinyet** | Sadece kenar karartma |
+| **Yok** | İşlem yok |
+
+Efektler canvas'ın kendi `filter` özelliğiyle uygulanır; ayrı bir piksel
+döngüsünden çok daha hızlıdır. Filtre **altyazıya ve geçişe uygulanmaz** —
+yalnızca sahne görüntüsünü etkiler.
+
+## İşleme modu
+
+| Mod | Kare hızı | Bit oranı |
+|---|---|---|
+| Hızlı | 24 FPS | 6 Mbps |
+| Dengeli *(varsayılan)* | 30 FPS | 12 Mbps |
+| Yüksek kalite | 30 FPS | 28 Mbps |
+| Özel | elle | elle |
+
+"Özel" seçilmedikçe kare hızı ve bit oranı alanları kilitlidir; yoksa ön ayar
+seçip sonra elle değiştiren kullanıcı hangi değerin geçerli olduğunu bilemez.
+
 ## Sahne geçişi
 
 | Seçenek | Ne yapar |

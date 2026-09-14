@@ -8,7 +8,7 @@ import { STILLER, altyaziCiz } from "./altyazi.js";
 const $ = (id) => document.getElementById(id);
 const el = {
   ses: $("ses"), srt: $("srt"), sahneler: $("sahneler"),
-  cozunurluk: $("cozunurluk"), fps: $("fps"), bitrate: $("bitrate"), kenburns: $("kenburns"),
+  cozunurluk: $("cozunurluk"), fps: $("fps"), bitrate: $("bitrate"), hareket: $("hareket"), efekt: $("efekt"), mod: $("mod"),
   gecis: $("gecis"), gecisSure: $("gecis-sure"),
   olustur: $("olustur"), durdur: $("durdur"), durum: $("durum"),
   panelDenetim: $("panel-denetim"), mesajlar: $("mesajlar"), cizelge: $("cizelge"),
@@ -224,7 +224,8 @@ el.olustur.addEventListener("click", async () => {
       parcalar: durum.parcalar,
       sesTamponu: durum.sesTamponu,
       en, boy, fps, bitOrani,
-      kenBurns: el.kenburns.checked,
+      hareket: el.hareket.value,
+      efekt: el.efekt.value,
       altyazi: altyaziAyari(),
       gecis: gecisAyari(),
       iptal: () => iptalIstendi,
@@ -308,11 +309,10 @@ async function onizlemeCizDerhal(t) {
   const olcek = Math.min(1, 960 / en);
   const pEn = Math.round(en * olcek), pBoy = Math.round(boy * olcek);
   if (tuval.width !== pEn || tuval.height !== pBoy) { tuval.width = pEn; tuval.height = pBoy; }
-  tuval.style.aspectRatio = `${en} / ${boy}`;
 
   const ctx = tuval.getContext("2d", { alpha: false });
   const parca = await onizlemeKaresiCiz(ctx, durum.parcalar, kaynakCoz, t, {
-    en: pEn, boy: pBoy, kenBurns: el.kenburns.checked,
+    en: pEn, boy: pBoy, hareket: el.hareket.value, efekt: el.efekt.value,
     altyazi: altyaziAyari(), gecis: gecisAyari(),
   });
 
@@ -377,13 +377,35 @@ el.onizlemeOynat.addEventListener("click", async () => {
 });
 
 // Ayar değişince görünen kare de değişmeli.
-for (const g of [el.kenburns, el.cozunurluk, el.altyaziKonum, el.altyaziBoyut, el.gecis, el.gecisSure]) {
+for (const g of [el.hareket, el.efekt, el.cozunurluk, el.altyaziKonum, el.altyaziBoyut, el.gecis, el.gecisSure]) {
   g.addEventListener("change", () => onizlemeyiTazele(cubuktanZaman()));
 }
 
 // ------------------------------------------------------------ altyazı stili
 
 let secilenStil = "klasik";
+
+// İşleme modu ön ayarları: kare hızı ve bit oranını birlikte belirler.
+// "Özel" seçilmedikçe iki alan da kilitlenir; yoksa ön ayar seçip sonra elle
+// değiştiren kullanıcı hangi değerin geçerli olduğunu bilemez.
+const MODLAR = {
+  hizli:   { fps: "24", mbps: 6 },
+  dengeli: { fps: "30", mbps: 12 },
+  yuksek:  { fps: "30", mbps: 28 },
+};
+
+function moduUygula() {
+  const m = MODLAR[el.mod.value];
+  const ozel = !m;
+  el.fps.disabled = !ozel;
+  el.bitrate.disabled = !ozel;
+  if (m) {
+    el.fps.value = m.fps;
+    el.bitrate.value = String(m.mbps);
+  }
+}
+el.mod.addEventListener("change", moduUygula);
+moduUygula();
 
 function gecisAyari() {
   return { tur: el.gecis.value, sure: Number(el.gecisSure.value) };

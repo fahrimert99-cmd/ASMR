@@ -357,6 +357,48 @@ export function altyaziDurumu(parca, t, altyazi) {
 // oynatmayı gerektirirdi. Giden sahne, geçiş başlarken tuvalden alınan anlık
 // görüntüdür; 0,5 sn'lik bir harmanda donuk olması göze çarpmaz ve iki video
 // akışını aynı anda çalıştırma karmaşasını ortadan kaldırır.
+// Görsel hareketi.
+//
+// "sirayla" ardışık sahneleri dönüşümlü yakınlaştırıp uzaklaştırır; tek yönlü
+// hareket uzun bir belgeselde tekdüze hissettirir.
+export const HAREKETLER = {
+  yok:      "Hareketsiz",
+  yakinlas: "Yavaşça yakınlaş",
+  uzaklas:  "Yavaşça uzaklaş",
+  sirayla:  "Sırayla yakınlaş / uzaklaş",
+};
+
+const ZOOM_MIKTARI = 0.06;
+
+export function hareketYonu(hareket, sahneNo) {
+  if (hareket === "sirayla") return sahneNo % 2 === 1 ? "yakinlas" : "uzaklas";
+  return hareket || "yok";
+}
+
+// Görsel efektleri.
+//
+// Filtreler canvas'ın kendi 'filter' özelliğiyle uygulanır; ayrı bir piksel
+// döngüsünden çok daha hızlıdır. Vinyet filtreyle ifade edilemediği için
+// sahnenin üzerine radyal bir gradyanla çizilir.
+export const EFEKTLER = {
+  yok:         { ad: "Yok" },
+  sinematik:   { ad: "Sinematik kontrast", filtre: "contrast(1.18) saturate(1.12) brightness(0.97)", vinyet: 0.34 },
+  sicak:       { ad: "Sıcak ton", filtre: "sepia(0.22) saturate(1.18) brightness(1.03)" },
+  soguk:       { ad: "Soğuk ton", filtre: "contrast(1.06) saturate(1.05) hue-rotate(-12deg) brightness(1.02)" },
+  siyah_beyaz: { ad: "Siyah beyaz", filtre: "grayscale(1) contrast(1.12)" },
+  vinyet:      { ad: "Yalnız vinyet", vinyet: 0.5 },
+};
+
+export function vinyetCiz(ctx, guc, en, boy) {
+  if (!guc) return;
+  const g = ctx.createRadialGradient(en / 2, boy / 2, Math.min(en, boy) * 0.32,
+                                     en / 2, boy / 2, Math.max(en, boy) * 0.72);
+  g.addColorStop(0, "rgba(0,0,0,0)");
+  g.addColorStop(1, `rgba(0,0,0,${guc})`);
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, en, boy);
+}
+
 export function gecisDurumu(indeks, parca, t, gecis) {
   if (!gecis || gecis.tur === "yok" || !(gecis.sure > 0) || indeks === 0) {
     return { aktif: false, oran: 1 };
@@ -386,10 +428,14 @@ export function gecisUygula(ctx, anlik, durum, en, boy) {
   }
 }
 
-export function gorselKareCiz(ctx, bitmap, parca, t, en, boy, kenBurns) {
+export function gorselKareCiz(ctx, bitmap, parca, t, en, boy, hareket) {
   // Siyah zemin boyanmaz: kaplayarak çizim tuvalin tamamını örter.
-  const oran = (t - parca.bas) / Math.max(parca.bit - parca.bas, 1e-6);
-  const zoom = kenBurns ? 1 + 0.06 * Math.min(Math.max(oran, 0), 1) : 1;
+  const ham = (t - parca.bas) / Math.max(parca.bit - parca.bas, 1e-6);
+  const oran = Math.min(Math.max(ham, 0), 1);
+  const yon = hareketYonu(hareket, parca.sahneNo);
+  const zoom = yon === "yakinlas" ? 1 + ZOOM_MIKTARI * oran
+             : yon === "uzaklas"  ? 1 + ZOOM_MIKTARI * (1 - oran)
+             : 1;
   kaplayarakCiz(ctx, bitmap, bitmap.width, bitmap.height, en, boy, zoom);
 }
 
@@ -397,25 +443,29 @@ export function gorselKareCiz(ctx, bitmap, parca, t, en, boy, kenBurns) {
 //
 // Render döngüsü video sahnelerini sıralı okur; önizlemede rastgele erişim
 // gerektiği için burada arama (seek) kullanılır. Çizim kuralları aynıdır.
-async function tekSahneCiz(ctx, parca, kaynakCoz, t, en, boy, kenBurns) {
+async function tekSahneCiz(ctx, parca, kaynakCoz, t, en, boy, hareket, efekt) {
+  const tanim = EFEKTLER[efekt] || EFEKTLER.yok;
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, en, boy);
   const kaynak = parca.sahne ? await kaynakCoz(parca.sahne) : null;
+  if (tanim.filtre) ctx.filter = tanim.filtre;
   if (kaynak?.tur === "gorsel") {
-    gorselKareCiz(ctx, kaynak.bitmap, parca, t, en, boy, kenBurns);
+    gorselKareCiz(ctx, kaynak.bitmap, parca, t, en, boy, hareket);
   } else if (kaynak?.tur === "video") {
     const klipSure = kaynak.sure > 0 ? kaynak.sure : 1;
     await videoKaresineGit(kaynak.el, (t - parca.bas) % klipSure);
     kaplayarakCiz(ctx, kaynak.el, kaynak.el.videoWidth, kaynak.el.videoHeight, en, boy, 1);
   }
+  ctx.filter = "none";   // vinyet, geçiş ve altyazı filtreden etkilenmemeli
+  vinyetCiz(ctx, tanim.vinyet, en, boy);
 }
 
 export async function onizlemeKaresiCiz(ctx, parcalar, kaynakCoz, t, ayar) {
-  const { en, boy, kenBurns, altyazi, gecis } = ayar;
+  const { en, boy, hareket, efekt, altyazi, gecis } = ayar;
   const { parca, indeks } = parcaBul(parcalar, t);
   const { metin, oran } = altyaziDurumu(parca, t, altyazi);
 
-  await tekSahneCiz(ctx, parca, kaynakCoz, t, en, boy, kenBurns);
+  await tekSahneCiz(ctx, parca, kaynakCoz, t, en, boy, hareket, efekt);
 
   // Ön izleme rastgele erişimlidir; render'daki gibi bir önceki kareyi elde
   // tutamaz, giden sahneyi o an ayrıca çizer.
@@ -424,7 +474,7 @@ export async function onizlemeKaresiCiz(ctx, parcalar, kaynakCoz, t, ayar) {
     const onceki = parcalar[indeks - 1];
     const anlik = new OffscreenCanvas(en, boy);
     const actx = anlik.getContext("2d", { alpha: false });
-    await tekSahneCiz(actx, onceki, kaynakCoz, Math.max(onceki.bit - 0.001, onceki.bas), en, boy, kenBurns);
+    await tekSahneCiz(actx, onceki, kaynakCoz, Math.max(onceki.bit - 0.001, onceki.bas), en, boy, hareket, efekt);
     gecisUygula(ctx, anlik, gd, en, boy);
   }
 
@@ -460,7 +510,7 @@ function kuyrukBekle(kodlayici, ustSinir, altSinir) {
 }
 
 export async function render(ayar) {
-  const { parcalar, sesTamponu, en, boy, fps, kenBurns, bitOrani, altyazi, gecis, ilerleme, iptal } = ayar;
+  const { parcalar, sesTamponu, en, boy, fps, hareket, efekt, bitOrani, altyazi, gecis, ilerleme, iptal } = ayar;
 
   const secim = await kodekSec(en, boy, fps);
   const toplamSure = sesTamponu.duration;
@@ -535,6 +585,9 @@ export async function render(ayar) {
   const altyaziAcik = !!altyazi && altyazi.stil && altyazi.stil !== "kapali";
   const altyaziAnimasyonlu = altyaziAcik && ANIMASYONLU.has(altyazi.stil);
 
+  const efektTanimi = EFEKTLER[efekt] || EFEKTLER.yok;
+  const hareketsiz = hareketYonu(hareket, 1) === "yok";
+
   // Geçişte giden sahne olarak kullanılacak anlık görüntü.
   const anlikTuval = new OffscreenCanvas(en, boy);
   const anlikCtx = anlikTuval.getContext("2d", { alpha: false });
@@ -572,9 +625,12 @@ export async function render(ayar) {
         // de girer, yoksa metin görünüp kaybolduğunda kare güncellenmezdi.
         const imza = `${parca.sahne.no}|${altyaziMetni}`;
         // Geçiş sırasında her kare farklıdır; hızlı yol devre dışı kalmalı.
-        const sabit = !kenBurns && !altyaziAnimasyonlu && !gd.aktif && sonImza === imza;
+        const sabit = hareketsiz && !altyaziAnimasyonlu && !gd.aktif && sonImza === imza;
         if (!sabit) {
-          gorselKareCiz(ctx, kaynak.bitmap, parca, t, en, boy, kenBurns);
+          if (efektTanimi.filtre) ctx.filter = efektTanimi.filtre;
+          gorselKareCiz(ctx, kaynak.bitmap, parca, t, en, boy, hareket);
+          ctx.filter = "none";
+          vinyetCiz(ctx, efektTanimi.vinyet, en, boy);
           if (gd.aktif) gecisUygula(ctx, anlikTuval, gd, en, boy);
           if (altyaziMetni) altyaziCiz(ctx, altyaziMetni, altyazi, en, boy, blokOrani);
           sonImza = gd.aktif ? null : imza;
@@ -585,6 +641,7 @@ export async function render(ayar) {
         const yerel = (t - parca.bas) % klipSure;
         ctx.fillStyle = "#000";
         ctx.fillRect(0, 0, en, boy);
+        if (efektTanimi.filtre) ctx.filter = efektTanimi.filtre;
 
         if (aktifSahneNo !== parca.sahne.no) {
           aktifAkis && (await aktifAkis.kapat());
@@ -605,6 +662,8 @@ export async function render(ayar) {
           await videoKaresineGit(kaynak.el, yerel);
           kaplayarakCiz(ctx, kaynak.el, kaynak.el.videoWidth, kaynak.el.videoHeight, en, boy, 1);
         }
+        ctx.filter = "none";
+        vinyetCiz(ctx, efektTanimi.vinyet, en, boy);
         if (gd.aktif) gecisUygula(ctx, anlikTuval, gd, en, boy);
         if (altyaziMetni) altyaziCiz(ctx, altyaziMetni, altyazi, en, boy, blokOrani);
         sonImza = null;

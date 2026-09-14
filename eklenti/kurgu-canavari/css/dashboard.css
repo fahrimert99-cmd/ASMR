@@ -181,8 +181,9 @@ a.indir {
 .onizleme-bas { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
 .onizleme-bilgi { font-size: 13px; color: var(--soluk); font-family: ui-monospace, monospace; }
 .onizleme-tuval {
-  width: 100%; aspect-ratio: 16 / 9; max-height: 520px; display: block;
-  background: #000; border-radius: 12px; border: 1px solid var(--cizgi); object-fit: contain;
+  display: block; margin: 0 auto;
+  width: 100%; height: auto; max-height: 620px;
+  background: #000; border-radius: 12px; border: 1px solid var(--cizgi);
 }
 .onizleme-kontrol { display: flex; align-items: center; gap: 14px; margin-top: 14px; }
 .onizleme-kontrol input[type="range"] { flex: 1; accent-color: var(--mor); height: 6px; }
