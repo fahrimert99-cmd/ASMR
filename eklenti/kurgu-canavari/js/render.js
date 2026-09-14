@@ -74,8 +74,24 @@ export async function sesCoz(dosya) {
 
 // --------------------------------------------------------------- sahne kaynağı
 
-async function gorselHazirla(dosya) {
-  const bitmap = await createImageBitmap(dosya);
+const EN_BUYUK_ZOOM = 1.07;   // Ken Burns en fazla %6 yakınlaştırır; pay bırakılır
+
+async function gorselHazirla(dosya, en, boy) {
+  const ham = await createImageBitmap(dosya);
+  const olcek = Math.max(en / ham.width, boy / ham.height) * EN_BUYUK_ZOOM;
+  let bitmap = ham;
+  // Yalnızca KÜÇÜLTME kazandırır: büyük bir kaynağı (örn. 4K) bir kez hedefe
+  // indirmek, her karede oradan ölçeklemekten ucuzdur. Kaynak zaten hedef
+  // boyuta yakın veya küçükse büyütüp saklamak per-kare çizimi yavaşlatır;
+  // (ölçüldü: 1080p'de 49 → 43.7 kare/sn) o yüzden orijinal korunur.
+  if (olcek < 0.98) {
+    bitmap = await createImageBitmap(ham, {
+      resizeWidth: Math.max(1, Math.round(ham.width * olcek)),
+      resizeHeight: Math.max(1, Math.round(ham.height * olcek)),
+      resizeQuality: "high",
+    });
+    ham.close();
+  }
   return { tur: "gorsel", bitmap, sure: Infinity, serbest: () => bitmap.close() };
 }
 
@@ -123,14 +139,14 @@ export async function videoOnDenetim(dosya) {
   }
 }
 
-export async function sahneKaynaklariHazirla(parcalar, ilerleme) {
+export async function sahneKaynaklariHazirla(parcalar, en, boy, ilerleme) {
   const kaynaklar = new Map();
   let n = 0;
   for (const p of parcalar) {
     if (!p.sahne || kaynaklar.has(p.sahne.no)) continue;
     kaynaklar.set(
       p.sahne.no,
-      p.sahne.tur === "gorsel" ? await gorselHazirla(p.sahne.dosya) : await videoHazirla(p.sahne.dosya)
+      p.sahne.tur === "gorsel" ? await gorselHazirla(p.sahne.dosya, en, boy) : await videoHazirla(p.sahne.dosya)
     );
     ilerleme?.(++n);
   }
@@ -157,7 +173,92 @@ async function videoKaresineGit(el, zaman) {
   });
 }
 
+// Video sahnelerini SIRALI OKUMA ile besleyen akış.
+//
+// Neden: kare başına arama (seek) ölçümde 46 ms tutuyordu ve toplam maliyetin
+// %79'uydu. Klibi oynatıp kareleri geldikleri gibi almak aramayı tamamen
+// ortadan kaldırır; ölçümde saniyede ~30 kare veriyor (aramalı yöntem ~17).
+// Oynatma hızını artırmak işe yaramaz: yakalama ekran tazeleme hızıyla sınırlı
+// olduğu için 4x hızda karelerin %75'i düşüyor (ölçüldü).
+//
+// Kareler kendi zaman damgalarıyla geldiği için çıktı kare hızı klibinkinden
+// farklı olsa bile klip gerçek hızında akar.
+class VideoAkisi {
+  constructor(el) {
+    this.el = el;
+    this.okuyucu = null;
+    this.iz = null;
+    this.sonKare = null;      // elde tutulan son kare (ödünç, kapatılmaz)
+    this.sonZaman = -1;
+    this.bitti = false;
+  }
+
+  static destekliMi() {
+    return typeof MediaStreamTrackProcessor !== "undefined" &&
+           typeof HTMLMediaElement !== "undefined" &&
+           typeof HTMLMediaElement.prototype.captureStream === "function";
+  }
+
+  async baslat(bas = 0) {
+    await this.kapat(false);
+    this.el.currentTime = bas;
+    this.iz = this.el.captureStream().getVideoTracks()[0];
+    this.okuyucu = new MediaStreamTrackProcessor({ track: this.iz }).readable.getReader();
+    this.bitti = false;
+    this.sonZaman = -1;
+    await this.el.play();
+  }
+
+  // Kaynak zamanı 'hedef' olan kareyi verir. Akış ileri sarılamaz; bu yüzden
+  // hedefe ulaşana kadar kareler okunup atılır, hedef geçilince son kare tutulur.
+  async kareAl(hedef) {
+    if (!this.okuyucu) return this.sonKare;
+    while (!this.bitti && this.sonZaman < hedef) {
+      const { value, done } = await this.okuyucu.read();
+      if (done || !value) { this.bitti = true; break; }
+      if (this.sonKare) this.sonKare.close();
+      this.sonKare = value;
+      this.sonZaman = value.timestamp / 1e6;
+    }
+    return this.sonKare;
+  }
+
+  async kapat(tamamen = true) {
+    try { this.okuyucu && (await this.okuyucu.cancel()); } catch (_) {}
+    try { this.iz && this.iz.stop(); } catch (_) {}
+    try { !this.el.paused && this.el.pause(); } catch (_) {}
+    if (tamamen && this.sonKare) { try { this.sonKare.close(); } catch (_) {} this.sonKare = null; }
+    this.okuyucu = null;
+    this.iz = null;
+  }
+}
+
 // --------------------------------------------------------------------- render
+
+// Kodlayıcı kuyruğu boşalana kadar bekler.
+//
+// setTimeout(0) tarayıcıda en az ~1 ms'e yuvarlanır ve kare başına birkaç kez
+// çağrıldığında toplamda kayda değer zaman yer. 'dequeue' olayı varsa kuyruk
+// gerçekten boşaldığı anda uyanırız.
+function kuyrukBekle(kodlayici, ustSinir, altSinir) {
+  if (kodlayici.encodeQueueSize <= ustSinir) return Promise.resolve();
+  if (typeof kodlayici.addEventListener !== "function") {
+    return new Promise((coz) => {
+      const yokla = () => (kodlayici.encodeQueueSize <= altSinir ? coz() : setTimeout(yokla, 0));
+      yokla();
+    });
+  }
+  return new Promise((coz) => {
+    const kontrol = () => {
+      if (kodlayici.encodeQueueSize <= altSinir) {
+        kodlayici.removeEventListener("dequeue", kontrol);
+        coz();
+      }
+    };
+    kodlayici.addEventListener("dequeue", kontrol);
+    kontrol();
+  });
+}
 
 export async function render(ayar) {
   const { parcalar, sesTamponu, en, boy, fps, kenBurns, bitOrani, ilerleme, iptal } = ayar;
@@ -215,12 +316,12 @@ export async function render(ayar) {
     });
     sesKodlayici.encode(ad);
     ad.close();
-    if (sesKodlayici.encodeQueueSize > 32) await new Promise((r) => setTimeout(r, 0));
+    await kuyrukBekle(sesKodlayici, 32, 16);
   }
   ilerleme?.({ asama: "ses", oran: 1 });
 
   // --- görüntü ---
-  const kaynaklar = await sahneKaynaklariHazirla(parcalar, () =>
+  const kaynaklar = await sahneKaynaklariHazirla(parcalar, en, boy, () =>
     ilerleme?.({ asama: "hazirlik" })
   );
 
@@ -228,6 +329,9 @@ export async function render(ayar) {
   const ctx = tuval.getContext("2d", { alpha: false });
   const kareSure = 1e6 / fps;
   let parcaIdx = 0;
+
+  const akisDestekli = VideoAkisi.destekliMi();
+  let aktifAkis = null, aktifSahneNo = null, sonYerel = -1, sonCizilenSahne = null;
 
   try {
     for (let kare = 0; kare < toplamKare; kare++) {
@@ -238,28 +342,59 @@ export async function render(ayar) {
       const parca = parcalar[parcaIdx];
       const kaynak = parca.sahne ? kaynaklar.get(parca.sahne.no) : null;
 
-      ctx.fillStyle = "#000";
-      ctx.fillRect(0, 0, en, boy);
+      // Video sahnesinden çıkıldıysa akışı bırak: oynatma arka planda sürerse
+      // boşuna kod çözme yapılır.
+      if (aktifAkis && kaynak?.tur !== "video") {
+        await aktifAkis.kapat(); aktifAkis = null; aktifSahneNo = null;
+      }
 
       if (kaynak?.tur === "gorsel") {
-        // Ken Burns: sahne boyunca %0 → %6 arası yavaş yakınlaşma.
-        const oran = (t - parca.bas) / Math.max(parca.bit - parca.bas, 1e-6);
-        const zoom = kenBurns ? 1 + 0.06 * Math.min(Math.max(oran, 0), 1) : 1;
-        kaplayarakCiz(ctx, kaynak.bitmap, kaynak.bitmap.width, kaynak.bitmap.height, en, boy, zoom);
+        // Ken Burns kapalıysa aynı sahnenin her karesi birebir aynıdır; tuvali
+        // yeniden boyamak gereksiz iştir, sadece sahne değişince çizilir.
+        const sabit = !kenBurns && sonCizilenSahne === parca.sahne.no;
+        if (!sabit) {
+          // Siyah zemin boyanmaz: kaplayarak çizim tuvalin tamamını örter.
+          const oran = (t - parca.bas) / Math.max(parca.bit - parca.bas, 1e-6);
+          const zoom = kenBurns ? 1 + 0.06 * Math.min(Math.max(oran, 0), 1) : 1;
+          kaplayarakCiz(ctx, kaynak.bitmap, kaynak.bitmap.width, kaynak.bitmap.height, en, boy, zoom);
+          sonCizilenSahne = parca.sahne.no;
+        }
       } else if (kaynak?.tur === "video") {
         // Klip bloktan kısaysa döngüye alınır; uzunsa baştan gerektiği kadarı kullanılır.
-        const yerel = kaynak.sure > 0 ? (t - parca.bas) % kaynak.sure : 0;
-        await videoKaresineGit(kaynak.el, yerel);
-        kaplayarakCiz(ctx, kaynak.el, kaynak.el.videoWidth, kaynak.el.videoHeight, en, boy, 1);
+        const klipSure = kaynak.sure > 0 ? kaynak.sure : 1;
+        const yerel = (t - parca.bas) % klipSure;
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, en, boy);
+
+        if (akisDestekli) {
+          if (aktifSahneNo !== parca.sahne.no) {
+            aktifAkis && (await aktifAkis.kapat());
+            aktifAkis = new VideoAkisi(kaynak.el);
+            await aktifAkis.baslat(0);
+            aktifSahneNo = parca.sahne.no;
+            sonYerel = -1;
+          } else if (yerel + 1e-6 < sonYerel) {
+            await aktifAkis.baslat(0);   // klip başa sardı
+          }
+          sonYerel = yerel;
+          const vkare = await aktifAkis.kareAl(yerel);
+          if (vkare) kaplayarakCiz(ctx, vkare, vkare.displayWidth, vkare.displayHeight, en, boy, 1);
+        } else {
+          await videoKaresineGit(kaynak.el, yerel);
+          kaplayarakCiz(ctx, kaynak.el, kaynak.el.videoWidth, kaynak.el.videoHeight, en, boy, 1);
+        }
+        sonCizilenSahne = null;
+      } else {
+        ctx.fillStyle = "#000";
+        ctx.fillRect(0, 0, en, boy);
+        sonCizilenSahne = null;
       }
 
       const vf = new VideoFrame(tuval, { timestamp: Math.round(kare * kareSure), duration: Math.round(kareSure) });
       videoKodlayici.encode(vf, { keyFrame: kare % (fps * 2) === 0 });
       vf.close();
 
-      if (videoKodlayici.encodeQueueSize > 8) {
-        while (videoKodlayici.encodeQueueSize > 4) await new Promise((r) => setTimeout(r, 0));
-      }
+      await kuyrukBekle(videoKodlayici, 8, 4);
       if (kare % 5 === 0 || kare === toplamKare - 1) {
         ilerleme?.({ asama: "goruntu", oran: (kare + 1) / toplamKare, kare: kare + 1, toplamKare });
       }
@@ -280,6 +415,7 @@ export async function render(ayar) {
       kare: toplamKare,
     };
   } finally {
+    if (aktifAkis) { try { await aktifAkis.kapat(); } catch (_) {} }
     for (const k of kaynaklar.values()) { try { k.serbest(); } catch (_) {} }
     try { videoKodlayici.state !== "closed" && videoKodlayici.close(); } catch (_) {}
     try { sesKodlayici.state !== "closed" && sesKodlayici.close(); } catch (_) {}

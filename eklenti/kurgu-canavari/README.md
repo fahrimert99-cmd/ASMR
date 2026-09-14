@@ -54,11 +54,39 @@ yalnızca `<input type="file">` ile okunur ve çıktı tarayıcı belleğinde ü
 Manifest V3 uzaktan kod yüklemeyi yasakladığı için kap yazıcıları (`mp4-muxer`,
 `webm-muxer`) `vendor/` altında yerel olarak durur.
 
+## Render hızı
+
+Aynı makinede, 12 sn / 360 kare üreten ölçümler (kare/sn — yüksek olan iyi):
+
+| Senaryo | Önce | Sonra | Kazanç |
+|---|---|---|---|
+| 6 görsel · 720p30 · Ken Burns kapalı | 118,6 | **263,9** | 2,23× |
+| 6 görsel · 720p30 · Ken Burns açık | 86,4 | **118,5** | 1,37× |
+| 6 görsel · 1080p30 · Ken Burns açık | 47,2 | **65,7** | 1,39× |
+| 3 video · 720p30 | 11,6 | **29,6** | 2,55× |
+
+Hızı belirleyen dört değişiklik:
+
+1. **Video sahneleri artık aranmıyor, sıralı okunuyor.** Ölçümde kare başına
+   maliyetin %79'u (46 ms) klipte arama (seek) yapmaktan geliyordu. Klip
+   oynatılıp kareler geldikleri gibi alınınca bu tamamen kalkıyor.
+   *Oynatma hızını artırmak işe yaramaz:* yakalama ekran tazeleme hızıyla
+   sınırlı olduğundan 4× hızda karelerin %75'i düşüyor (ölçüldü).
+2. **Sabit görseller yeniden çizilmiyor.** Ken Burns kapalıyken bir sahnenin
+   tüm kareleri birebir aynıdır; tuval yalnızca sahne değişince boyanır.
+3. **Gereksiz siyah zemin kaldırıldı.** Kaplayarak çizim tuvalin tamamını
+   zaten örttüğü için altına boyamak boş işti (1080p'de belirgin fark).
+4. **Büyük görseller bir kez küçültülüyor.** 4K bir kaynağı her karede
+   ölçeklemek yerine hazırlıkta hedefe indirilir. Yalnızca küçültmede
+   uygulanır; kaynak zaten hedef boyuttaysa büyütüp saklamak yavaşlatıyordu
+   (ölçüldü: 49 → 43,7 kare/sn).
+
+Kalan sınır: video sahneleri **gerçek zamanın altına inemez** (saniyede ~30
+kare). Bu, tarayıcının kare yakalama hızından gelir; aşmak için klibin
+demux edilip `VideoDecoder` ile çözülmesi gerekir.
+
 ## Bilinen sınırlar
 
-- **Video sahneleri yavaş render edilir.** Kare doğruluğu için her karede klip
-  üzerinde arama (seek) yapılır. Yalnızca görsellerden oluşan bir proje çok
-  daha hızlıdır.
 - **Uzun projeler bellek ister.** Çıktı tamamlanana kadar bellekte tutulur;
   10 dakikanın üzerindeki işlerde sekmeyi başka işle meşgul etmeyin.
 - **Sahne videolarının sesi kullanılmaz.** Ses hattı yalnızca seslendirmedir.
