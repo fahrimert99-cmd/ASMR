@@ -16,6 +16,16 @@ lighting, shallow depth of field, photorealistic macro or clean medical 3D rende
 deep tomato red and warm gold accents, no text, no letters, no watermark, 16:9
 ```
 
+## Tamamı yeniden üretiliyor
+
+Bu liste **83 karenin tamamını sıfırdan üretmek** için hazırlandı; eski 80'lik
+setten dosya taşınmasına gerek yok. `05-domates-yeniden-adlandir.sh/.ps1`
+betikleri yalnızca eski görselleri korumak isteyenler için duruyor.
+
+Dört prompt (44, 54, 56, 82) yazı taşıyan nesnelerden arındırıldı — belge,
+manşet, soru işareti gibi ögeler modele harf ürettiriyordu. Yerlerine boş
+yüzeyli karşılıkları kondu.
+
 ## Değişenler
 
 - **YENİ (5 adet):** blok 5, 30, 31, 35, 58 — ElevenLabs uzun cümleleri böldü.
@@ -71,7 +81,7 @@ deep tomato red and warm gold accents, no text, no letters, no watermark, 16:9
 | 41 | 5.92 | Lycopene riding inside that particle sits exactly where the damage starts. | red pigment glowing inside an LDL particle precisely as oxidative attack arrives | 39 |
 | 42 | 3.04 | It also builds up in tissue. | glowing pigment accumulating gradually within dense body tissue | 40 |
 | 43 | 8.56 | The liver, the adrenal glands, the testes and the prostate... | anatomical body map with four organs highlighted in warm red, clean medical render | 41 |
-| 44 | 2.96 | So what does the evidence say? | research papers and data screens glowing in a dim laboratory | 42 |
+| 44 | 2.96 | So what does the evidence say? | stacked pages and glowing data screens in a dim laboratory, every surface blank and abstract, only light and shape | 42 |
 | 45 | 3.52 | Here it splits, and I want to be careful. | a single path dividing into two diverging routes, one lit and one dim | 43 |
 | 46 | 4.64 | On observational data it is consistent. | a clean downward trend line across a wide scatter of data points | 44 |
 | 47 | 12.32 | People with higher lycopene intake... lower rates of cardiovascular disease | population silhouettes with varying internal glow, healthier arteries beside brighter ones | 45 |
@@ -81,9 +91,9 @@ deep tomato red and warm gold accents, no text, no letters, no watermark, 16:9
 | 51 | 3.28 | That gap usually means one of two things. | two separate doors in darkness, both closed, equal weight | 49 |
 | 52 | 6.96 | Either the whole food matters more than the single molecule... | a whole tomato dissolving into hundreds of different molecules, only one of them highlighted | 50 |
 | 53 | 3.36 | We do not yet know which. | an unanswered question formed by light over an empty laboratory bench | 51 |
-| 54 | 4.16 | On prostate cancer, be sceptical of what you have heard. | a bold magazine style claim crumbling into dust, deliberately unconvincing | 52 |
+| 54 | 4.16 | On prostate cancer, be sceptical of what you have heard. | a bold blank banner crumbling into dust, the shape of a claim collapsing, deliberately unconvincing | 52 |
 | 55 | 6.72 | The claim was strong in the nineteen nineties and has been downgraded. | a bar of evidence visibly shrinking over time along a timeline | 53 |
-| 56 | 4.48 | Regulators now describe that evidence as very limited. | an official looking document under cold light with a small cautious marking | 54 |
+| 56 | 4.48 | Regulators now describe that evidence as very limited. | an official looking blank document under cold light bearing only an embossed seal, nothing written on it | 54 |
 | 57 | 1.16 | ⚡ Mechanism, strong. | a solid stone block engraved with a molecular diagram, immovable | 55 |
 | 58 | 1.84 | Strong. (⚡ mekanizma) | a thick anchored pillar of dark stone standing immovable, a glowing red molecule embedded at its core, weight and certainty | **YENİ** |
 | 59 | 3.20 | ⚡ Population data, consistent. | a steady row of aligned markers stretching into the distance | 56 |
@@ -109,5 +119,5 @@ deep tomato red and warm gold accents, no text, no letters, no watermark, 16:9
 | 79 | 8.32 | And if you have reflux, tomato is a common trigger... | anatomical stomach and oesophagus with a mild warm irritation glow, medical illustration | 76 |
 | 80 | 2.48 | None of this was really about a tomato. | a tomato dissolving upward into abstract glowing molecular particles | 77 |
 | 81 | 10.96 | It was about a molecule that is present but unavailable. | a glowing molecule sealed inside a transparent locked container, visible but unreachable | 78 |
-| 82 | 3.12 | So which molecule should we follow next? | an array of whole foods glowing faintly in darkness with a luminous question mark | 79 |
+| 82 | 3.12 | So which molecule should we follow next? | an array of whole foods glowing faintly in darkness with one empty pedestal waiting among them | 79 |
 | 83 | 5.89 | Write a food and an organ in the comments... | luminous speech bubbles floating above a glowing artery silhouette | 80 |
