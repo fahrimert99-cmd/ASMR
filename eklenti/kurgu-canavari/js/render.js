@@ -6,6 +6,7 @@
 
 import { Muxer as Mp4Muxer, ArrayBufferTarget as Mp4Hedef } from "../vendor/mp4-muxer.mjs";
 import { Muxer as WebmMuxer, ArrayBufferTarget as WebmHedef } from "../vendor/webm-muxer.mjs";
+import { Input, BlobSource, ALL_FORMATS, VideoSampleSink } from "../vendor/mediabunny.min.mjs";
 
 const SES_ORNEKLEME = 48000;   // Opus 48 kHz zorunlu kılar; AAC de sorunsuz kabul eder
 const SES_KANAL = 2;
@@ -74,24 +75,16 @@ export async function sesCoz(dosya) {
 
 // --------------------------------------------------------------- sahne kaynağı
 
-const EN_BUYUK_ZOOM = 1.07;   // Ken Burns en fazla %6 yakınlaştırır; pay bırakılır
-
-async function gorselHazirla(dosya, en, boy) {
-  const ham = await createImageBitmap(dosya);
-  const olcek = Math.max(en / ham.width, boy / ham.height) * EN_BUYUK_ZOOM;
-  let bitmap = ham;
-  // Yalnızca KÜÇÜLTME kazandırır: büyük bir kaynağı (örn. 4K) bir kez hedefe
-  // indirmek, her karede oradan ölçeklemekten ucuzdur. Kaynak zaten hedef
-  // boyuta yakın veya küçükse büyütüp saklamak per-kare çizimi yavaşlatır;
-  // (ölçüldü: 1080p'de 49 → 43.7 kare/sn) o yüzden orijinal korunur.
-  if (olcek < 0.98) {
-    bitmap = await createImageBitmap(ham, {
-      resizeWidth: Math.max(1, Math.round(ham.width * olcek)),
-      resizeHeight: Math.max(1, Math.round(ham.height * olcek)),
-      resizeQuality: "high",
-    });
-    ham.close();
-  }
+// Görsel, olduğu gibi saklanır.
+//
+// Hazırlıkta hedef boyuta ön ölçekleme denendi ve ÖLÇÜMLE ELENDİ: canvas'ın
+// kare başına küçültmesi zaten ucuz, tek seferlik yeniden örnekleme ise
+// karşılığını vermiyor. 4K kaynakta bile kayıptı (kare/sn, 3 ölçüm ortancası):
+//   720p  Ken Burns açık : ön ölçekleme 112.6  <  kapalı 129.7
+//   1080p Ken Burns açık : 64.9  <  64.4 (fark yok)
+//   4K -> 1080p          : 75.2  <  78.9
+async function gorselHazirla(dosya) {
+  const bitmap = await createImageBitmap(dosya);
   return { tur: "gorsel", bitmap, sure: Infinity, serbest: () => bitmap.close() };
 }
 
@@ -107,6 +100,7 @@ async function videoHazirla(dosya) {
   });
   return {
     tur: "video",
+    dosya,
     el,
     sure: el.duration,
     serbest: () => { el.src = ""; URL.revokeObjectURL(url); },
@@ -146,11 +140,101 @@ export async function sahneKaynaklariHazirla(parcalar, en, boy, ilerleme) {
     if (!p.sahne || kaynaklar.has(p.sahne.no)) continue;
     kaynaklar.set(
       p.sahne.no,
-      p.sahne.tur === "gorsel" ? await gorselHazirla(p.sahne.dosya, en, boy) : await videoHazirla(p.sahne.dosya)
+      p.sahne.tur === "gorsel" ? await gorselHazirla(p.sahne.dosya) : await videoHazirla(p.sahne.dosya)
     );
     ilerleme?.(++n);
   }
   return kaynaklar;
+}
+
+// Video sahnelerini KOD ÇÖZEREK besleyen akış (en hızlı yol).
+//
+// Oynatarak yakalama, ekran tazeleme hızıyla sınırlıdır: saniyede ~30 kareden
+// hızlı olamaz (ölçüldü). Klibi demux edip doğrudan VideoDecoder ile çözmek bu
+// tavanı kaldırır; çözme işlemcinin izin verdiği hızda ilerler.
+//
+// Kod çözücü klibin kodeğini desteklemiyorsa (örn. patentli kodek içermeyen bir
+// yapıda H.264) kurulum başarısız olur ve çağıran taraf oynatma yoluna düşer.
+class VideoCozucuAkisi {
+  constructor(dosya) {
+    this.dosya = dosya;
+    this.girdi = null;
+    this.yutucu = null;
+    this.yineleyici = null;
+    this.sonOrnek = null;
+    this.sonZaman = -1;
+    this.bitti = false;
+  }
+
+  static destekliMi() {
+    return typeof VideoDecoder !== "undefined";
+  }
+
+  async hazirla() {
+    this.girdi = new Input({ source: new BlobSource(this.dosya), formats: ALL_FORMATS });
+    const iz = await this.girdi.getPrimaryVideoTrack();
+    if (!iz) throw new Error("video izi bulunamadı");
+    if (!(await iz.canDecode())) throw new Error("bu kodek çözülemiyor");
+    this.yutucu = new VideoSampleSink(iz);
+  }
+
+  async baslat() {
+    this.#ornegiBirak();
+    this.yineleyici = this.yutucu.samples();
+    this.sonZaman = -1;
+    this.bitti = false;
+  }
+
+  async kareAl(hedef) {
+    while (!this.bitti && this.sonZaman < hedef) {
+      const { value, done } = await this.yineleyici.next();
+      if (done || !value) { this.bitti = true; break; }
+      this.#ornegiBirak();
+      this.sonOrnek = value;
+      this.sonZaman = value.timestamp;
+    }
+    if (!this.sonOrnek) return null;
+    const resim = this.sonOrnek.toCanvasImageSource();
+    return { resim, en: resim.displayWidth ?? resim.width, boy: resim.displayHeight ?? resim.height };
+  }
+
+  #ornegiBirak() {
+    if (this.sonOrnek) { try { this.sonOrnek.close(); } catch (_) {} this.sonOrnek = null; }
+  }
+
+  async kapat() {
+    try { this.yineleyici && (await this.yineleyici.return()); } catch (_) {}
+    this.#ornegiBirak();
+    try { this.girdi && this.girdi.dispose && (await this.girdi.dispose()); } catch (_) {}
+    this.yineleyici = null;
+  }
+}
+
+// Bir video sahnesi için en hızlı çalışan akışı açar.
+//
+// Sıra: kod çözme (tavansız) → oynatarak yakalama (gerçek zamanla sınırlı)
+// → kare kare arama (en yavaş, son çare).
+async function akisAc(kaynak) {
+  if (VideoCozucuAkisi.destekliMi()) {
+    const akis = new VideoCozucuAkisi(kaynak.dosya);
+    try {
+      await akis.hazirla();
+      await akis.baslat();
+      return { akis, yol: "cozucu" };
+    } catch (_) {
+      try { await akis.kapat(); } catch (_) {}
+    }
+  }
+  if (VideoAkisi.destekliMi()) {
+    const akis = new VideoAkisi(kaynak.el);
+    try {
+      await akis.baslat(0);
+      return { akis, yol: "oynatma" };
+    } catch (_) {
+      try { await akis.kapat(); } catch (_) {}
+    }
+  }
+  return null;   // arama yoluna düşülecek
 }
 
 // --------------------------------------------------------------------- çizim
@@ -212,7 +296,7 @@ class VideoAkisi {
   // Kaynak zamanı 'hedef' olan kareyi verir. Akış ileri sarılamaz; bu yüzden
   // hedefe ulaşana kadar kareler okunup atılır, hedef geçilince son kare tutulur.
   async kareAl(hedef) {
-    if (!this.okuyucu) return this.sonKare;
+    if (!this.okuyucu) return this.#paket();
     while (!this.bitti && this.sonZaman < hedef) {
       const { value, done } = await this.okuyucu.read();
       if (done || !value) { this.bitti = true; break; }
@@ -220,7 +304,12 @@ class VideoAkisi {
       this.sonKare = value;
       this.sonZaman = value.timestamp / 1e6;
     }
-    return this.sonKare;
+    return this.#paket();
+  }
+
+  #paket() {
+    if (!this.sonKare) return null;
+    return { resim: this.sonKare, en: this.sonKare.displayWidth, boy: this.sonKare.displayHeight };
   }
 
   async kapat(tamamen = true) {
@@ -330,8 +419,8 @@ export async function render(ayar) {
   const kareSure = 1e6 / fps;
   let parcaIdx = 0;
 
-  const akisDestekli = VideoAkisi.destekliMi();
   let aktifAkis = null, aktifSahneNo = null, sonYerel = -1, sonCizilenSahne = null;
+  let kullanilanYol = null;   // "cozucu" | "oynatma" | "arama" — sonuçta bildirilir
 
   try {
     for (let kare = 0; kare < toplamKare; kare++) {
@@ -366,19 +455,21 @@ export async function render(ayar) {
         ctx.fillStyle = "#000";
         ctx.fillRect(0, 0, en, boy);
 
-        if (akisDestekli) {
-          if (aktifSahneNo !== parca.sahne.no) {
-            aktifAkis && (await aktifAkis.kapat());
-            aktifAkis = new VideoAkisi(kaynak.el);
-            await aktifAkis.baslat(0);
-            aktifSahneNo = parca.sahne.no;
-            sonYerel = -1;
-          } else if (yerel + 1e-6 < sonYerel) {
-            await aktifAkis.baslat(0);   // klip başa sardı
-          }
-          sonYerel = yerel;
-          const vkare = await aktifAkis.kareAl(yerel);
-          if (vkare) kaplayarakCiz(ctx, vkare, vkare.displayWidth, vkare.displayHeight, en, boy, 1);
+        if (aktifSahneNo !== parca.sahne.no) {
+          aktifAkis && (await aktifAkis.kapat());
+          const acilan = await akisAc(kaynak);
+          aktifAkis = acilan?.akis ?? null;
+          kullanilanYol = acilan?.yol ?? "arama";
+          aktifSahneNo = parca.sahne.no;
+          sonYerel = -1;
+        } else if (aktifAkis && yerel + 1e-6 < sonYerel) {
+          await aktifAkis.baslat(0);   // klip başa sardı
+        }
+        sonYerel = yerel;
+
+        if (aktifAkis) {
+          const k = await aktifAkis.kareAl(yerel);
+          if (k) kaplayarakCiz(ctx, k.resim, k.en, k.boy, en, boy, 1);
         } else {
           await videoKaresineGit(kaynak.el, yerel);
           kaplayarakCiz(ctx, kaynak.el, kaynak.el.videoWidth, kaynak.el.videoHeight, en, boy, 1);
@@ -411,6 +502,7 @@ export async function render(ayar) {
       kap: secim.kap,
       mime: secim.kap === "mp4" ? "video/mp4" : "video/webm",
       kodekAdi: `${secim.video.ad} + ${secim.ses.ad}`,
+      videoYolu: kullanilanYol,
       sure: toplamSure,
       kare: toplamKare,
     };

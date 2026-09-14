@@ -56,34 +56,35 @@ Manifest V3 uzaktan kod yüklemeyi yasakladığı için kap yazıcıları (`mp4-
 
 ## Render hızı
 
-Aynı makinede, 12 sn / 360 kare üreten ölçümler (kare/sn — yüksek olan iyi):
+12 sn / 360 kare üreten ölçümler; her senaryo 3 kez çalıştırılıp **ortanca**
+alınmıştır (tek ölçüm bu makinede %20'ye varan sapma gösteriyor):
 
 | Senaryo | Önce | Sonra | Kazanç |
 |---|---|---|---|
-| 6 görsel · 720p30 · Ken Burns kapalı | 118,6 | **263,9** | 2,23× |
-| 6 görsel · 720p30 · Ken Burns açık | 86,4 | **118,5** | 1,37× |
-| 6 görsel · 1080p30 · Ken Burns açık | 47,2 | **65,7** | 1,39× |
-| 3 video · 720p30 | 11,6 | **29,6** | 2,55× |
+| 3 video · 720p30 | 11,1 | **106,2** | 9,6× |
+| 6 görsel · 720p30 · Ken Burns kapalı | 125,3 | **252,1** | 2,0× |
+| 6 görsel · 1080p30 · Ken Burns açık | 54,8 | **65,0** | 1,19× |
+| 6 görsel · 720p30 · Ken Burns açık | 126,6 | **134,6** | 1,06× |
 
-Hızı belirleyen dört değişiklik:
+Hızı belirleyen değişiklikler:
 
-1. **Video sahneleri artık aranmıyor, sıralı okunuyor.** Ölçümde kare başına
-   maliyetin %79'u (46 ms) klipte arama (seek) yapmaktan geliyordu. Klip
-   oynatılıp kareler geldikleri gibi alınınca bu tamamen kalkıyor.
-   *Oynatma hızını artırmak işe yaramaz:* yakalama ekran tazeleme hızıyla
-   sınırlı olduğundan 4× hızda karelerin %75'i düşüyor (ölçüldü).
+1. **Video sahneleri demux edilip doğrudan kod çözücüye veriliyor**
+   (mediabunny + `VideoDecoder`). Ölçümde kare başına maliyetin %79'u (46 ms)
+   klipte arama (seek) yapmaktan geliyordu. Üç kademeli yedek zinciri var:
+   kod çözme → oynatarak yakalama → kare kare arama.
 2. **Sabit görseller yeniden çizilmiyor.** Ken Burns kapalıyken bir sahnenin
    tüm kareleri birebir aynıdır; tuval yalnızca sahne değişince boyanır.
-3. **Gereksiz siyah zemin kaldırıldı.** Kaplayarak çizim tuvalin tamamını
-   zaten örttüğü için altına boyamak boş işti (1080p'de belirgin fark).
-4. **Büyük görseller bir kez küçültülüyor.** 4K bir kaynağı her karede
-   ölçeklemek yerine hazırlıkta hedefe indirilir. Yalnızca küçültmede
-   uygulanır; kaynak zaten hedef boyuttaysa büyütüp saklamak yavaşlatıyordu
-   (ölçüldü: 49 → 43,7 kare/sn).
+3. **Gereksiz siyah zemin kaldırıldı.** Kaplayarak çizim tuvali zaten örtüyor.
+4. **Kuyruk beklemesi** `setTimeout(0)` yerine `dequeue` olayına bağlı.
 
-Kalan sınır: video sahneleri **gerçek zamanın altına inemez** (saniyede ~30
-kare). Bu, tarayıcının kare yakalama hızından gelir; aşmak için klibin
-demux edilip `VideoDecoder` ile çözülmesi gerekir.
+### Denenip elenen iki yol
+
+- **Oynatma hızını artırmak:** yakalama ekran tazeleme hızıyla sınırlı
+  olduğundan 4× hızda karelerin %75'i düşüyor. Kod çözme yolu bu tavanı
+  tamamen kaldırdığı için gereksiz kaldı.
+- **Görselleri hazırlıkta hedefe ön ölçeklemek:** 4K kaynakta bile kayıptı
+  (75,2 < 78,9). Canvas'ın kare başına küçültmesi zaten ucuz; tek seferlik
+  yeniden örnekleme karşılığını vermiyor. Kaldırıldı.
 
 ## Bilinen sınırlar
 
