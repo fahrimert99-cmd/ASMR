@@ -134,6 +134,11 @@ export async function videoOnDenetim(dosya) {
   }
 }
 
+// Tek bir sahnenin kaynağını açar (canlı önizleme talep ettikçe kullanır).
+export async function sahneKaynagiAc(sahne) {
+  return sahne.tur === "gorsel" ? gorselHazirla(sahne.dosya) : videoHazirla(sahne.dosya);
+}
+
 export async function sahneKaynaklariHazirla(parcalar, en, boy, ilerleme) {
   const kaynaklar = new Map();
   let n = 0;
@@ -323,6 +328,59 @@ class VideoAkisi {
   }
 }
 
+// ------------------------------------------------- ortak çizim (paylaşılan)
+//
+// Bu üç işlevi hem render döngüsü hem canlı önizleme kullanır. Ayrı kod
+// yolları olsaydı önizleme ile çıktı zamanla birbirinden ayrışırdı.
+
+export function parcaBul(parcalar, t) {
+  let i = 0;
+  while (i < parcalar.length - 1 && t >= parcalar[i].bit) i++;
+  return { parca: parcalar[i], indeks: i };
+}
+
+// Altyazı yalnızca bloğun KENDİ aralığında görünür; boşluklarda sahne tutulur
+// ama metin ekranda asılı kalmaz.
+export function altyaziDurumu(parca, t, altyazi) {
+  const acik = !!altyazi && altyazi.stil && altyazi.stil !== "kapali";
+  const icinde = acik && t >= parca.blokBas && t < parca.blokBit;
+  return {
+    metin: icinde ? parca.metin : "",
+    oran: icinde ? (t - parca.blokBas) / Math.max(parca.blokBit - parca.blokBas, 1e-6) : 1,
+  };
+}
+
+export function gorselKareCiz(ctx, bitmap, parca, t, en, boy, kenBurns) {
+  // Siyah zemin boyanmaz: kaplayarak çizim tuvalin tamamını örter.
+  const oran = (t - parca.bas) / Math.max(parca.bit - parca.bas, 1e-6);
+  const zoom = kenBurns ? 1 + 0.06 * Math.min(Math.max(oran, 0), 1) : 1;
+  kaplayarakCiz(ctx, bitmap, bitmap.width, bitmap.height, en, boy, zoom);
+}
+
+// Tek bir kareyi rastgele zamanda çizer (canlı önizleme için).
+//
+// Render döngüsü video sahnelerini sıralı okur; önizlemede rastgele erişim
+// gerektiği için burada arama (seek) kullanılır. Çizim kuralları aynıdır.
+export async function onizlemeKaresiCiz(ctx, parcalar, kaynakCoz, t, ayar) {
+  const { en, boy, kenBurns, altyazi } = ayar;
+  const { parca } = parcaBul(parcalar, t);
+  const { metin, oran } = altyaziDurumu(parca, t, altyazi);
+
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, en, boy);
+
+  const kaynak = parca.sahne ? await kaynakCoz(parca.sahne) : null;
+  if (kaynak?.tur === "gorsel") {
+    gorselKareCiz(ctx, kaynak.bitmap, parca, t, en, boy, kenBurns);
+  } else if (kaynak?.tur === "video") {
+    const klipSure = kaynak.sure > 0 ? kaynak.sure : 1;
+    await videoKaresineGit(kaynak.el, (t - parca.bas) % klipSure);
+    kaplayarakCiz(ctx, kaynak.el, kaynak.el.videoWidth, kaynak.el.videoHeight, en, boy, 1);
+  }
+  if (metin) altyaziCiz(ctx, metin, altyazi, en, boy, oran);
+  return parca;
+}
+
 // --------------------------------------------------------------------- render
 
 // Kodlayıcı kuyruğu boşalana kadar bekler.
@@ -431,8 +489,9 @@ export async function render(ayar) {
       if (iptal?.()) throw new Error("İşlem kullanıcı tarafından durduruldu.");
       const t = kare / fps;
 
-      while (parcaIdx < parcalar.length - 1 && t >= parcalar[parcaIdx].bit) parcaIdx++;
-      const parca = parcalar[parcaIdx];
+      const bulunan = parcaBul(parcalar, t);
+      parcaIdx = bulunan.indeks;
+      const parca = bulunan.parca;
       const kaynak = parca.sahne ? kaynaklar.get(parca.sahne.no) : null;
 
       // Video sahnesinden çıkıldıysa akışı bırak: oynatma arka planda sürerse
@@ -441,13 +500,7 @@ export async function render(ayar) {
         await aktifAkis.kapat(); aktifAkis = null; aktifSahneNo = null;
       }
 
-      // Altyazı yalnızca bloğun KENDİ aralığında görünür; boşluklarda sahne
-      // tutulsa bile metin ekranda asılı kalmaz.
-      const blokIcinde = altyaziAcik && t >= parca.blokBas && t < parca.blokBit;
-      const altyaziMetni = blokIcinde ? parca.metin : "";
-      const blokOrani = blokIcinde
-        ? (t - parca.blokBas) / Math.max(parca.blokBit - parca.blokBas, 1e-6)
-        : 1;
+      const { metin: altyaziMetni, oran: blokOrani } = altyaziDurumu(parca, t, altyazi);
 
       if (kaynak?.tur === "gorsel") {
         // Ken Burns kapalı ve altyazı durağan ise sahnenin her karesi birebir
@@ -456,10 +509,7 @@ export async function render(ayar) {
         const imza = `${parca.sahne.no}|${altyaziMetni}`;
         const sabit = !kenBurns && !altyaziAnimasyonlu && sonImza === imza;
         if (!sabit) {
-          // Siyah zemin boyanmaz: kaplayarak çizim tuvalin tamamını örter.
-          const oran = (t - parca.bas) / Math.max(parca.bit - parca.bas, 1e-6);
-          const zoom = kenBurns ? 1 + 0.06 * Math.min(Math.max(oran, 0), 1) : 1;
-          kaplayarakCiz(ctx, kaynak.bitmap, kaynak.bitmap.width, kaynak.bitmap.height, en, boy, zoom);
+          gorselKareCiz(ctx, kaynak.bitmap, parca, t, en, boy, kenBurns);
           if (altyaziMetni) altyaziCiz(ctx, altyaziMetni, altyazi, en, boy, blokOrani);
           sonImza = imza;
         }

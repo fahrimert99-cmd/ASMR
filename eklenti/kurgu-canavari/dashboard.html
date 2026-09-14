@@ -109,6 +109,20 @@
     </div>
   </section>
 
+  <section class="panel" id="panel-onizleme" hidden>
+    <div class="onizleme-bas">
+      <h2 style="margin:0">Canlı ön izleme</h2>
+      <div class="onizleme-bilgi" id="onizleme-bilgi">SRT kilidi aktif</div>
+    </div>
+    <canvas id="onizleme-tuval" class="onizleme-tuval"></canvas>
+    <div class="onizleme-kontrol">
+      <button class="ikincil" id="onizleme-oynat">▶ Oynat</button>
+      <input type="range" id="onizleme-cubuk" min="0" max="1000" value="0" step="1">
+      <span class="onizleme-zaman" id="onizleme-zaman">00:00.00</span>
+    </div>
+    <audio id="onizleme-ses" preload="auto"></audio>
+  </section>
+
   <section class="eylem">
     <button class="ana" id="olustur" disabled>Zaman Çizelgesini Oluştur</button>
     <button class="ikincil" id="durdur" hidden>Durdur</button>

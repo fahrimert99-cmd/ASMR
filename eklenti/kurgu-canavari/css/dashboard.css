@@ -175,3 +175,16 @@ a.indir {
 .stil-kart.secili .ad { color: var(--mor); }
 @media (max-width: 1000px) { .stil-izgara { grid-template-columns: repeat(3, 1fr); } }
 @media (max-width: 620px)  { .stil-izgara { grid-template-columns: repeat(2, 1fr); } }
+
+
+/* --------------------------------------------------------- canlı ön izleme */
+.onizleme-bas { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 14px; }
+.onizleme-bilgi { font-size: 13px; color: var(--soluk); font-family: ui-monospace, monospace; }
+.onizleme-tuval {
+  width: 100%; aspect-ratio: 16 / 9; max-height: 520px; display: block;
+  background: #000; border-radius: 12px; border: 1px solid var(--cizgi); object-fit: contain;
+}
+.onizleme-kontrol { display: flex; align-items: center; gap: 14px; margin-top: 14px; }
+.onizleme-kontrol input[type="range"] { flex: 1; accent-color: var(--mor); height: 6px; }
+.onizleme-zaman { font-family: ui-monospace, monospace; font-size: 14px; color: var(--metin); min-width: 76px; text-align: right; }
+audio#onizleme-ses { display: none; }

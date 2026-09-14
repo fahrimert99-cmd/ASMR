@@ -2,7 +2,7 @@
 
 import { srtAyristir, zamanBicimle } from "./srt.js";
 import { dosyalariEslestir, zamanCizelgesiKur } from "./eslestirme.js";
-import { render, sesCoz, kodekSec, videoOnDenetim } from "./render.js";
+import { render, sesCoz, kodekSec, videoOnDenetim, sahneKaynagiAc, onizlemeKaresiCiz } from "./render.js";
 import { STILLER, altyaziCiz } from "./altyazi.js";
 
 const $ = (id) => document.getElementById(id);
@@ -14,6 +14,9 @@ const el = {
   panelIlerleme: $("panel-ilerleme"), cubuk: $("cubuk"),
   ilerlemeBaslik: $("ilerleme-baslik"), ilerlemeMetin: $("ilerleme-metin"),
   stilIzgara: $("stil-izgara"), altyaziKonum: $("altyazi-konum"), altyaziBoyut: $("altyazi-boyut"),
+  panelOnizleme: $("panel-onizleme"), onizlemeTuval: $("onizleme-tuval"), onizlemeBilgi: $("onizleme-bilgi"),
+  onizlemeOynat: $("onizleme-oynat"), onizlemeCubuk: $("onizleme-cubuk"), onizlemeZaman: $("onizleme-zaman"),
+  onizlemeSes: $("onizleme-ses"),
   panelSonuc: $("panel-sonuc"), sonucBilgi: $("sonuc-bilgi"),
   onizleme: $("onizleme"), indir: $("indir"),
 };
@@ -42,6 +45,8 @@ el.ses.addEventListener("change", async () => {
   try {
     durum.sesTamponu = await sesCoz(dosya);
     durum.sesAdi = dosya.name;
+    if (el.onizlemeSes.src) URL.revokeObjectURL(el.onizlemeSes.src);
+    el.onizlemeSes.src = URL.createObjectURL(dosya);
     durumYaz(`Seslendirme hazır — ${zamanBicimle(durum.sesTamponu.duration)}`);
   } catch (e) {
     durum.sesTamponu = null;
@@ -70,6 +75,9 @@ async function cizelgeyiTazele() {
   durum.hazir = false;
   bozukVideolar.clear();
   klipSureleri.clear();
+  durdurOnizleme();
+  onbellegiBosalt();
+  el.panelOnizleme.hidden = true;
 
   const sesVar = !!durum.sesTamponu;
   const blokVar = durum.bloklar.length > 0;
@@ -138,6 +146,8 @@ async function cizelgeyiTazele() {
     durumYaz("Çizelge hazır. Oluşturabilirsiniz.");
     el.olustur.disabled = false;
     durum.hazir = true;
+    el.panelOnizleme.hidden = false;
+    onizlemeyiTazele(cubuktanZaman());
   }
 }
 
@@ -257,6 +267,117 @@ el.olustur.addEventListener("click", async () => {
   }
 });
 
+
+// ------------------------------------------------------------ canlı ön izleme
+//
+// Önizleme, render'ın çizim işlevlerinin AYNISINI kullanır; ayrı bir çizim yolu
+// olsaydı önizleme ile çıktı zamanla birbirinden ayrışırdı.
+
+const ONBELLEK_SINIRI = 4;          // aynı anda açık tutulan sahne kaynağı
+const onizlemeOnbellek = new Map(); // sahneNo -> kaynak
+let onizlemeCiziliyor = false;      // üst üste binen çizimleri engeller
+let onizlemeBekleyen = null;        // en son istenen zaman
+let oynuyor = false;
+
+async function kaynakCoz(sahne) {
+  if (onizlemeOnbellek.has(sahne.no)) return onizlemeOnbellek.get(sahne.no);
+  const kaynak = await sahneKaynagiAc(sahne);
+  onizlemeOnbellek.set(sahne.no, kaynak);
+  // Tüm sahneleri bellekte tutmak uzun projelerde yüzlerce MB eder; en eski
+  // girdiler bırakılır.
+  while (onizlemeOnbellek.size > ONBELLEK_SINIRI) {
+    const [ilkNo, ilkKaynak] = onizlemeOnbellek.entries().next().value;
+    try { ilkKaynak.serbest(); } catch (_) {}
+    onizlemeOnbellek.delete(ilkNo);
+  }
+  return kaynak;
+}
+
+function onbellegiBosalt() {
+  for (const k of onizlemeOnbellek.values()) { try { k.serbest(); } catch (_) {} }
+  onizlemeOnbellek.clear();
+}
+
+async function onizlemeCizDerhal(t) {
+  const tuval = el.onizlemeTuval;
+  const [en, boy] = el.cozunurluk.value.split("x").map(Number);
+  // Önizleme tuvali çıktı oranında ama daha küçük çizilir: 1080p kareyi her
+  // fare hareketinde üretmek gereksiz.
+  const olcek = Math.min(1, 960 / en);
+  const pEn = Math.round(en * olcek), pBoy = Math.round(boy * olcek);
+  if (tuval.width !== pEn || tuval.height !== pBoy) { tuval.width = pEn; tuval.height = pBoy; }
+  tuval.style.aspectRatio = `${en} / ${boy}`;
+
+  const ctx = tuval.getContext("2d", { alpha: false });
+  const parca = await onizlemeKaresiCiz(ctx, durum.parcalar, kaynakCoz, t, {
+    en: pEn, boy: pBoy, kenBurns: el.kenburns.checked, altyazi: altyaziAyari(),
+  });
+
+  el.onizlemeZaman.textContent = zamanBicimle(t);
+  const kilit = altyaziAyari().stil === "kapali" ? "Altyazı kapalı" : "SRT kilidi aktif";
+  el.onizlemeBilgi.textContent = `${kilit} • Sahne ${parca.sahneNo} • ${t.toFixed(3)} sn`;
+}
+
+// Çizimler sıraya alınır: kullanıcı çubuğu hızlı sürüklerken her ara değer için
+// çizim başlatmak yerine yalnızca en son istenen zaman çizilir.
+async function onizlemeyiTazele(t) {
+  if (!durum.parcalar.length) return;
+  onizlemeBekleyen = t;
+  if (onizlemeCiziliyor) return;
+  onizlemeCiziliyor = true;
+  try {
+    while (onizlemeBekleyen !== null) {
+      const hedef = onizlemeBekleyen;
+      onizlemeBekleyen = null;
+      await onizlemeCizDerhal(hedef);
+    }
+  } catch (e) {
+    el.onizlemeBilgi.textContent = "Ön izleme çizilemedi: " + e.message;
+  } finally {
+    onizlemeCiziliyor = false;
+  }
+}
+
+function cubuktanZaman() {
+  const sure = durum.sesTamponu?.duration || 0;
+  return (Number(el.onizlemeCubuk.value) / 1000) * sure;
+}
+
+el.onizlemeCubuk.addEventListener("input", () => {
+  if (oynuyor) durdurOnizleme();
+  onizlemeyiTazele(cubuktanZaman());
+});
+
+function durdurOnizleme() {
+  oynuyor = false;
+  el.onizlemeSes.pause();
+  el.onizlemeOynat.textContent = "▶ Oynat";
+}
+
+el.onizlemeOynat.addEventListener("click", async () => {
+  if (oynuyor) return durdurOnizleme();
+  if (!durum.sesTamponu) return;
+  oynuyor = true;
+  el.onizlemeOynat.textContent = "❚❚ Duraklat";
+  el.onizlemeSes.currentTime = cubuktanZaman();
+  try { await el.onizlemeSes.play(); } catch (_) {}
+  const adim = () => {
+    if (!oynuyor) return;
+    const t = el.onizlemeSes.currentTime;
+    const sure = durum.sesTamponu.duration;
+    el.onizlemeCubuk.value = String(Math.round((t / sure) * 1000));
+    onizlemeyiTazele(t);
+    if (t >= sure - 0.02) return durdurOnizleme();
+    requestAnimationFrame(adim);
+  };
+  requestAnimationFrame(adim);
+});
+
+// Ayar değişince görünen kare de değişmeli.
+for (const g of [el.kenburns, el.cozunurluk, el.altyaziKonum, el.altyaziBoyut]) {
+  g.addEventListener("change", () => onizlemeyiTazele(cubuktanZaman()));
+}
+
 // ------------------------------------------------------------ altyazı stili
 
 let secilenStil = "klasik";
@@ -296,6 +417,7 @@ function stilKartlariniKur() {
     kart.addEventListener("click", () => {
       secilenStil = anahtar;
       [...el.stilIzgara.children].forEach((k) => k.classList.toggle("secili", k.dataset.stil === anahtar));
+      onizlemeyiTazele(cubuktanZaman());
     });
     el.stilIzgara.appendChild(kart);
   }

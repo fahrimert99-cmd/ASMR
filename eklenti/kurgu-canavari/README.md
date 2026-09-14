@@ -52,6 +52,21 @@ Panodaki stil kartlarının önizlemeleri, videoyu çizen işlevin **aynısıyla
 **Altyazı yalnızca bloğun kendi aralığında görünür.** Bloklar arası
 boşluklarda sahne tutulur ama yazı ekranda asılı kalmaz.
 
+## Canlı ön izleme
+
+Çizelge hazır olunca ön izleme paneli açılır. Zaman çubuğunu sürükleyerek
+herhangi bir ana atlayabilir, **Oynat** ile seslendirmeyi dinleyerek sahnelerin
+ve altyazının nerede değiştiğini görebilirsiniz. Ayarları (Ken Burns, altyazı
+stili, konum, boyut, çözünürlük) değiştirdiğinizde görünen kare anında yenilenir.
+
+Ön izleme ile çıktı **aynı çizim kodunu** kullanır (`parcaBul`,
+`altyaziDurumu`, `gorselKareCiz`); ayrı kod yolları olsaydı ikisi zamanla
+birbirinden ayrışırdı. Doğrulaması testlerdedir: beş ayrı zaman noktasında ön
+izleme karesi ile render edilmiş kare karşılaştırılır.
+
+Sahneler talep edildikçe açılır ve aynı anda en fazla dördü bellekte tutulur;
+elli sahnelik bir projede hepsini açık tutmak yüzlerce MB ederdi.
+
 ## Zamanlama kuralları
 
 - **Ses ana saattir.** Videonun toplam süresi seslendirmenin süresidir.
