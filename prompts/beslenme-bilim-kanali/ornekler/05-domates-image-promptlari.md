@@ -2,11 +2,13 @@
 
 Kaynak: `05-tomato-arteries-EN-5000.txt` · **cümle bazında** hazırlandı.
 
-> **SRT uyarısı:** Ses henüz üretilmedi. Numaralar SRT bloklarına değil, metnin
-> 80 cümlesine karşılık gelir. Beklenen blok sayısı **~78** (cümle × 0,97 —
-> muzda bu formül 81 tahmin edip gerçeğinde de 81 vermişti).
-> Çok kısa cümleler (15, 23, 35, 55, 56, 57, 59, 60, 63, 66, 69) SRT'de
-> komşusuyla birleşebilir; o satırlar ⚡ ile işaretli.
+> **Bu liste artık geçmiş kayıt.** Ses üretildi ve SRT **83 blok** verdi
+> (tahmin ~78 idi — cümle × 0,97 formülü bu metinde tutmadı; ElevenLabs beş
+> cümleyi bölüp iki cümleyi birleştirdi). Montaj için kullanılacak güncel liste:
+> **[`05-domates-image-promptlari-83.md`](05-domates-image-promptlari-83.md)**
+>
+> Aşağıdaki numaralar metnin 80 cümlesine karşılık gelir, SRT bloklarına değil.
+> Eşleme tablosu `05-domates-SAHNE-TABLOSU.md` içinde.
 
 ## Ortak Stil Eki
 

@@ -44,9 +44,15 @@ Altyazılar: `prompts/moskova-belgeseli/` altında `SES1-part1.srt`,
 |---|---|---|
 | `03-muz-kaslar_Arthur.mp3` | 6:17.65 | `prompts/beslenme-bilim-kanali/ornekler/03-banana-muscles-EN-5000.txt` |
 | `04-avokado-emilim_Edward.mp3` | 6:23.82 | `prompts/beslenme-bilim-kanali/ornekler/04-avocado-absorption-EN-5000.txt` |
+| `05-domates-damar_Edward.mp3` | 6:47.28 | `prompts/beslenme-bilim-kanali/ornekler/05-tomato-arteries-EN-5000.txt` |
 
 Ses: Arthur (Clear, Engaging, American Male Audiobook Narrator) ·
 Ayarlar: `sp100 s62 sb71 f25`
+Edward (British, Dark, Seductive, Low) · Ayarlar: `sp100 s50 sb75 f25`
+
+Altyazılar: `05-domates-EN.srt` (ham ElevenLabs, 83 blok, bloklar arası 0,4–2,0 sn
+boşluk — altyazı için) ve `05-domates-SAHNE-83.srt` (bitişik, sıfır boşluk —
+montaj için).
 
 ## Ses Tempo Kalibrasyonu
 
@@ -55,22 +61,27 @@ Süre tahminlerinde kullanılacak katsayılar (gerçek ölçümlerden):
 | Ses | sn/karakter | Aralık | Ölçüm |
 |---|---|---|---|
 | Arthur | **0,0760** | 0,0760–0,0761 | 2 (brokoli, muz) |
-| Edward | **0,0804** (ort.) | 0,0782–0,0825 | 4 (Moskova ×3, avokado) |
+| Edward | **0,0811** (ort.) | 0,0782–0,0839 | 5 (Moskova ×3, avokado, domates) |
 
 Arthur çok kararlı; iki ölçümü neredeyse aynı. **Edward içeriğe göre
-değişiyor** — Moskova parçalarında 0,0825'e kadar çıktı, avokadoda 0,0782'ye
-indi. Avokado tahmininde 0,0810 kullanıldı ve 14 sn (%3,5) sapma oluştu.
+değişiyor** — avokadoda 0,0782'ye indi, domateste 0,0839'a çıktı. Bu %7'lik
+bir yayılım: 4.900 karakterlik bir metinde 28 saniye fark eder.
+
+Domates metninde birçok çok kısa cümle var ("Straight molecules stack badly.",
+"Mechanism.", "Strong.") ve Edward bunların her birinin arkasına belirgin bir
+duraklama koyuyor. Katsayının yükselme sebebi okuma hızı değil, **duraklama
+sayısı**. Kısa cümle yoğunluğu yüksek metinlerde üst sınırı kullanın.
 
 **Edward için tahmin yaparken aralık verin:** `karakter × 0,078` ile
-`karakter × 0,083` arası. Tek sayıya güvenmeyin.
+`karakter × 0,084` arası. Tek sayıya güvenmeyin.
 
 **Hedef süreden karakter hesabı:** `karakter = hedef_saniye ÷ katsayı`
 
-| Hedef | Arthur (0,0760) | Edward (0,0804 ort.) |
+| Hedef | Arthur (0,0760) | Edward (0,0811 ort.) |
 |---|---|---|
-| 5 dk | 3.950 krk | 3.730 krk |
-| 6 dk | 4.740 krk | 4.480 krk |
-| 10 dk | 7.890 krk | 7.460 krk |
-| 15 dk | 11.840 krk | 11.190 krk |
+| 5 dk | 3.950 krk | 3.700 krk |
+| 6 dk | 4.740 krk | 4.440 krk |
+| 10 dk | 7.890 krk | 7.400 krk |
+| 15 dk | 11.840 krk | 11.100 krk |
 
-Edward'da ±%3 pay bırakın.
+Edward'da ±%4 pay bırakın.
