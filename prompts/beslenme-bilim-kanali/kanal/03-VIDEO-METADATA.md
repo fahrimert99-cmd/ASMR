@@ -1,7 +1,7 @@
 # 3 — Video Metadata (kopyala-yapıştır)
 
 Bölüm zaman damgaları **gerçek SRT dosyalarından** türetilmiştir, tahmin
-değildir. Üçü de YouTube'un chapters şartını karşılar: `0:00` ile başlar,
+değildir. Hepsi YouTube'un chapters şartını karşılar: `0:00` ile başlar,
 en az üç bölüm, her bölüm ≥10 saniye.
 
 Sınırlar: başlık ≤100 karakter · açıklama ≤5.000 · etiketler toplam ≤500.
@@ -195,3 +195,65 @@ Which molecule should we follow next? Write a food and an organ in the comments.
 pomegranate, urolithin A, punicalagin, endothelial function, nitric oxide, artery health, gut microbiome, blood pressure, nutrition science, food biochemistry, evidence based nutrition, polyphenols, cardiovascular health
 ```
 *(219 karakter)*
+
+---
+
+# VİDEO 5 — Domates × Damar (6:47)
+
+**Başlık:**
+```
+Why You Should Cook Your Tomatoes (And Never Boil Broccoli)
+```
+*(59 karakter)*
+
+**Açıklama:**
+```
+Two weeks ago the rule was never boil your broccoli, because heat destroys the enzyme that makes its most important molecule. Cook your tomatoes is the opposite advice, and both are correct. This video explains why.
+
+In a raw tomato, lycopene is not free. It sits inside structures called chromoplasts, bound into a matrix of protein and membrane that your digestion cannot open. Heat does three things: it ruptures the cell walls, it denatures the proteins gripping the pigment, and it bends the molecule from a straight trans isomer into a curved cis isomer. Straight molecules stack badly. Bent ones fit, and that shape slides far more easily into the micelles that carry fat soluble molecules across your intestinal wall.
+
+From there we follow it the whole way: chylomicrons, the lymphatic system, the bloodstream, and finally into LDL particles. That last step matters, because the first stage of arterial plaque is not LDL itself but LDL becoming oxidised inside the artery wall. Lycopene rides inside the particle, exactly where the damage begins.
+
+We also split the evidence honestly, because it does not all point the same way.
+
+CHAPTERS
+0:00 The rule that just reversed
+0:40 What lycopene is and where it hides
+1:15 Heat does three things
+2:09 Straight molecules stack badly
+2:33 The second multiplier: fat
+2:55 Into the bloodstream, into LDL
+3:58 What the evidence actually says
+4:50 Prostate cancer: be sceptical
+5:15 Four rules
+6:06 Two cautions
+6:24 Present but unavailable
+
+THE FOUR RULES
+1. Cook them. Sauce, roasted, stewed, or paste.
+2. Cook them in oil. Without fat the lycopene has no way across.
+3. Tomato paste is the most concentrated source in an ordinary kitchen.
+4. Keep some raw, because cooking does cost you vitamin C. Eat both.
+
+WHERE THE EVIDENCE STANDS
+Mechanism: strong and well described.
+Population data: consistent across many groups.
+Isolated supplement trials: disappointing, and we say so.
+The prostate cancer claim was strong in the nineteen nineties and has been steadily downgraded since. Regulators now describe that evidence as very limited.
+
+DISCLAIMER
+This video explains biological mechanisms. It is not medical advice. Tomato is a common reflux trigger, which has nothing to do with lycopene and everything to do with acidity. If you have reflux or take medication for it, adjust accordingly.
+
+Which molecule should we follow next? Write a food and an organ in the comments.
+```
+
+**Etiketler:**
+```
+tomato, lycopene, cooked tomatoes, tomato paste, LDL oxidation, artery health, cis isomer, carotenoids, fat soluble vitamins, micelles, nutrition science, food biochemistry, evidence based nutrition, cardiovascular health, why cook tomatoes
+```
+*(240 karakter)*
+
+**Sabit yorum:**
+```
+The line that holds the whole video together: straight molecules stack badly, bent ones fit. Heat does not destroy lycopene, it releases it and reshapes it. That is the opposite of what heat does to broccoli, and both facts are true at the same time. What food should we take apart next?
+```
