@@ -26,6 +26,22 @@ Dört prompt (44, 54, 56, 82) yazı taşıyan nesnelerden arındırıldı — be
 manşet, soru işareti gibi ögeler modele harf ürettiriyordu. Yerlerine boş
 yüzeyli karşılıkları kondu.
 
+## Sese Göre Hizalama Kontrolü
+
+83 blok tek tek dinlenme sırasına göre karşılaştırıldı (söylenen cümle ↔ kare).
+Beş kare düzeltildi — ses değişmedi, yalnızca görseller:
+
+| Blok | Sorun | Yeni kare |
+|---|---|---|
+| 20 | Bükük molekülün misele girişini gösteriyordu; bu 22'nin ödülü, 13 sn önce harcanıyordu. Cümle zaten "heat **bends** it" diyor. | Düz molekülün bükülme anı |
+| 54 | Pankart dağılıyordu; dağılma 55'in işi ("steadily downgraded"). 54 iddianın kurulduğu yer. | Pankart dimdik, fazla kendinden emin |
+| 57 | 58 ile aynı taş bloktu, 1,16 sn arayla iki taş. | Birbirine geçmiş moleküler dişliler — mekanizmanın kendisi |
+| 65 | 24, 70 ve 71 ile birlikte dördüncü "salça vs taze domates" karesiydi. | İşlenmiş formlar sıcak, taze olanlar sönük |
+| 70 | 71 ile neredeyse aynı kareydi. Cümlenin vurgusu "ordinary **kitchen**". | Sıradan mutfak rafında tek parlayan salça kavanozu |
+
+Bu düzeltmelerden sonra 19 → 20 → 21 → 22 zinciri doğru okunuyor:
+düz çubuk → bükülme → düz olan takılıyor → bükük olan giriyor.
+
 ## Değişenler
 
 - **YENİ (5 adet):** blok 5, 30, 31, 35, 58 — ElevenLabs uzun cümleleri böldü.
@@ -57,7 +73,7 @@ yüzeyli karşılıkları kondu.
 | 17 | 10.56 | Second, it denatures the proteins holding the pigment... | a protein mesh unravelling and releasing the pigment crystals it was gripping | 17 |
 | 18 | 6.64 | Third... heat changes the shape of the molecule itself. | a long straight molecule suspended in dark space, heat shimmer approaching it | 18 |
 | 19 | 8.64 | In a raw tomato most lycopene is a straight, rod like form... | a perfectly straight rod shaped molecule in 3D, rigid and symmetrical, cold lighting | 19 |
-| 20 | 13.44 | And that bent shape packs far more easily into the micelles... | a bent molecule sliding smoothly into the core of a micelle, perfect fit | 21 |
+| 20 | 13.44 | And that bent shape packs far more easily into the micelles... | a long straight molecule slowly bending into a curved shape as warm light washes over it, the moment of transformation | 21 |
 | 21 | 2.96 | ⚡ Straight molecules stack badly. | straight rods jamming awkwardly against a micelle opening, refusing to enter | 22 |
 | 22 | 2.04 | ⚡ Bent ones fit. | a single curved molecule slipping cleanly inside a glowing micelle, effortless | 23 |
 | 23 | 7.36 | So the same amount of lycopene, cooked, reaches your bloodstream... | two identical portions of pigment, one trickling and one flooding into a bloodstream | 24 |
@@ -91,10 +107,10 @@ yüzeyli karşılıkları kondu.
 | 51 | 3.28 | That gap usually means one of two things. | two separate doors in darkness, both closed, equal weight | 49 |
 | 52 | 6.96 | Either the whole food matters more than the single molecule... | a whole tomato dissolving into hundreds of different molecules, only one of them highlighted | 50 |
 | 53 | 3.36 | We do not yet know which. | an unanswered question formed by light over an empty laboratory bench | 51 |
-| 54 | 4.16 | On prostate cancer, be sceptical of what you have heard. | a bold blank banner crumbling into dust, the shape of a claim collapsing, deliberately unconvincing | 52 |
+| 54 | 4.16 | On prostate cancer, be sceptical of what you have heard. | a bold blank banner standing tall under confident light, overstated and unearned, the shape of a claim demanding belief | 52 |
 | 55 | 6.72 | The claim was strong in the nineteen nineties and has been downgraded. | a bar of evidence visibly shrinking over time along a timeline | 53 |
 | 56 | 4.48 | Regulators now describe that evidence as very limited. | an official looking blank document under cold light bearing only an embossed seal, nothing written on it | 54 |
-| 57 | 1.16 | ⚡ Mechanism, strong. | a solid stone block engraved with a molecular diagram, immovable | 55 |
+| 57 | 1.16 | ⚡ Mechanism, strong. | interlocking molecular gears meshing precisely and turning together, clean medical 3D, the machinery itself | 55 |
 | 58 | 1.84 | Strong. (⚡ mekanizma) | a thick anchored pillar of dark stone standing immovable, a glowing red molecule embedded at its core, weight and certainty | **YENİ** |
 | 59 | 3.20 | ⚡ Population data, consistent. | a steady row of aligned markers stretching into the distance | 56 |
 | 60 | 3.60 | ⚡ Isolated supplement trials, disappointing. | a collapsed scaffold beside an empty capsule, grey and flat | 57 |
@@ -102,12 +118,12 @@ yüzeyli karşılıkları kondu.
 | 62 | 1.20 | ⚡ One. | a single ripe tomato lit alone in clean light | 59 |
 | 63 | 1.36 | ⚡ Cook them. | tomatoes simmering in a pan, gentle bubbles, warm rising steam | 60 |
 | 64 | 4.64 | Sauce, roasted, stewed, or paste. | four preparations of tomato arranged together, sauce, roasted, stewed and paste | 61 |
-| 65 | 7.92 | The processed form is genuinely the better source here. | a jar of tomato paste glowing brighter than the fresh tomatoes beside it | 62 |
+| 65 | 7.92 | The processed form is genuinely the better source here. | a jar of paste and a simmering pot glowing warmly while pristine fresh tomatoes sit dull and unlit beside them | 62 |
 | 66 | 1.20 | ⚡ Two. | a bottle of olive oil standing beside a tomato, side lit | 63 |
 | 67 | 2.00 | Cook them in oil. | olive oil poured over tomatoes in a hot pan, golden and generous | 64 |
 | 68 | 4.00 | Without fat the lycopene has no way across. | pigment molecules stopped at the intestinal wall with no micelle to carry them | 65 |
 | 69 | 1.36 | ⚡ Three. | a spoonful of dense tomato paste held up in clean light | 66 |
-| 70 | 5.60 | Tomato paste is the most concentrated lycopene source... | a small jar of paste beside a large pile of fresh tomatoes, equal glow from both | 67 |
+| 70 | 5.60 | Tomato paste is the most concentrated lycopene source... | an ordinary kitchen shelf of everyday jars with one tomato paste jar alone radiating intense red light | 67 |
 | 71 | 4.96 | One spoonful carries more than several fresh tomatoes. | a single spoon of paste radiating intensely beside several dimmer whole tomatoes | 68 |
 | 72 | 1.44 | ⚡ Four. | a fresh raw tomato slice on dark slate, crisp and bright | 69 |
 | 73 | 4.88 | Keep some raw, because cooking does cost you vitamin C. | a raw tomato slice glowing on one side while a cooked one dims, honest comparison | 70 |
