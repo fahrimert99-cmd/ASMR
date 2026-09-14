@@ -57,8 +57,8 @@ export async function kodekSec(en, boy, fps) {
       if (s.supported) { ses = a; break; }
     } catch (_) { /* yoksay */ }
   }
-  if (!ses) throw new Error(`${video.kap.toUpperCase()} için ses kodlayıcı bulunamadı.`);
-
+  // Ses kodlayıcı bulunamazsa sessiz video yine üretilebilir; hata yalnızca
+  // gerçekten seslendirme verildiğinde anlamlıdır ve orada bildirilir.
   return { video, ses, kap: video.kap };
 }
 
@@ -72,6 +72,22 @@ export async function sesCoz(dosya) {
   const ctx = new OfflineAudioContext(SES_KANAL, SES_ORNEKLEME, SES_ORNEKLEME);
   const tampon = await ctx.decodeAudioData(veri);
   return tampon;
+}
+
+// Ses tamponunu hedef süreye uydurur: uzunsa kırpar, kısaysa sessizlikle
+// tamamlar. Sabit süreli modda videonun uzunluğunu sahneler belirler; ses
+// olduğu gibi bırakılsaydı kap içinde görüntüden uzun bir ses izi kalırdı.
+export function sesiSureyeUydur(tampon, hedefSure) {
+  const hedefUzunluk = Math.max(1, Math.round(hedefSure * SES_ORNEKLEME));
+  if (Math.abs(tampon.length - hedefUzunluk) < 2) return tampon;
+  const ctx = new OfflineAudioContext(SES_KANAL, hedefUzunluk, SES_ORNEKLEME);
+  const yeni = ctx.createBuffer(SES_KANAL, hedefUzunluk, SES_ORNEKLEME);
+  const kopyalanacak = Math.min(tampon.length, hedefUzunluk);
+  for (let k = 0; k < SES_KANAL; k++) {
+    const kaynak = tampon.getChannelData(Math.min(k, tampon.numberOfChannels - 1));
+    yeni.getChannelData(k).set(kaynak.subarray(0, kopyalanacak));
+  }
+  return yeni;
 }
 
 // --------------------------------------------------------------- sahne kaynağı
@@ -513,7 +529,10 @@ export async function render(ayar) {
   const { parcalar, sesTamponu, en, boy, fps, hareket, efekt, bitOrani, altyazi, gecis, ilerleme, iptal } = ayar;
 
   const secim = await kodekSec(en, boy, fps);
-  const toplamSure = sesTamponu.duration;
+  // Ses varsa ana saat odur; yoksa süreyi çizelgenin sonu belirler.
+  const toplamSure = sesTamponu
+    ? sesTamponu.duration
+    : (parcalar.length ? parcalar[parcalar.length - 1].bit : 0);
   const toplamKare = Math.max(1, Math.round(toplamSure * fps));
 
   const hedef = secim.kap === "mp4" ? new Mp4Hedef() : new WebmHedef();
@@ -522,13 +541,15 @@ export async function render(ayar) {
       ? new Mp4Muxer({
           target: hedef,
           video: { codec: "avc", width: en, height: boy },
-          audio: { codec: "aac", sampleRate: SES_ORNEKLEME, numberOfChannels: SES_KANAL },
+          // Ses izi yalnızca seslendirme verildiğinde açılır; boş bir iz
+          // bazı oynatıcılarda bozuk dosya gibi görünür.
+          ...(sesTamponu ? { audio: { codec: "aac", sampleRate: SES_ORNEKLEME, numberOfChannels: SES_KANAL } } : {}),
           fastStart: "in-memory",   // moov başa alınır: dosya web'de anında oynar
         })
       : new WebmMuxer({
           target: hedef,
           video: { codec: secim.video.codec.startsWith("vp09") ? "V_VP9" : "V_VP8", width: en, height: boy, frameRate: fps },
-          audio: { codec: "A_OPUS", sampleRate: SES_ORNEKLEME, numberOfChannels: SES_KANAL },
+          ...(sesTamponu ? { audio: { codec: "A_OPUS", sampleRate: SES_ORNEKLEME, numberOfChannels: SES_KANAL } } : {}),
         });
 
   let hataMesaji = null;
@@ -541,15 +562,22 @@ export async function render(ayar) {
     bitrate: bitOrani, framerate: fps, latencyMode: "quality", ...secim.video.ek,
   });
 
-  const sesKodlayici = new AudioEncoder({
-    output: (parca, meta) => muxer.addAudioChunk(parca, meta),
-    error: (e) => (hataMesaji = e.message),
-  });
-  sesKodlayici.configure({
-    codec: secim.ses.codec, sampleRate: SES_ORNEKLEME, numberOfChannels: SES_KANAL, bitrate: 192000,
-  });
+  let sesKodlayici = null;
+  if (sesTamponu) {
+    if (!secim.ses) {
+      throw new Error(`Bu tarayıcı ${secim.kap.toUpperCase()} için ses kodlayıcı sunmuyor; seslendirmesiz deneyin.`);
+    }
+    sesKodlayici = new AudioEncoder({
+      output: (parca, meta) => muxer.addAudioChunk(parca, meta),
+      error: (e) => (hataMesaji = e.message),
+    });
+    sesKodlayici.configure({
+      codec: secim.ses.codec, sampleRate: SES_ORNEKLEME, numberOfChannels: SES_KANAL, bitrate: 192000,
+    });
+  }
 
   // --- ses ---
+  if (sesTamponu) {
   const kanallar = [];
   for (let k = 0; k < SES_KANAL; k++) {
     kanallar.push(sesTamponu.numberOfChannels > k ? sesTamponu.getChannelData(k) : sesTamponu.getChannelData(0));
@@ -566,6 +594,7 @@ export async function render(ayar) {
     sesKodlayici.encode(ad);
     ad.close();
     await kuyrukBekle(sesKodlayici, 32, 16);
+  }
   }
   ilerleme?.({ asama: "ses", oran: 1 });
 
@@ -687,7 +716,7 @@ export async function render(ayar) {
     }
 
     await videoKodlayici.flush();
-    await sesKodlayici.flush();
+    if (sesKodlayici) await sesKodlayici.flush();
     muxer.finalize();
     if (hataMesaji) throw new Error(hataMesaji);
 
@@ -695,7 +724,7 @@ export async function render(ayar) {
       veri: hedef.buffer,
       kap: secim.kap,
       mime: secim.kap === "mp4" ? "video/mp4" : "video/webm",
-      kodekAdi: `${secim.video.ad} + ${secim.ses.ad}`,
+      kodekAdi: sesTamponu ? `${secim.video.ad} + ${secim.ses.ad}` : `${secim.video.ad} • sessiz`,
       videoYolu: kullanilanYol,
       sure: toplamSure,
       kare: toplamKare,
@@ -704,6 +733,6 @@ export async function render(ayar) {
     if (aktifAkis) { try { await aktifAkis.kapat(); } catch (_) {} }
     for (const k of kaynaklar.values()) { try { k.serbest(); } catch (_) {} }
     try { videoKodlayici.state !== "closed" && videoKodlayici.close(); } catch (_) {}
-    try { sesKodlayici.state !== "closed" && sesKodlayici.close(); } catch (_) {}
+    try { sesKodlayici && sesKodlayici.state !== "closed" && sesKodlayici.close(); } catch (_) {}
   }
 }

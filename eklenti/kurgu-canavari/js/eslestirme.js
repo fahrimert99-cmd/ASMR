@@ -28,6 +28,8 @@ export function sahneNumarasi(ad) {
   return m ? parseInt(m[0], 10) : null;
 }
 
+// blokSayisi null verilirse blok kısıtı yoktur (sabit süreli mod): eksik ve
+// fazla numara denetimleri atlanır, yalnızca tür/numara/çakışma bakılır.
 export function dosyalariEslestir(dosyalar, blokSayisi) {
   const sahneler = new Map();
   const sorunlar = [];
@@ -57,6 +59,8 @@ export function dosyalariEslestir(dosyalar, blokSayisi) {
       mesaj: `${no} numarası birden fazla dosyada: ${adlar.join(", ")}. İlki kullanıldı.`,
     });
   }
+
+  if (blokSayisi == null) return { sahneler, sorunlar, eksik: [] };
 
   // Eksik numaralar: 1..blokSayisi aralığında karşılığı olmayan bloklar.
   const eksik = [];
@@ -109,4 +113,25 @@ export function zamanCizelgesiKur(bloklar, sahneler, sesSuresi) {
   const son = parcalar[parcalar.length - 1];
   if (sesSuresi > 0 && son.bit > sesSuresi) son.bit = Math.max(son.bas + 0.001, sesSuresi);
   return parcalar;
+}
+
+// Sabit süreli çizelge (SRT'siz mod).
+//
+// Her sahne, dosya adındaki numara sırasına göre eşit süre alır. SRT olmadığı
+// için altyazı metni yoktur; blokBas ve blokBit eşit bırakılır, böylece altyazı
+// motoru hiçbir karede metin çizmez.
+export function sabitCizelgeKur(sahneler, sureBasina) {
+  const numaralar = [...sahneler.keys()].sort((a, b) => a - b);
+  return numaralar.map((no, i) => {
+    const bas = i * sureBasina;
+    return {
+      sahneNo: no,
+      bas,
+      bit: bas + sureBasina,
+      blokBas: bas,
+      blokBit: bas,      // metin yok
+      metin: "",
+      sahne: sahneler.get(no),
+    };
+  });
 }

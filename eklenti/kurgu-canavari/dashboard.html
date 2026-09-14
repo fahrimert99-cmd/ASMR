@@ -27,13 +27,13 @@
     <div class="kart" id="kart-ses">
       <span class="no">01</span>
       <h3>Seslendirme</h3>
-      <p class="aciklama">Tek MP3, WAV veya M4A dosyası</p>
+      <p class="aciklama" id="aciklama-ses">Tek MP3, WAV veya M4A dosyası</p>
       <input type="file" id="ses" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg">
     </div>
     <div class="kart" id="kart-srt">
       <span class="no">02</span>
       <h3>Senkron SRT dosyası</h3>
-      <p class="aciklama">Aynı seslendirmeye ait zaman kodlu altyazı &bull; zorunlu</p>
+      <p class="aciklama" id="aciklama-srt">Aynı seslendirmeye ait zaman kodlu altyazı &bull; zorunlu</p>
       <input type="file" id="srt" accept=".srt,text/plain">
     </div>
     <div class="kart" id="kart-sahne">
@@ -42,6 +42,28 @@
       <p class="aciklama">Görsel ve videoları birlikte seç: 01, 02, 03…</p>
       <input type="file" id="sahneler" multiple accept="image/*,video/*">
     </div>
+  </section>
+
+  <section class="ayarlar" id="mod-satiri">
+    <div class="alan">
+      <label for="calisma-modu">Çalışma modu</label>
+      <select id="calisma-modu">
+        <option value="srt" selected>SRT'ye göre &bull; seslendirme + altyazı</option>
+        <option value="sabit">Sabit süre &bull; her görsel N saniye</option>
+      </select>
+    </div>
+    <div class="alan" id="alan-sahne-sure" hidden>
+      <label for="sahne-sure">Görsel başına süre</label>
+      <select id="sahne-sure">
+        <option value="3">3 saniye</option>
+        <option value="4">4 saniye</option>
+        <option value="5" selected>5 saniye</option>
+        <option value="6">6 saniye</option>
+        <option value="8">8 saniye</option>
+        <option value="10">10 saniye</option>
+      </select>
+    </div>
+    <div class="durum" id="mod-aciklama" style="min-width:320px"></div>
   </section>
 
   <section class="ayarlar">

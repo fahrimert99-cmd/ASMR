@@ -1,8 +1,8 @@
 // Pano mantığı: dosyaları oku, çizelgeyi kur, denetle, render et.
 
 import { srtAyristir, zamanBicimle } from "./srt.js";
-import { dosyalariEslestir, zamanCizelgesiKur } from "./eslestirme.js";
-import { render, sesCoz, kodekSec, videoOnDenetim, sahneKaynagiAc, onizlemeKaresiCiz } from "./render.js";
+import { dosyalariEslestir, zamanCizelgesiKur, sabitCizelgeKur } from "./eslestirme.js";
+import { render, sesCoz, kodekSec, videoOnDenetim, sahneKaynagiAc, onizlemeKaresiCiz, sesiSureyeUydur } from "./render.js";
 import { STILLER, altyaziCiz } from "./altyazi.js";
 
 const $ = (id) => document.getElementById(id);
@@ -10,6 +10,9 @@ const el = {
   ses: $("ses"), srt: $("srt"), sahneler: $("sahneler"),
   cozunurluk: $("cozunurluk"), fps: $("fps"), bitrate: $("bitrate"), hareket: $("hareket"), efekt: $("efekt"), mod: $("mod"),
   gecis: $("gecis"), gecisSure: $("gecis-sure"),
+  calismaModu: $("calisma-modu"), sahneSure: $("sahne-sure"), alanSahneSure: $("alan-sahne-sure"),
+  modAciklama: $("mod-aciklama"), aciklamaSes: $("aciklama-ses"), aciklamaSrt: $("aciklama-srt"),
+  panelAltyazi: $("panel-altyazi"),
   olustur: $("olustur"), durdur: $("durdur"), durum: $("durum"),
   panelDenetim: $("panel-denetim"), mesajlar: $("mesajlar"), cizelge: $("cizelge"),
   panelIlerleme: $("panel-ilerleme"), cubuk: $("cubuk"),
@@ -80,33 +83,44 @@ async function cizelgeyiTazele() {
   onbellegiBosalt();
   el.panelOnizleme.hidden = true;
 
+  const sabit = sabitMi();
   const sesVar = !!durum.sesTamponu;
   const blokVar = durum.bloklar.length > 0;
   const dosyalar = [...(el.sahneler.files || [])];
 
   el.panelDenetim.hidden = !(blokVar || dosyalar.length);
 
-  if (!sesVar || !blokVar || !dosyalar.length) {
-    const eksikler = [];
-    if (!sesVar) eksikler.push("seslendirme");
-    if (!blokVar) eksikler.push("SRT");
-    if (!dosyalar.length) eksikler.push("sahne dosyaları");
+  const eksikler = [];
+  if (!dosyalar.length) eksikler.push("sahne dosyaları");
+  if (!sabit && !sesVar) eksikler.push("seslendirme");
+  if (!sabit && !blokVar) eksikler.push("SRT");
+  if (eksikler.length) {
     durumYaz(`Eksik: ${eksikler.join(", ")}.`);
     el.olustur.disabled = true;
     if (blokVar || dosyalar.length) cizelgeyiCiz([], dosyalar.length);
     return;
   }
 
-  for (const u of durum.srtUyarilari || []) mesaj("uyari", u);
+  if (!sabit) for (const u of durum.srtUyarilari || []) mesaj("uyari", u);
 
-  const { sahneler, sorunlar } = dosyalariEslestir(dosyalar, durum.bloklar.length);
+  const { sahneler, sorunlar } = dosyalariEslestir(dosyalar, sabit ? null : durum.bloklar.length);
   for (const s of sorunlar) mesaj(s.tur, s.mesaj);
 
-  const parcalar = zamanCizelgesiKur(durum.bloklar, sahneler, durum.sesTamponu.duration);
+  let parcalar;
+  if (sabit) {
+    const sureBasina = Number(el.sahneSure.value);
+    parcalar = sabitCizelgeKur(sahneler, sureBasina);
+    // Videonun süresini sahneler belirler; verilmişse ses buna uydurulur.
+    durum.cizelgeSuresi = parcalar.length ? parcalar[parcalar.length - 1].bit : 0;
+  } else {
+    parcalar = zamanCizelgesiKur(durum.bloklar, sahneler, durum.sesTamponu.duration);
+    durum.cizelgeSuresi = durum.sesTamponu.duration;
+  }
   durum.parcalar = parcalar;
 
   // Sesin SRT'den belirgin biçimde kısa/uzun olması, yanlış SRT seçildiğinin
   // en sık işaretidir; sessizce render etmek yerine açıkça söylenir.
+  if (!sabit) {
   const srtSonu = durum.bloklar[durum.bloklar.length - 1].bit;
   const fark = durum.sesTamponu.duration - srtSonu;
   if (Math.abs(fark) > 1.5) {
@@ -116,6 +130,7 @@ async function cizelgeyiTazele() {
       `(${fark > 0 ? "ses" : "SRT"} ${Math.abs(fark).toFixed(1)} sn daha uzun). ` +
       `Farklı bir seslendirmenin SRT'sini seçmiş olabilirsiniz.`
     );
+  }
   }
 
   // Video sahneleri render'dan ÖNCE sınanır: çözülemeyen bir klip, ancak
@@ -143,7 +158,10 @@ async function cizelgeyiTazele() {
     durumYaz(`${eksikSahne} blok kullanılamıyor (dosya yok veya video çözülemedi). Eksikleri tamamlayın.`);
     el.olustur.disabled = true;
   } else {
-    mesaj("iyi", `${parcalar.length} blok, ${parcalar.length} sahne ile tam eşleşti. Toplam süre ${zamanBicimle(durum.sesTamponu.duration)}.`);
+    mesaj("iyi", sabit
+      ? `${parcalar.length} görsel × ${el.sahneSure.value} sn = ${zamanBicimle(durum.cizelgeSuresi)}` +
+        (sesVar ? " • ses bu süreye uydurulacak" : " • sessiz video")
+      : `${parcalar.length} blok, ${parcalar.length} sahne ile tam eşleşti. Toplam süre ${zamanBicimle(durum.cizelgeSuresi)}.`);
     durumYaz("Çizelge hazır. Oluşturabilirsiniz.");
     el.olustur.disabled = false;
     durum.hazir = true;
@@ -218,11 +236,14 @@ el.olustur.addEventListener("click", async () => {
   const baslangic = performance.now();
   try {
     const secim = await kodekSec(en, boy, fps);
-    el.ilerlemeMetin.textContent = `Kodek: ${secim.video.ad} + ${secim.ses.ad} (${secim.kap.toUpperCase()})`;
+    el.ilerlemeMetin.textContent = `Kodek: ${secim.video.ad}${secim.ses ? " + " + secim.ses.ad : ""} (${secim.kap.toUpperCase()})`;
 
+    const sesForRender = durum.sesTamponu
+      ? sesiSureyeUydur(durum.sesTamponu, durum.cizelgeSuresi)
+      : null;
     const sonuc = await render({
       parcalar: durum.parcalar,
-      sesTamponu: durum.sesTamponu,
+      sesTamponu: sesForRender,
       en, boy, fps, bitOrani,
       hareket: el.hareket.value,
       efekt: el.efekt.value,
@@ -246,7 +267,7 @@ el.olustur.addEventListener("click", async () => {
     if (sonUrl) URL.revokeObjectURL(sonUrl);
     sonUrl = URL.createObjectURL(blob);
 
-    const ad = (durum.sesAdi.replace(/\.[^.]+$/, "") || "kurgu") + "." + sonuc.kap;
+    const ad = ((durum.sesAdi || "").replace(/\.[^.]+$/, "") || "kurgu") + "." + sonuc.kap;
     el.onizleme.src = sonUrl;
     el.indir.href = sonUrl;
     el.indir.download = ad;
@@ -342,7 +363,7 @@ async function onizlemeyiTazele(t) {
 }
 
 function cubuktanZaman() {
-  const sure = durum.sesTamponu?.duration || 0;
+  const sure = durum.cizelgeSuresi || durum.sesTamponu?.duration || 0;
   return (Number(el.onizlemeCubuk.value) / 1000) * sure;
 }
 
@@ -359,7 +380,7 @@ function durdurOnizleme() {
 
 el.onizlemeOynat.addEventListener("click", async () => {
   if (oynuyor) return durdurOnizleme();
-  if (!durum.sesTamponu) return;
+  if (!durum.sesTamponu) return;   // sessiz videoda oynatacak ses yok
   oynuyor = true;
   el.onizlemeOynat.textContent = "❚❚ Duraklat";
   el.onizlemeSes.currentTime = cubuktanZaman();
@@ -367,7 +388,7 @@ el.onizlemeOynat.addEventListener("click", async () => {
   const adim = () => {
     if (!oynuyor) return;
     const t = el.onizlemeSes.currentTime;
-    const sure = durum.sesTamponu.duration;
+    const sure = durum.cizelgeSuresi || durum.sesTamponu.duration;
     el.onizlemeCubuk.value = String(Math.round((t / sure) * 1000));
     onizlemeyiTazele(t);
     if (t >= sure - 0.02) return durdurOnizleme();
@@ -384,6 +405,33 @@ for (const g of [el.hareket, el.efekt, el.cozunurluk, el.altyaziKonum, el.altyaz
 // ------------------------------------------------------------ altyazı stili
 
 let secilenStil = "klasik";
+
+// ----------------------------------------------------------- çalışma modu
+//
+// "srt": seslendirme zorunlu, SRT zorunlu; sahneler blok zamanlarına oturur.
+// "sabit": ikisi de isteğe bağlı; her sahne eşit süre alır. Bu modda SRT
+// olmadığı için altyazı da yoktur, o bölüm gizlenir.
+
+function sabitMi() { return el.calismaModu.value === "sabit"; }
+
+function moduTazele() {
+  const sabit = sabitMi();
+  el.alanSahneSure.hidden = !sabit;
+  el.panelAltyazi.hidden = sabit;
+  el.aciklamaSes.textContent = sabit
+    ? "MP3, WAV veya M4A &bull; isteğe bağlı fon sesi".replace("&bull;", "•")
+    : "Tek MP3, WAV veya M4A dosyası";
+  el.aciklamaSrt.textContent = sabit
+    ? "Bu modda kullanılmaz"
+    : "Aynı seslendirmeye ait zaman kodlu altyazı • zorunlu";
+  el.srt.disabled = sabit;
+  el.modAciklama.textContent = sabit
+    ? `Her görsel ${el.sahneSure.value} saniye ekranda kalır; SRT ve seslendirme isteğe bağlıdır.`
+    : "Sahneler SRT bloklarına oturur; videonun süresini seslendirme belirler.";
+  cizelgeyiTazele();
+}
+el.calismaModu.addEventListener("change", moduTazele);
+el.sahneSure.addEventListener("change", moduTazele);
 
 // İşleme modu ön ayarları: kare hızı ve bit oranını birlikte belirler.
 // "Özel" seçilmedikçe iki alan da kilitlenir; yoksa ön ayar seçip sonra elle
@@ -452,6 +500,7 @@ function stilKartlariniKur() {
   }
 }
 stilKartlariniKur();
+moduTazele();
 
 // Kodek desteğini açılışta bildir: kullanıcı dosyaları seçmeden önce
 // hangi kapta çıktı alacağını bilsin.
@@ -459,7 +508,7 @@ stilKartlariniKur();
   try {
     const s = await kodekSec(1920, 1080, 30);
     durumYaz(
-      `Hazır. Bu tarayıcı ${s.video.ad} + ${s.ses.ad} destekliyor; çıktı ${s.kap.toUpperCase()} olacak. ` +
+      `Hazır. Bu tarayıcı ${s.video.ad}${s.ses ? " + " + s.ses.ad : ""} destekliyor; çıktı ${s.kap.toUpperCase()} olacak. ` +
       `Başlamak için üç dosya grubunu da seçin.`
     );
   } catch (e) {

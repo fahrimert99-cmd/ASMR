@@ -11,6 +11,23 @@ WebCodecs ile yapılır.
 3. **Paketlenmemiş öğe yükle** → bu klasörü (`eklenti/kurgu-canavari`) seçin.
 4. Araç çubuğundaki simgeye tıklayın; pano yeni sekmede açılır.
 
+## Çalışma modu
+
+| Mod | Ne gerekir | Süreyi ne belirler |
+|---|---|---|
+| **SRT'ye göre** | Seslendirme + SRT + sahneler | Seslendirmenin süresi |
+| **Sabit süre** | Yalnızca sahneler | Sahne sayısı × seçilen süre |
+
+**Sabit süre** modunda her görsel eşit süre ekranda kalır (3–10 sn, varsayılan 5).
+SRT ve seslendirme **isteğe bağlıdır**:
+
+- Ses vermezseniz sessiz video üretilir (ses izi hiç açılmaz).
+- Ses verirseniz videonun süresine uydurulur: uzunsa kırpılır, kısaysa
+  sessizlikle tamamlanır.
+- SRT olmadığı için altyazı da yoktur; o bölüm gizlenir.
+
+Geçiş, görsel hareketi ve efektler bu modda da çalışır.
+
 ## Kullanım
 
 | Girdi | Ne verilir |
