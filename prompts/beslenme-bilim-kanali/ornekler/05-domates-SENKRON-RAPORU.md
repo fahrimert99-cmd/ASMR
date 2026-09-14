@@ -59,7 +59,35 @@ aralığı korundu.
 Doğrulandı: düzeltme sonrası kaynak metin ile altyazı arasında kelime düzeyinde
 **sıfır sapma**.
 
-## 5. Hangi Dosya Nereye
+## 5. Altyazı Biçimlendirmesi
+
+`05-domates-ALTYAZI.srt` okunabilirlik kurallarına göre yeniden düzenlendi.
+Önceki hâlinde 83 bloğun **44'ü tek satırda 42 karakteri**, 21'i iki satıra
+bile sığmayan 84 karakteri aşıyordu; en uzun blok 165 karakterdi.
+
+Uygulanan kurallar:
+
+| Kural | Değer |
+|---|---|
+| Satır uzunluğu | ≤ 42 karakter |
+| Satır sayısı | ≤ 2 |
+| Olay başına karakter | ≤ 78 (aşanlar cümle içinde bölündü) |
+| En kısa gösterim | 1,8 sn (boşluk elverdiği ölçüde) |
+| Olaylar arası | ≥ 0,08 sn, çakışma yok |
+
+Uzun bloklar birden fazla altyazı olayına bölündü; süre, karakter oranına göre
+paylaştırıldı. **83 blok → 106 altyazı olayı.** Bu yalnızca altyazı dosyasını
+ilgilendirir; `SAHNE-83.srt` 83 blok olarak **değişmeden** durur, montaj
+eşleşmesi bozulmaz.
+
+Sonuç: 42 karakteri aşan satır **yok**, üç satırlı olay **yok**, çakışma
+**yok**. Ortalama okuma hızı 13,4 karakter/saniye (rahat okuma sınırı 21).
+
+Süresi 1,2 saniyenin altında kalan dört olay var — "Cooking it", "Mechanism.",
+"One.", "Two." Bunlar sesin kendi ritmiyle sınırlı; sonraki cümle hemen
+başladığı için uzatılamıyor. Hepsi bir-iki kelime olduğundan okunabilir.
+
+## 6. Hangi Dosya Nereye
 
 | Amaç | Dosya |
 |---|---|
@@ -71,7 +99,7 @@ Doğrulandı: düzeltme sonrası kaynak metin ile altyazı arasında kelime düz
 Ham `05-domates-EN.srt` yalnızca kayıt amacıyla saklanıyor; hiçbir yerde
 kullanılmamalı.
 
-## 6. Sonraki Videolarda Aynı Kontrol
+## 7. Sonraki Videolarda Aynı Kontrol
 
 Ses üretildikten sonra kaynak metin ile SRT'yi kelime düzeyinde hizalayın.
 Blok sayısı karşılaştırması yetmez — ElevenLabs cümle atlarsa blok sayısı da
