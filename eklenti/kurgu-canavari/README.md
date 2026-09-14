@@ -79,3 +79,9 @@ eklenti/kurgu-canavari/
 ├── vendor/                # mp4-muxer, webm-muxer (yerel, MV3 gereği)
 └── ikonlar/
 ```
+
+## Üyelik / hesap
+
+Yoktur ve gerekmez. Eklenti tek kullanıcı içindir: hesap, giriş, lisans anahtarı
+veya sunucu doğrulaması içermez. Chrome Web Store'a yüklemeye de gerek yoktur;
+"paketlenmemiş öğe yükle" ile kalıcı olarak kurulu kalır.
