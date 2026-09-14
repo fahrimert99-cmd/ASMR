@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="utf-8">
-  <title>Kurgu Canavarı</title>
+  <title>Görsel Kurgu</title>
   <link rel="stylesheet" href="css/dashboard.css">
 </head>
 <body>
@@ -11,40 +11,44 @@
   <header class="kahraman">
     <div class="rozet-satir">
       <img src="ikonlar/ikon128.png" alt="">
-      <span class="rozet-yazi">Yapay Zihin &middot; Kurgu Aracı</span>
+      <span class="rozet-yazi">Yapay Zihin &middot; Görsel Aracı</span>
     </div>
-    <h1>Kurgu <span class="vurgu">Canavarı</span></h1>
-    <p>Numaralı sahneleri, SRT zaman kodlarını sesin ana saati kabul ederek kusursuz bir zaman çizelgesine yerleştirir.</p>
+    <h1>Görsel <span class="vurgu">Kurgu</span></h1>
+    <p>Numaralı görselleri eşit süreli sahnelere bölüp tek bir videoya dizer. SRT gerekmez.</p>
   </header>
 
   <div class="bilgi">
-    <b>Dosya düzeni:</b> <code>Video 01.mp4</code>, <code>Görsel 02.png</code> …<br>
-    SRT'deki 1. blok <code>01</code> dosyasına, 2. blok <code>02</code> dosyasına yerleşir.
-    Her bloğun başlangıç ve bitiş zamanları render sırasında kilitlidir.
+    <b>Dosya düzeni:</b> <code>01.png</code>, <code>Görsel 02.jpg</code>, <code>Video 03.mp4</code> …<br>
+    Sıra, dosya adındaki <b>ilk rakam öbeğine</b> göre kurulur. Görsellerin yanına video da koyabilirsiniz.
   </div>
 
-  <section class="kartlar">
-    <div class="kart" id="kart-ses">
+  <section class="kartlar" style="grid-template-columns: repeat(2, 1fr)">
+    <div class="kart">
       <span class="no">01</span>
-      <h3>Seslendirme</h3>
-      <p class="aciklama">Tek MP3, WAV veya M4A dosyası</p>
-      <input type="file" id="ses" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg">
-    </div>
-    <div class="kart" id="kart-srt">
-      <span class="no">02</span>
-      <h3>Senkron SRT dosyası</h3>
-      <p class="aciklama">Aynı seslendirmeye ait zaman kodlu altyazı &bull; zorunlu</p>
-      <input type="file" id="srt" accept=".srt,text/plain">
-    </div>
-    <div class="kart" id="kart-sahne">
-      <span class="no">03</span>
-      <h3>Numaralı sahneler</h3>
-      <p class="aciklama">Görsel ve videoları birlikte seç: 01, 02, 03…</p>
+      <h3>Görseller</h3>
+      <p class="aciklama">Numaralı görseller ve videolar &bull; zorunlu</p>
       <input type="file" id="sahneler" multiple accept="image/*,video/*">
+    </div>
+    <div class="kart">
+      <span class="no">02</span>
+      <h3>Fon sesi</h3>
+      <p class="aciklama">MP3, WAV veya M4A &bull; isteğe bağlı. Videonun süresine uydurulur.</p>
+      <input type="file" id="ses" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg">
     </div>
   </section>
 
   <section class="ayarlar">
+    <div class="alan">
+      <label for="sahne-sure">Görsel başına süre</label>
+      <select id="sahne-sure">
+        <option value="3">3 saniye</option>
+        <option value="4">4 saniye</option>
+        <option value="5" selected>5 saniye</option>
+        <option value="6">6 saniye</option>
+        <option value="8">8 saniye</option>
+        <option value="10">10 saniye</option>
+      </select>
+    </div>
     <div class="alan">
       <label for="cozunurluk">Çözünürlük</label>
       <select id="cozunurluk">
@@ -114,41 +118,12 @@
     </div>
   </section>
 
-  <section class="panel" id="panel-altyazi">
-    <h2>Altyazı stili</h2>
-    <p class="durum" style="margin:-6px 0 16px">
-      Tarzı görerek seç. SRT'deki metin, aynı zaman kodlarıyla sahnenin üzerine işlenir.
-      Önizlemeler videodaki çizimin aynısıdır.
-    </p>
-    <div class="stil-izgara" id="stil-izgara"></div>
-    <div class="ayarlar" style="margin:18px 0 0">
-      <div class="alan">
-        <label for="altyazi-konum">Altyazı konumu</label>
-        <select id="altyazi-konum">
-          <option value="alt" selected>Alt</option>
-          <option value="orta">Orta</option>
-          <option value="ust">Üst</option>
-        </select>
-      </div>
-      <div class="alan">
-        <label for="altyazi-boyut">Altyazı boyutu</label>
-        <select id="altyazi-boyut">
-          <option value="kucuk">Küçük</option>
-          <option value="orta" selected>Orta</option>
-          <option value="buyuk">Büyük</option>
-        </select>
-      </div>
-    </div>
-  </section>
-
   <section class="panel" id="panel-denetim" hidden>
-    <h2>Zaman çizelgesi denetimi</h2>
+    <h2>Sahne sırası</h2>
     <div id="mesajlar"></div>
     <div class="kaydir">
       <table>
-        <thead>
-          <tr><th>Blok</th><th>Başlangıç</th><th>Bitiş</th><th>Süre</th><th>Dosya</th><th>Tür</th><th>Metin</th></tr>
-        </thead>
+        <thead><tr><th>Sıra</th><th>Başlangıç</th><th>Bitiş</th><th>Süre</th><th>Dosya</th><th>Tür</th></tr></thead>
         <tbody id="cizelge"></tbody>
       </table>
     </div>
@@ -157,7 +132,7 @@
   <section class="panel" id="panel-onizleme" hidden>
     <div class="onizleme-bas">
       <h2 style="margin:0">Canlı ön izleme</h2>
-      <div class="onizleme-bilgi" id="onizleme-bilgi">SRT kilidi aktif</div>
+      <div class="onizleme-bilgi" id="onizleme-bilgi"></div>
     </div>
     <canvas id="onizleme-tuval" class="onizleme-tuval"></canvas>
     <div class="onizleme-kontrol">
@@ -169,9 +144,9 @@
   </section>
 
   <section class="eylem">
-    <button class="ana" id="olustur" disabled>Zaman Çizelgesini Oluştur</button>
+    <button class="ana" id="olustur" disabled>Videoyu Oluştur</button>
     <button class="ikincil" id="durdur" hidden>Durdur</button>
-    <div class="durum" id="durum">Başlamak için üç dosya grubunu da seçin.</div>
+    <div class="durum" id="durum">Başlamak için görselleri seçin.</div>
   </section>
 
   <section class="panel" id="panel-ilerleme" hidden>

@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Görsel Kurgu",
+  "version": "1.0.0",
+  "description": "Numaralı görselleri eşit süreli sahnelere bölüp tek bir videoya dizer. SRT gerekmez.",
+  "icons": {
+    "16": "ikonlar/ikon16.png",
+    "32": "ikonlar/ikon32.png",
+    "48": "ikonlar/ikon48.png",
+    "128": "ikonlar/ikon128.png"
+  },
+  "action": {
+    "default_title": "Görsel Kurgu'yu aç",
+    "default_icon": { "16": "ikonlar/ikon16.png", "32": "ikonlar/ikon32.png" }
+  },
+  "background": { "service_worker": "js/arka_plan.js", "type": "module" },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}
