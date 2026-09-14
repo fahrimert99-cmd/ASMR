@@ -66,6 +66,23 @@
       <label for="bitrate">Bit oranı (Mbps)</label>
       <input type="number" id="bitrate" value="8" min="1" max="50" step="1">
     </div>
+    <div class="alan">
+      <label for="gecis">Sahne geçişi</label>
+      <select id="gecis">
+        <option value="yumusak" selected>Yumuşak fade</option>
+        <option value="karart">Karartarak geçiş</option>
+        <option value="yok">Sert kesim</option>
+      </select>
+    </div>
+    <div class="alan">
+      <label for="gecis-sure">Geçiş süresi</label>
+      <select id="gecis-sure">
+        <option value="0.3">0,3 sn</option>
+        <option value="0.5" selected>0,5 sn</option>
+        <option value="0.8">0,8 sn</option>
+        <option value="1.2">1,2 sn</option>
+      </select>
+    </div>
     <label class="onay"><input type="checkbox" id="kenburns" checked> Görsellere yavaş zoom (Ken Burns)</label>
   </section>
 

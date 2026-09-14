@@ -350,6 +350,42 @@ export function altyaziDurumu(parca, t, altyazi) {
   };
 }
 
+// Sahne geçişi.
+//
+// Geçiş penceresi YENİ sahnenin başına yerleştirilir: [bas, bas + süre].
+// Ortalanmış bir pencere, gelen video klibini kendi başlangıcından önce
+// oynatmayı gerektirirdi. Giden sahne, geçiş başlarken tuvalden alınan anlık
+// görüntüdür; 0,5 sn'lik bir harmanda donuk olması göze çarpmaz ve iki video
+// akışını aynı anda çalıştırma karmaşasını ortadan kaldırır.
+export function gecisDurumu(indeks, parca, t, gecis) {
+  if (!gecis || gecis.tur === "yok" || !(gecis.sure > 0) || indeks === 0) {
+    return { aktif: false, oran: 1 };
+  }
+  const pencere = Math.min(gecis.sure, Math.max(parca.bit - parca.bas, 0.001));
+  if (t >= parca.bas + pencere) return { aktif: false, oran: 1 };
+  return { aktif: true, oran: (t - parca.bas) / pencere, tur: gecis.tur };
+}
+
+// Yeni sahne tuvale çizilmiş durumdayken çağrılır; üzerine gideni harmanlar.
+export function gecisUygula(ctx, anlik, durum, en, boy) {
+  const o = Math.min(Math.max(durum.oran, 0), 1);
+  if (durum.tur === "karart") {
+    // İlk yarı: giden sahne karartılır. İkinci yarı: gelen sahne karanlıktan açılır.
+    if (o < 0.5) {
+      ctx.drawImage(anlik, 0, 0, en, boy);
+      ctx.fillStyle = `rgba(0,0,0,${o * 2})`;
+    } else {
+      ctx.fillStyle = `rgba(0,0,0,${(1 - o) * 2})`;
+    }
+    ctx.fillRect(0, 0, en, boy);
+  } else {
+    ctx.save();
+    ctx.globalAlpha = 1 - o;
+    ctx.drawImage(anlik, 0, 0, en, boy);
+    ctx.restore();
+  }
+}
+
 export function gorselKareCiz(ctx, bitmap, parca, t, en, boy, kenBurns) {
   // Siyah zemin boyanmaz: kaplayarak çizim tuvalin tamamını örter.
   const oran = (t - parca.bas) / Math.max(parca.bit - parca.bas, 1e-6);
@@ -361,14 +397,9 @@ export function gorselKareCiz(ctx, bitmap, parca, t, en, boy, kenBurns) {
 //
 // Render döngüsü video sahnelerini sıralı okur; önizlemede rastgele erişim
 // gerektiği için burada arama (seek) kullanılır. Çizim kuralları aynıdır.
-export async function onizlemeKaresiCiz(ctx, parcalar, kaynakCoz, t, ayar) {
-  const { en, boy, kenBurns, altyazi } = ayar;
-  const { parca } = parcaBul(parcalar, t);
-  const { metin, oran } = altyaziDurumu(parca, t, altyazi);
-
+async function tekSahneCiz(ctx, parca, kaynakCoz, t, en, boy, kenBurns) {
   ctx.fillStyle = "#000";
   ctx.fillRect(0, 0, en, boy);
-
   const kaynak = parca.sahne ? await kaynakCoz(parca.sahne) : null;
   if (kaynak?.tur === "gorsel") {
     gorselKareCiz(ctx, kaynak.bitmap, parca, t, en, boy, kenBurns);
@@ -377,6 +408,26 @@ export async function onizlemeKaresiCiz(ctx, parcalar, kaynakCoz, t, ayar) {
     await videoKaresineGit(kaynak.el, (t - parca.bas) % klipSure);
     kaplayarakCiz(ctx, kaynak.el, kaynak.el.videoWidth, kaynak.el.videoHeight, en, boy, 1);
   }
+}
+
+export async function onizlemeKaresiCiz(ctx, parcalar, kaynakCoz, t, ayar) {
+  const { en, boy, kenBurns, altyazi, gecis } = ayar;
+  const { parca, indeks } = parcaBul(parcalar, t);
+  const { metin, oran } = altyaziDurumu(parca, t, altyazi);
+
+  await tekSahneCiz(ctx, parca, kaynakCoz, t, en, boy, kenBurns);
+
+  // Ön izleme rastgele erişimlidir; render'daki gibi bir önceki kareyi elde
+  // tutamaz, giden sahneyi o an ayrıca çizer.
+  const gd = gecisDurumu(indeks, parca, t, gecis);
+  if (gd.aktif) {
+    const onceki = parcalar[indeks - 1];
+    const anlik = new OffscreenCanvas(en, boy);
+    const actx = anlik.getContext("2d", { alpha: false });
+    await tekSahneCiz(actx, onceki, kaynakCoz, Math.max(onceki.bit - 0.001, onceki.bas), en, boy, kenBurns);
+    gecisUygula(ctx, anlik, gd, en, boy);
+  }
+
   if (metin) altyaziCiz(ctx, metin, altyazi, en, boy, oran);
   return parca;
 }
@@ -409,7 +460,7 @@ function kuyrukBekle(kodlayici, ustSinir, altSinir) {
 }
 
 export async function render(ayar) {
-  const { parcalar, sesTamponu, en, boy, fps, kenBurns, bitOrani, altyazi, ilerleme, iptal } = ayar;
+  const { parcalar, sesTamponu, en, boy, fps, kenBurns, bitOrani, altyazi, gecis, ilerleme, iptal } = ayar;
 
   const secim = await kodekSec(en, boy, fps);
   const toplamSure = sesTamponu.duration;
@@ -484,6 +535,11 @@ export async function render(ayar) {
   const altyaziAcik = !!altyazi && altyazi.stil && altyazi.stil !== "kapali";
   const altyaziAnimasyonlu = altyaziAcik && ANIMASYONLU.has(altyazi.stil);
 
+  // Geçişte giden sahne olarak kullanılacak anlık görüntü.
+  const anlikTuval = new OffscreenCanvas(en, boy);
+  const anlikCtx = anlikTuval.getContext("2d", { alpha: false });
+  let oncekiIdx = -1;
+
   try {
     for (let kare = 0; kare < toplamKare; kare++) {
       if (iptal?.()) throw new Error("İşlem kullanıcı tarafından durduruldu.");
@@ -501,17 +557,27 @@ export async function render(ayar) {
       }
 
       const { metin: altyaziMetni, oran: blokOrani } = altyaziDurumu(parca, t, altyazi);
+      const gd = gecisDurumu(parcaIdx, parca, t, gecis);
+
+      // Parça değiştiği anda tuval hâlâ önceki sahnenin son karesini taşır;
+      // geçişte kullanılacak anlık görüntü tam burada alınır.
+      if (parcaIdx !== oncekiIdx) {
+        if (oncekiIdx >= 0) anlikCtx.drawImage(tuval, 0, 0, en, boy);
+        oncekiIdx = parcaIdx;
+      }
 
       if (kaynak?.tur === "gorsel") {
         // Ken Burns kapalı ve altyazı durağan ise sahnenin her karesi birebir
         // aynıdır; tuvali yeniden boyamak gereksiz iştir. İmzaya altyazı metni
         // de girer, yoksa metin görünüp kaybolduğunda kare güncellenmezdi.
         const imza = `${parca.sahne.no}|${altyaziMetni}`;
-        const sabit = !kenBurns && !altyaziAnimasyonlu && sonImza === imza;
+        // Geçiş sırasında her kare farklıdır; hızlı yol devre dışı kalmalı.
+        const sabit = !kenBurns && !altyaziAnimasyonlu && !gd.aktif && sonImza === imza;
         if (!sabit) {
           gorselKareCiz(ctx, kaynak.bitmap, parca, t, en, boy, kenBurns);
+          if (gd.aktif) gecisUygula(ctx, anlikTuval, gd, en, boy);
           if (altyaziMetni) altyaziCiz(ctx, altyaziMetni, altyazi, en, boy, blokOrani);
-          sonImza = imza;
+          sonImza = gd.aktif ? null : imza;
         }
       } else if (kaynak?.tur === "video") {
         // Klip bloktan kısaysa döngüye alınır; uzunsa baştan gerektiği kadarı kullanılır.
@@ -539,11 +605,13 @@ export async function render(ayar) {
           await videoKaresineGit(kaynak.el, yerel);
           kaplayarakCiz(ctx, kaynak.el, kaynak.el.videoWidth, kaynak.el.videoHeight, en, boy, 1);
         }
+        if (gd.aktif) gecisUygula(ctx, anlikTuval, gd, en, boy);
         if (altyaziMetni) altyaziCiz(ctx, altyaziMetni, altyazi, en, boy, blokOrani);
         sonImza = null;
       } else {
         ctx.fillStyle = "#000";
         ctx.fillRect(0, 0, en, boy);
+        if (gd.aktif) gecisUygula(ctx, anlikTuval, gd, en, boy);
         if (altyaziMetni) altyaziCiz(ctx, altyaziMetni, altyazi, en, boy, blokOrani);
         sonImza = null;
       }

@@ -9,6 +9,7 @@ const $ = (id) => document.getElementById(id);
 const el = {
   ses: $("ses"), srt: $("srt"), sahneler: $("sahneler"),
   cozunurluk: $("cozunurluk"), fps: $("fps"), bitrate: $("bitrate"), kenburns: $("kenburns"),
+  gecis: $("gecis"), gecisSure: $("gecis-sure"),
   olustur: $("olustur"), durdur: $("durdur"), durum: $("durum"),
   panelDenetim: $("panel-denetim"), mesajlar: $("mesajlar"), cizelge: $("cizelge"),
   panelIlerleme: $("panel-ilerleme"), cubuk: $("cubuk"),
@@ -225,6 +226,7 @@ el.olustur.addEventListener("click", async () => {
       en, boy, fps, bitOrani,
       kenBurns: el.kenburns.checked,
       altyazi: altyaziAyari(),
+      gecis: gecisAyari(),
       iptal: () => iptalIstendi,
       ilerleme: (d) => {
         if (d.asama === "hazirlik") { el.ilerlemeMetin.textContent = "Sahneler hazırlanıyor…"; return; }
@@ -310,7 +312,8 @@ async function onizlemeCizDerhal(t) {
 
   const ctx = tuval.getContext("2d", { alpha: false });
   const parca = await onizlemeKaresiCiz(ctx, durum.parcalar, kaynakCoz, t, {
-    en: pEn, boy: pBoy, kenBurns: el.kenburns.checked, altyazi: altyaziAyari(),
+    en: pEn, boy: pBoy, kenBurns: el.kenburns.checked,
+    altyazi: altyaziAyari(), gecis: gecisAyari(),
   });
 
   el.onizlemeZaman.textContent = zamanBicimle(t);
@@ -374,13 +377,17 @@ el.onizlemeOynat.addEventListener("click", async () => {
 });
 
 // Ayar değişince görünen kare de değişmeli.
-for (const g of [el.kenburns, el.cozunurluk, el.altyaziKonum, el.altyaziBoyut]) {
+for (const g of [el.kenburns, el.cozunurluk, el.altyaziKonum, el.altyaziBoyut, el.gecis, el.gecisSure]) {
   g.addEventListener("change", () => onizlemeyiTazele(cubuktanZaman()));
 }
 
 // ------------------------------------------------------------ altyazı stili
 
 let secilenStil = "klasik";
+
+function gecisAyari() {
+  return { tur: el.gecis.value, sure: Number(el.gecisSure.value) };
+}
 
 function altyaziAyari() {
   return { stil: secilenStil, konum: el.altyaziKonum.value, boyut: el.altyaziBoyut.value };

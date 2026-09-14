@@ -52,6 +52,24 @@ Panodaki stil kartlarının önizlemeleri, videoyu çizen işlevin **aynısıyla
 **Altyazı yalnızca bloğun kendi aralığında görünür.** Bloklar arası
 boşluklarda sahne tutulur ama yazı ekranda asılı kalmaz.
 
+## Sahne geçişi
+
+| Seçenek | Ne yapar |
+|---|---|
+| **Yumuşak fade** | Giden sahne, gelen sahnenin üzerinde yavaşça saydamlaşır |
+| **Karartarak geçiş** | Giden sahne karartılır, gelen sahne karanlıktan açılır |
+| **Sert kesim** | Geçiş yok |
+
+Süre 0,3 / 0,5 / 0,8 / 1,2 sn seçilebilir.
+
+Geçiş penceresi **yeni sahnenin başına** yerleştirilir. Ortalanmış bir pencere,
+gelen video klibini kendi başlangıcından önce oynatmayı gerektirirdi. Giden
+sahne, geçiş başlarken tuvalden alınan anlık görüntüdür; yarım saniyelik bir
+harmanda donuk olması göze çarpmaz ve iki video akışını aynı anda çalıştırma
+karmaşasını ortadan kaldırır.
+
+**Altyazı geçişten etkilenmez**; harmanın üzerine tam görünürlükte çizilir.
+
 ## Canlı ön izleme
 
 Çizelge hazır olunca ön izleme paneli açılır. Zaman çubuğunu sürükleyerek
