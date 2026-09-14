@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <title>Kurgu Canavarı</title>
+  <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+<div class="sarmal">
+
+  <header class="kahraman">
+    <div class="rozet-satir">
+      <img src="ikonlar/ikon128.png" alt="">
+      <span class="rozet-yazi">Yapay Zihin &middot; Üye Aracı</span>
+    </div>
+    <h1>Kurgu <span class="vurgu">Canavarı</span></h1>
+    <p>Numaralı sahneleri, SRT zaman kodlarını sesin ana saati kabul ederek kusursuz bir zaman çizelgesine yerleştirir.</p>
+  </header>
+
+  <div class="bilgi">
+    <b>Dosya düzeni:</b> <code>Video 01.mp4</code>, <code>Görsel 02.png</code> …<br>
+    SRT'deki 1. blok <code>01</code> dosyasına, 2. blok <code>02</code> dosyasına yerleşir.
+    Her bloğun başlangıç ve bitiş zamanları render sırasında kilitlidir.
+  </div>
+
+  <section class="kartlar">
+    <div class="kart" id="kart-ses">
+      <span class="no">01</span>
+      <h3>Seslendirme</h3>
+      <p class="aciklama">Tek MP3, WAV veya M4A dosyası</p>
+      <input type="file" id="ses" accept="audio/*,.mp3,.wav,.m4a,.aac,.ogg">
+    </div>
+    <div class="kart" id="kart-srt">
+      <span class="no">02</span>
+      <h3>Senkron SRT dosyası</h3>
+      <p class="aciklama">Aynı seslendirmeye ait zaman kodlu altyazı &bull; zorunlu</p>
+      <input type="file" id="srt" accept=".srt,text/plain">
+    </div>
+    <div class="kart" id="kart-sahne">
+      <span class="no">03</span>
+      <h3>Numaralı sahneler</h3>
+      <p class="aciklama">Görsel ve videoları birlikte seç: 01, 02, 03…</p>
+      <input type="file" id="sahneler" multiple accept="image/*,video/*">
+    </div>
+  </section>
+
+  <section class="ayarlar">
+    <div class="alan">
+      <label for="cozunurluk">Çözünürlük</label>
+      <select id="cozunurluk">
+        <option value="1920x1080" selected>1920 × 1080 (Full HD)</option>
+        <option value="1280x720">1280 × 720 (HD)</option>
+        <option value="2560x1440">2560 × 1440 (2K)</option>
+        <option value="1080x1920">1080 × 1920 (Dikey / Shorts)</option>
+      </select>
+    </div>
+    <div class="alan">
+      <label for="fps">Kare hızı</label>
+      <select id="fps">
+        <option value="24">24 fps</option>
+        <option value="30" selected>30 fps</option>
+        <option value="60">60 fps</option>
+      </select>
+    </div>
+    <div class="alan">
+      <label for="bitrate">Bit oranı (Mbps)</label>
+      <input type="number" id="bitrate" value="8" min="1" max="50" step="1">
+    </div>
+    <label class="onay"><input type="checkbox" id="kenburns" checked> Görsellere yavaş zoom (Ken Burns)</label>
+  </section>
+
+  <section class="panel" id="panel-denetim" hidden>
+    <h2>Zaman çizelgesi denetimi</h2>
+    <div id="mesajlar"></div>
+    <div class="kaydir">
+      <table>
+        <thead>
+          <tr><th>Blok</th><th>Başlangıç</th><th>Bitiş</th><th>Süre</th><th>Dosya</th><th>Tür</th><th>Metin</th></tr>
+        </thead>
+        <tbody id="cizelge"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="eylem">
+    <button class="ana" id="olustur" disabled>Zaman Çizelgesini Oluştur</button>
+    <button class="ikincil" id="durdur" hidden>Durdur</button>
+    <div class="durum" id="durum">Başlamak için üç dosya grubunu da seçin.</div>
+  </section>
+
+  <section class="panel" id="panel-ilerleme" hidden>
+    <h2 id="ilerleme-baslik">Render sürüyor…</h2>
+    <div class="cubuk"><i id="cubuk"></i></div>
+    <p class="durum" id="ilerleme-metin" style="margin:12px 0 0"></p>
+  </section>
+
+  <section class="panel" id="panel-sonuc" hidden>
+    <h2>Sonuç</h2>
+    <div id="sonuc-bilgi"></div>
+    <video class="onizleme" id="onizleme" controls></video>
+    <br><a class="indir" id="indir" download>Videoyu indir</a>
+  </section>
+
+</div>
+<script type="module" src="js/dashboard.js"></script>
+</body>
+</html>

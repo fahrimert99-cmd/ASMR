@@ -1,0 +1,26 @@
+{
+  "manifest_version": 3,
+  "name": "Kurgu Canavarı",
+  "version": "1.0.0",
+  "description": "Numaralı sahneleri, SRT zaman kodlarını sesin ana saati kabul ederek kusursuz bir zaman çizelgesine yerleştirir.",
+  "icons": {
+    "16": "ikonlar/ikon16.png",
+    "32": "ikonlar/ikon32.png",
+    "48": "ikonlar/ikon48.png",
+    "128": "ikonlar/ikon128.png"
+  },
+  "action": {
+    "default_title": "Kurgu Canavarı'nı aç",
+    "default_icon": {
+      "16": "ikonlar/ikon16.png",
+      "32": "ikonlar/ikon32.png"
+    }
+  },
+  "background": {
+    "service_worker": "js/arka_plan.js",
+    "type": "module"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}
