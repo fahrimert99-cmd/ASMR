@@ -160,3 +160,18 @@ a.indir {
   h1 { font-size: 42px; }
   body { padding: 20px 12px 48px; }
 }
+
+
+/* ------------------------------------------------------------ altyazı stili */
+.stil-izgara { display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+.stil-kart {
+  background: #0b1322; border: 1px solid var(--cizgi); border-radius: 12px;
+  padding: 10px; cursor: pointer; text-align: center; transition: border-color .12s;
+}
+.stil-kart:hover { border-color: #2c3e60; }
+.stil-kart.secili { border-color: var(--mor); box-shadow: 0 0 0 1px var(--mor) inset; }
+.stil-kart canvas { width: 100%; height: auto; border-radius: 8px; display: block; background: #10192b; }
+.stil-kart .ad { margin-top: 9px; font-size: 13px; font-weight: 600; color: var(--metin); }
+.stil-kart.secili .ad { color: var(--mor); }
+@media (max-width: 1000px) { .stil-izgara { grid-template-columns: repeat(3, 1fr); } }
+@media (max-width: 620px)  { .stil-izgara { grid-template-columns: repeat(2, 1fr); } }

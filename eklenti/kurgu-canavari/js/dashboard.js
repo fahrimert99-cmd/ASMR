@@ -3,6 +3,7 @@
 import { srtAyristir, zamanBicimle } from "./srt.js";
 import { dosyalariEslestir, zamanCizelgesiKur } from "./eslestirme.js";
 import { render, sesCoz, kodekSec, videoOnDenetim } from "./render.js";
+import { STILLER, altyaziCiz } from "./altyazi.js";
 
 const $ = (id) => document.getElementById(id);
 const el = {
@@ -12,6 +13,7 @@ const el = {
   panelDenetim: $("panel-denetim"), mesajlar: $("mesajlar"), cizelge: $("cizelge"),
   panelIlerleme: $("panel-ilerleme"), cubuk: $("cubuk"),
   ilerlemeBaslik: $("ilerleme-baslik"), ilerlemeMetin: $("ilerleme-metin"),
+  stilIzgara: $("stil-izgara"), altyaziKonum: $("altyazi-konum"), altyaziBoyut: $("altyazi-boyut"),
   panelSonuc: $("panel-sonuc"), sonucBilgi: $("sonuc-bilgi"),
   onizleme: $("onizleme"), indir: $("indir"),
 };
@@ -212,6 +214,7 @@ el.olustur.addEventListener("click", async () => {
       sesTamponu: durum.sesTamponu,
       en, boy, fps, bitOrani,
       kenBurns: el.kenburns.checked,
+      altyazi: altyaziAyari(),
       iptal: () => iptalIstendi,
       ilerleme: (d) => {
         if (d.asama === "hazirlik") { el.ilerlemeMetin.textContent = "Sahneler hazırlanıyor…"; return; }
@@ -253,6 +256,51 @@ el.olustur.addEventListener("click", async () => {
     el.durdur.hidden = true;
   }
 });
+
+// ------------------------------------------------------------ altyazı stili
+
+let secilenStil = "klasik";
+
+function altyaziAyari() {
+  return { stil: secilenStil, konum: el.altyaziKonum.value, boyut: el.altyaziBoyut.value };
+}
+
+// Kartlardaki önizlemeler, videoda kullanılan çizim işleviyle üretilir; böylece
+// kartta görünen ile çıktıdaki birebir aynıdır.
+function stilKartlariniKur() {
+  el.stilIzgara.innerHTML = "";
+  for (const [anahtar, tanim] of Object.entries(STILLER)) {
+    const kart = document.createElement("div");
+    kart.className = "stil-kart" + (anahtar === secilenStil ? " secili" : "");
+    kart.dataset.stil = anahtar;
+
+    const tuval = document.createElement("canvas");
+    tuval.width = 300; tuval.height = 120;
+    const ctx = tuval.getContext("2d");
+    ctx.fillStyle = "#10192b";
+    ctx.fillRect(0, 0, 300, 120);
+    if (anahtar === "kapali") {
+      ctx.fillStyle = "#5b6b87";
+      ctx.font = '600 22px "Segoe UI", system-ui, sans-serif';
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText("Aa", 150, 60);
+    } else {
+      altyaziCiz(ctx, "Hikâye burada", { stil: anahtar, konum: "orta", puntoOran: 0.19 }, 300, 120, 0.6);
+    }
+
+    const ad = document.createElement("div");
+    ad.className = "ad";
+    ad.textContent = tanim.ad;
+
+    kart.append(tuval, ad);
+    kart.addEventListener("click", () => {
+      secilenStil = anahtar;
+      [...el.stilIzgara.children].forEach((k) => k.classList.toggle("secili", k.dataset.stil === anahtar));
+    });
+    el.stilIzgara.appendChild(kart);
+  }
+}
+stilKartlariniKur();
 
 // Kodek desteğini açılışta bildir: kullanıcı dosyaları seçmeden önce
 // hangi kapta çıktı alacağını bilsin.

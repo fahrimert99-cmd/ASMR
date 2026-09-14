@@ -69,6 +69,33 @@
     <label class="onay"><input type="checkbox" id="kenburns" checked> Görsellere yavaş zoom (Ken Burns)</label>
   </section>
 
+  <section class="panel" id="panel-altyazi">
+    <h2>Altyazı stili</h2>
+    <p class="durum" style="margin:-6px 0 16px">
+      Tarzı görerek seç. SRT'deki metin, aynı zaman kodlarıyla sahnenin üzerine işlenir.
+      Önizlemeler videodaki çizimin aynısıdır.
+    </p>
+    <div class="stil-izgara" id="stil-izgara"></div>
+    <div class="ayarlar" style="margin:18px 0 0">
+      <div class="alan">
+        <label for="altyazi-konum">Altyazı konumu</label>
+        <select id="altyazi-konum">
+          <option value="alt" selected>Alt</option>
+          <option value="orta">Orta</option>
+          <option value="ust">Üst</option>
+        </select>
+      </div>
+      <div class="alan">
+        <label for="altyazi-boyut">Altyazı boyutu</label>
+        <select id="altyazi-boyut">
+          <option value="kucuk">Küçük</option>
+          <option value="orta" selected>Orta</option>
+          <option value="buyuk">Büyük</option>
+        </select>
+      </div>
+    </div>
+  </section>
+
   <section class="panel" id="panel-denetim" hidden>
     <h2>Zaman çizelgesi denetimi</h2>
     <div id="mesajlar"></div>

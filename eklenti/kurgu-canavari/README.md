@@ -27,6 +27,31 @@ Dosyalar seçilir seçilmez **denetim tablosu** çıkar: hangi blok hangi dosyay
 bağlandı, süreler ne, eksik/çakışan numara var mı, hangi video klip bloğundan
 kısa olduğu için döngüye girecek — hepsi render'dan önce görünür.
 
+## Altyazı
+
+SRT'deki metin, aynı zaman kodlarıyla sahnenin üzerine işlenir. On stil vardır:
+
+| | |
+|---|---|
+| **Kapalı** | Altyazı işlenmez |
+| **Klasik beyaz** | Beyaz yazı, siyah kontur |
+| **Koyu kutu** | Yarı saydam siyah kutu üzerine beyaz yazı |
+| **Sarı vurgulu** | Sarı kutu üzerine koyu yazı |
+| **Neon mor** | Mor parlamalı yazı |
+| **Sinema** | Krem rengi yazı, yumuşak gölge |
+| **Minimal** | Kutusuz, ince beyaz yazı |
+| **Karaoke** | Kelimeler ilerledikçe sarıya döner |
+| **Typewriter** | Metin karakter karakter açılır, imleçli |
+| **Lower Third** | Sola yaslı bant, camgöbeği kenar çizgisi |
+
+Konum (alt / orta / üst) ve boyut (küçük / orta / büyük) ayrıca seçilir.
+
+Panodaki stil kartlarının önizlemeleri, videoyu çizen işlevin **aynısıyla**
+üretilir; kartta gördüğünüz ile çıktıdaki birebir aynıdır.
+
+**Altyazı yalnızca bloğun kendi aralığında görünür.** Bloklar arası
+boşluklarda sahne tutulur ama yazı ekranda asılı kalmaz.
+
 ## Zamanlama kuralları
 
 - **Ses ana saattir.** Videonun toplam süresi seslendirmenin süresidir.

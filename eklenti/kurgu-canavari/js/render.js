@@ -7,6 +7,7 @@
 import { Muxer as Mp4Muxer, ArrayBufferTarget as Mp4Hedef } from "../vendor/mp4-muxer.mjs";
 import { Muxer as WebmMuxer, ArrayBufferTarget as WebmHedef } from "../vendor/webm-muxer.mjs";
 import { Input, BlobSource, ALL_FORMATS, VideoSampleSink } from "../vendor/mediabunny.min.mjs";
+import { altyaziCiz, ANIMASYONLU } from "./altyazi.js";
 
 const SES_ORNEKLEME = 48000;   // Opus 48 kHz zorunlu kılar; AAC de sorunsuz kabul eder
 const SES_KANAL = 2;
@@ -350,7 +351,7 @@ function kuyrukBekle(kodlayici, ustSinir, altSinir) {
 }
 
 export async function render(ayar) {
-  const { parcalar, sesTamponu, en, boy, fps, kenBurns, bitOrani, ilerleme, iptal } = ayar;
+  const { parcalar, sesTamponu, en, boy, fps, kenBurns, bitOrani, altyazi, ilerleme, iptal } = ayar;
 
   const secim = await kodekSec(en, boy, fps);
   const toplamSure = sesTamponu.duration;
@@ -419,8 +420,11 @@ export async function render(ayar) {
   const kareSure = 1e6 / fps;
   let parcaIdx = 0;
 
-  let aktifAkis = null, aktifSahneNo = null, sonYerel = -1, sonCizilenSahne = null;
+  let aktifAkis = null, aktifSahneNo = null, sonYerel = -1, sonImza = null;
   let kullanilanYol = null;   // "cozucu" | "oynatma" | "arama" — sonuçta bildirilir
+
+  const altyaziAcik = !!altyazi && altyazi.stil && altyazi.stil !== "kapali";
+  const altyaziAnimasyonlu = altyaziAcik && ANIMASYONLU.has(altyazi.stil);
 
   try {
     for (let kare = 0; kare < toplamKare; kare++) {
@@ -437,16 +441,27 @@ export async function render(ayar) {
         await aktifAkis.kapat(); aktifAkis = null; aktifSahneNo = null;
       }
 
+      // Altyazı yalnızca bloğun KENDİ aralığında görünür; boşluklarda sahne
+      // tutulsa bile metin ekranda asılı kalmaz.
+      const blokIcinde = altyaziAcik && t >= parca.blokBas && t < parca.blokBit;
+      const altyaziMetni = blokIcinde ? parca.metin : "";
+      const blokOrani = blokIcinde
+        ? (t - parca.blokBas) / Math.max(parca.blokBit - parca.blokBas, 1e-6)
+        : 1;
+
       if (kaynak?.tur === "gorsel") {
-        // Ken Burns kapalıysa aynı sahnenin her karesi birebir aynıdır; tuvali
-        // yeniden boyamak gereksiz iştir, sadece sahne değişince çizilir.
-        const sabit = !kenBurns && sonCizilenSahne === parca.sahne.no;
+        // Ken Burns kapalı ve altyazı durağan ise sahnenin her karesi birebir
+        // aynıdır; tuvali yeniden boyamak gereksiz iştir. İmzaya altyazı metni
+        // de girer, yoksa metin görünüp kaybolduğunda kare güncellenmezdi.
+        const imza = `${parca.sahne.no}|${altyaziMetni}`;
+        const sabit = !kenBurns && !altyaziAnimasyonlu && sonImza === imza;
         if (!sabit) {
           // Siyah zemin boyanmaz: kaplayarak çizim tuvalin tamamını örter.
           const oran = (t - parca.bas) / Math.max(parca.bit - parca.bas, 1e-6);
           const zoom = kenBurns ? 1 + 0.06 * Math.min(Math.max(oran, 0), 1) : 1;
           kaplayarakCiz(ctx, kaynak.bitmap, kaynak.bitmap.width, kaynak.bitmap.height, en, boy, zoom);
-          sonCizilenSahne = parca.sahne.no;
+          if (altyaziMetni) altyaziCiz(ctx, altyaziMetni, altyazi, en, boy, blokOrani);
+          sonImza = imza;
         }
       } else if (kaynak?.tur === "video") {
         // Klip bloktan kısaysa döngüye alınır; uzunsa baştan gerektiği kadarı kullanılır.
@@ -474,11 +489,13 @@ export async function render(ayar) {
           await videoKaresineGit(kaynak.el, yerel);
           kaplayarakCiz(ctx, kaynak.el, kaynak.el.videoWidth, kaynak.el.videoHeight, en, boy, 1);
         }
-        sonCizilenSahne = null;
+        if (altyaziMetni) altyaziCiz(ctx, altyaziMetni, altyazi, en, boy, blokOrani);
+        sonImza = null;
       } else {
         ctx.fillStyle = "#000";
         ctx.fillRect(0, 0, en, boy);
-        sonCizilenSahne = null;
+        if (altyaziMetni) altyaziCiz(ctx, altyaziMetni, altyazi, en, boy, blokOrani);
+        sonImza = null;
       }
 
       const vf = new VideoFrame(tuval, { timestamp: Math.round(kare * kareSure), duration: Math.round(kareSure) });
