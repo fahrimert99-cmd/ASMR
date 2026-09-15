@@ -151,6 +151,9 @@ chrome.runtime.onMessage.addListener((m, gonderen) => {
     secici[beklenenAlan] = m.secici;
     if (typeof gonderen?.frameId === "number") hedefCerceveId = gonderen.frameId;
     gunlukYaz(`${beklenenAlan} ← ${m.secici}  (<${m.etiket}>)`, "iyi");
+    if (m.yukariCikildi) {
+      gunlukYaz(`(<${m.yukariCikildi}> simgesine tıkladınız; kaydedilen öğe onu içeren <${m.etiket}>)`, "");
+    }
     if (beklenenAlan === "prompt" && !m.metinAlani) {
       gunlukYaz("Not: tıkladığınız öğe yazı kutusu değil. Üretimde yakınındaki " +
         "gerçek yazı alanı aranacak; olmazsa doğrudan metnin yazıldığı kutuya tıklayın.", "");

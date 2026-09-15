@@ -35,6 +35,25 @@
     return null;
   }
 
+  // Tıklanan öğeyi anlamlı olana çevirir.
+  //
+  // Düğmelerin içinde <svg>, <span> gibi süs öğeleri olur ve fare onlara denk
+  // gelir. Kaydedilmesi gereken düğmenin kendisidir: hem daha kararlı bir
+  // seçici verir (aria-label gibi), hem de tıklanacak olan odur.
+  //
+  // Yalnızca süs öğelerinde yukarı çıkılır; sıradan bir <div> tıklandığında
+  // (örneğin sonucun çıktığı alan) olduğu gibi bırakılır, yoksa kapsayan bir
+  // bağlantıya sıçrayıp yanlış öğe seçilirdi.
+  const SUS_OGE = new Set(["svg", "use", "path", "g", "circle", "rect", "polygon", "line",
+                           "span", "i", "em", "b", "strong", "small", "img", "figure", "picture"]);
+  const AKSIYON = 'button, a, label, input, textarea, select, [role="button"], [contenteditable="true"], [contenteditable=""]';
+
+  function hedefiNormalize(el) {
+    if (!el?.tagName) return el;
+    if (!SUS_OGE.has(el.tagName.toLowerCase())) return el;
+    return el.closest?.(AKSIYON) || el;
+  }
+
   function secikiCikar(el) {
     if (el.id && kimlikSaglamMi(el.id)) {
       const s = `#${CSS.escape(el.id)}`;
@@ -100,8 +119,9 @@
     if (!ogrenmeAktif) return;
     e.preventDefault();
     e.stopPropagation();
-    const secici = secikiCikar(e.target);
-    const hedef = e.target;
+    const hedef = hedefiNormalize(e.target);
+    const secici = secikiCikar(hedef);
+    const tiklanan = e.target.tagName.toLowerCase();
     const dosyaGirdisi = (hedef.tagName === "INPUT" && hedef.type === "file")
       || !!hedef.querySelector?.('input[type="file"]');
     const metinAlani = metinAlaniMi(hedef) || !!hedef.querySelector?.(METIN_ALANI);
@@ -109,6 +129,7 @@
     ogrenmeyiBitir();
     chrome.runtime.sendMessage({
       tur: "ogrenildi", secici, etiket: etiketAdi, dosyaGirdisi, metinAlani,
+      yukariCikildi: tiklanan !== etiketAdi ? tiklanan : null,
     });
   };
 
@@ -139,6 +160,18 @@
 
   const bekle = (ms) => new Promise((r) => setTimeout(r, ms));
   const bul = (s) => { try { return s ? document.querySelector(s) : null; } catch (_) { return null; } };
+
+  // Tek seferde bulunamazsa kısa süre yeniden dener: tek sayfa uygulamaları
+  // arayüzü eşzamansız çizdiği için öğe bir an sonra belirebilir.
+  async function bulBekle(s, sure = 6000) {
+    const bitis = Date.now() + sure;
+    for (;;) {
+      const o = bul(s);
+      if (o) return o;
+      if (Date.now() > bitis) return null;
+      await bekle(300);
+    }
+  }
 
   // React ve benzeri çatılar değer atamasını kendi durumlarında takip eder;
   // doğrudan .value yazmak arayüzü güncellemez. Yerel ayarlayıcıyı çağırıp
@@ -252,7 +285,7 @@
     degerYaz(promptEl, prompt);
     await bekle(250);
 
-    const uretEl = bul(secici.uret);
+    const uretEl = await bulBekle(secici.uret);
     if (!uretEl) throw new Error("üret düğmesi bulunamadı: " + secici.uret);
     uretEl.click();
 
