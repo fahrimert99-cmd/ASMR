@@ -16,6 +16,7 @@ const el = {
 
 const ALANLAR = ["prompt", "gorsel", "uret", "sonuc"];
 let secici = { prompt: "", gorsel: "", uret: "", sonuc: "" };
+let izler = {};   // öğelerin parmak izleri: seçici bozulursa kurtarma için
 let hedefSekmeId = null;
 let hedefCerceveId = 0;   // seçicinin öğrenildiği çerçeve; işler oraya gönderilir
 let calisiyor = false;
@@ -36,15 +37,16 @@ function gunlukYaz(metin, sinif = "") {
 }
 
 async function ayarlariYukle() {
-  const d = await chrome.storage.local.get(["secici", "site", "klasor", "gecikme"]);
+  const d = await chrome.storage.local.get(["secici", "izler", "site", "klasor", "gecikme"]);
   if (d.secici) secici = { ...secici, ...d.secici };
+  if (d.izler) izler = d.izler;
   if (d.site) el.site.value = d.site;
   if (d.klasor) el.klasor.value = d.klasor;
   if (d.gecikme) { el.gecikmeAlt.value = d.gecikme[0]; el.gecikmeUst.value = d.gecikme[1]; }
   seciciyiGoster();
 }
 const ayarlariKaydet = () => chrome.storage.local.set({
-  secici, site: el.site.value, klasor: el.klasor.value,
+  secici, izler, site: el.site.value, klasor: el.klasor.value,
   gecikme: [Number(el.gecikmeAlt.value), Number(el.gecikmeUst.value)],
 });
 
@@ -142,7 +144,7 @@ document.querySelectorAll("[data-sina]").forEach((d) => {
     if (!hedefSekmeId) return yaz("Önce siteye bağlanın.", "hata");
     if (!secici[alan]) return yaz("Bu seçici henüz öğretilmedi.", "hata");
     try {
-      const c = await chrome.tabs.sendMessage(hedefSekmeId, { tur: "sina", secici: secici[alan], alan },
+      const c = await chrome.tabs.sendMessage(hedefSekmeId, { tur: "sina", secici: secici[alan], alan, iz: izler[alan] },
         hedefCerceveId ? { frameId: hedefCerceveId } : undefined);
       const r = c.sonuc;
       yaz(r.mesaj, r.ok ? "iyi" : "hata");
@@ -177,6 +179,7 @@ chrome.runtime.onMessage.addListener((m, gonderen) => {
   if (m.tur === "ogrenildi" && beklenenAlan) {
     secici[beklenenAlan] = m.secici;
     if (typeof gonderen?.frameId === "number") hedefCerceveId = gonderen.frameId;
+    if (m.iz) izler[beklenenAlan] = m.iz;
     gunlukYaz(`${beklenenAlan} ← ${m.secici}  (<${m.etiket}>)`, "iyi");
     if (m.yukariCikildi) {
       gunlukYaz(`(<${m.yukariCikildi}> simgesine tıkladınız; kaydedilen öğe onu içeren <${m.etiket}>)`, "");
@@ -295,13 +298,14 @@ el.basla.addEventListener("click", async () => {
     durumYaz(`${i + 1}/${adet} işleniyor…`);
 
     try {
-      const is = { secici, prompt: promptlar[i], zamanAsimi };
+      const is = { secici, izler, prompt: promptlar[i], zamanAsimi };
       if (gorseller[i] && secici.gorsel) {
         is.gorsel = { ad: gorseller[i].name, veri: await dosyaOku(gorseller[i]) };
       }
       const cevap = await chrome.tabs.sendMessage(hedefSekmeId, { tur: "is", is }, { frameId: hedefCerceveId });
       if (!cevap?.ok) throw new Error(cevap?.hata || "yanıt yok");
 
+      for (const not of cevap.sonuc.kurtarmalar || []) gunlukYaz("kurtarma — " + not, "hata");
       const adresler = cevap.sonuc.adresler;
       gunlukYaz(`${i + 1}. iş: ${adresler.length} sonuç bulundu.`);
       for (const adres of adresler) {

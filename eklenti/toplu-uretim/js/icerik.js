@@ -54,28 +54,102 @@
     return el.closest?.(AKSIYON) || el;
   }
 
-  function secikiCikar(el) {
-    if (el.id && kimlikSaglamMi(el.id)) {
-      const s = `#${CSS.escape(el.id)}`;
-      if (document.querySelectorAll(s).length === 1) return s;
+  function nitelikParcasi(el) {
+    for (const n of ANLAMLI_NITELIK) {
+      const d = el.getAttribute(n);
+      if (d && d.length < 60 && !/["\\]/.test(d)) return `[${n}="${d}"]`;
     }
-    const n = nitelikSecici(el);
-    if (n) return n;
+    return null;
+  }
 
-    // Son çare: köke kadar etiket + kardeş sırası. Sınıf adları derleyici
-    // tarafından üretildiğinde (hash'li) değişken olduğu için kullanılmaz.
+  const benzersizMi = (s) => {
+    try { return document.querySelectorAll(s).length === 1; } catch (_) { return false; }
+  };
+
+  // Öğe için olabildiğince KISA ve KARARLI bir seçici üretir.
+  //
+  // Konuma dayalı uzun yollar (body > div:nth-of-type(3) > ...) tek sayfa
+  // uygulamaları arayüzü yeniden çizdiğinde bozulur. Bu yüzden önce kimlik ve
+  // anlamlı nitelikler denenir, sonra kararlı bir atanın içine "kapsanmış"
+  // kısa bir seçici kurulur; konum yolu yalnızca son çaredir.
+  function secikiCikar(el) {
+    const etiket = el.tagName.toLowerCase();
+
+    if (el.id && kimlikSaglamMi(el.id) && benzersizMi("#" + CSS.escape(el.id))) {
+      return "#" + CSS.escape(el.id);
+    }
+    const kendi = nitelikParcasi(el);
+    if (kendi && benzersizMi(etiket + kendi)) return etiket + kendi;
+
+    // Kararlı bir atanın içine kapsa: "form textarea", "#panel button" gibi.
+    let ata = el.parentElement;
+    for (let derinlik = 0; derinlik < 6 && ata && ata !== document.body; derinlik++, ata = ata.parentElement) {
+      const ataSecici = (ata.id && kimlikSaglamMi(ata.id) && "#" + CSS.escape(ata.id))
+        || (nitelikParcasi(ata) && ata.tagName.toLowerCase() + nitelikParcasi(ata));
+      if (!ataSecici || !benzersizMi(ataSecici)) continue;
+
+      for (const kuyruk of [etiket + (kendi || ""), etiket]) {
+        const aday = `${ataSecici} ${kuyruk}`;
+        if (benzersizMi(aday)) return aday;
+        const kardesler = [...(el.parentElement?.children || [])].filter((c) => c.tagName === el.tagName);
+        if (kardesler.length > 1) {
+          const sirali = `${aday}:nth-of-type(${kardesler.indexOf(el) + 1})`;
+          if (benzersizMi(sirali)) return sirali;
+        }
+      }
+    }
+
+    // Son çare: köke kadar konum yolu.
     const parcalar = [];
     let dugum = el;
     while (dugum && dugum.nodeType === 1 && dugum !== document.body) {
-      const etiket = dugum.tagName.toLowerCase();
+      const e = dugum.tagName.toLowerCase();
       const kardesler = [...(dugum.parentElement?.children || [])].filter((c) => c.tagName === dugum.tagName);
-      const sira = kardesler.indexOf(dugum) + 1;
-      parcalar.unshift(kardesler.length > 1 ? `${etiket}:nth-of-type(${sira})` : etiket);
+      parcalar.unshift(kardesler.length > 1 ? `${e}:nth-of-type(${kardesler.indexOf(dugum) + 1})` : e);
       const deneme = "body > " + parcalar.join(" > ");
-      try { if (document.querySelectorAll(deneme).length === 1) return deneme; } catch (_) {}
+      if (benzersizMi(deneme)) return deneme;
       dugum = dugum.parentElement;
     }
     return "body > " + parcalar.join(" > ");
+  }
+
+  // Öğenin "parmak izi": seçici bozulursa öğeyi yeniden bulmak için.
+  function parmakIzi(el) {
+    return {
+      etiket: el.tagName.toLowerCase(),
+      aria: el.getAttribute("aria-label") || "",
+      rol: el.getAttribute("role") || "",
+      tip: el.getAttribute("type") || "",
+      isim: el.getAttribute("name") || "",
+      ipucu: el.getAttribute("placeholder") || "",
+      metin: (el.textContent || "").trim().replace(/\s+/g, " ").slice(0, 60),
+    };
+  }
+
+  // Seçici tutmazsa parmak izinden arar. Site arayüzünü değiştirdiğinde
+  // kullanıcıyı yeniden öğretmeye zorlamadan kurtarmayı dener; bulursa
+  // bunu açıkça bildirir, sessizce farklı bir öğeye basmaz.
+  function izdenBul(iz) {
+    if (!iz?.etiket) return null;
+    const adaylar = [...document.querySelectorAll(iz.etiket)];
+    if (!adaylar.length) return null;
+    const puanla = (el) => {
+      let p = 0;
+      if (iz.aria && el.getAttribute("aria-label") === iz.aria) p += 5;
+      if (iz.isim && el.getAttribute("name") === iz.isim) p += 4;
+      if (iz.ipucu && el.getAttribute("placeholder") === iz.ipucu) p += 4;
+      if (iz.tip && el.getAttribute("type") === iz.tip) p += 2;
+      if (iz.rol && el.getAttribute("role") === iz.rol) p += 2;
+      if (iz.metin) {
+        const m = (el.textContent || "").trim().replace(/\s+/g, " ").slice(0, 60);
+        if (m === iz.metin) p += 4; else if (m && iz.metin.includes(m)) p += 1;
+      }
+      return p;
+    };
+    const puanli = adaylar.map((el) => ({ el, p: puanla(el) })).sort((a, b) => b.p - a.p);
+    if (puanli[0].p < 4) return null;                       // zayıf eşleşmeye güvenme
+    if (puanli[1] && puanli[1].p === puanli[0].p) return null;   // belirsizse dokunma
+    return puanli[0].el;
   }
 
   // ------------------------------------------------------------- öğrenme kipi
@@ -128,7 +202,7 @@
     const etiketAdi = hedef.tagName.toLowerCase();
     ogrenmeyiBitir();
     chrome.runtime.sendMessage({
-      tur: "ogrenildi", secici, etiket: etiketAdi, dosyaGirdisi, metinAlani,
+      tur: "ogrenildi", secici, etiket: etiketAdi, dosyaGirdisi, metinAlani, iz: parmakIzi(hedef),
       yukariCikildi: tiklanan !== etiketAdi ? tiklanan : null,
     });
   };
@@ -161,12 +235,26 @@
   const bekle = (ms) => new Promise((r) => setTimeout(r, ms));
   const bul = (s) => { try { return s ? document.querySelector(s) : null; } catch (_) { return null; } };
 
+  let kurtarmaNotlari = [];
+
+  // Önce seçiciyi dener; tutmazsa parmak izinden arar.
+  function bulEsnek(secici, iz, ad) {
+    const dogrudan = bul(secici);
+    if (dogrudan) return dogrudan;
+    const kurtarilan = izdenBul(iz);
+    if (kurtarilan) {
+      kurtarmaNotlari.push(`${ad}: seçici tutmadı, öğe parmak izinden bulundu`);
+      return kurtarilan;
+    }
+    return null;
+  }
+
   // Tek seferde bulunamazsa kısa süre yeniden dener: tek sayfa uygulamaları
   // arayüzü eşzamansız çizdiği için öğe bir an sonra belirebilir.
-  async function bulBekle(s, sure = 6000) {
+  async function bulBekle(s, iz, ad, sure = 6000) {
     const bitis = Date.now() + sure;
     for (;;) {
-      const o = bul(s);
+      const o = bulEsnek(s, iz, ad);
       if (o) return o;
       if (Date.now() > bitis) return null;
       await bekle(300);
@@ -190,8 +278,8 @@
   // tıklar (öğe görsel olarak o kutudur). Yerel value ayarlayıcısını bir
   // <div> üzerinde çağırmak "Illegal invocation" verir; bu yüzden önce gerçek
   // alan aranır.
-  function metinAlaniBul(secici) {
-    const oge = bul(secici);
+  function metinAlaniBul(secici, iz) {
+    const oge = bulEsnek(secici, iz, "prompt");
     if (!oge) return null;
     if (metinAlaniMi(oge)) return oge;
     const icten = oge.querySelector?.(METIN_ALANI);
@@ -231,8 +319,8 @@
   // süslü bir düğme/alandır. Kullanıcı görünene tıklamak zorunda olduğu için,
   // öğretilen öğe girdinin kendisi değilse önce içinde, sonra sayfanın
   // tamamında aranır.
-  function dosyaGirdisiBul(secici) {
-    const oge = bul(secici);
+  function dosyaGirdisiBul(secici, iz) {
+    const oge = bulEsnek(secici, iz, "görsel");
     if (oge?.tagName === "INPUT" && oge.type === "file") return oge;
     const icten = oge?.querySelector?.('input[type="file"]');
     if (icten) return icten;
@@ -245,8 +333,8 @@
     return document.querySelector('input[type="file"]');
   }
 
-  async function gorselEkle(secici, veri, ad) {
-    const girdi = dosyaGirdisiBul(secici);
+  async function gorselEkle(secici, iz, veri, ad) {
+    const girdi = dosyaGirdisiBul(secici, iz);
     if (!girdi) throw new Error("sayfada dosya girdisi bulunamadı (öğretilen: " + secici + ")");
     const bayt = Uint8Array.from(atob(veri), (c) => c.charCodeAt(0));
     const dosya = new File([bayt], ad, { type: "image/png" });
@@ -258,8 +346,8 @@
   }
 
   // Sonuçtaki bağlantıyı toplar: video[src], source[src] veya a[href].
-  function sonucAdresleri(secici) {
-    const kok = bul(secici) || document;
+  function sonucAdresleri(secici, iz) {
+    const kok = bulEsnek(secici, iz, "sonuç") || document;
     const adresler = new Set();
     const ekle = (u) => u && !u.startsWith("data:") && adresler.add(u);
     if (kok.tagName === "VIDEO") ekle(kok.currentSrc || kok.src);
@@ -271,29 +359,30 @@
   }
 
   async function isYurut(is) {
-    const { secici, prompt, gorsel, zamanAsimi = 300000 } = is;
+    const { secici, izler = {}, prompt, gorsel, zamanAsimi = 300000 } = is;
+    kurtarmaNotlari = [];
 
-    const promptEl = metinAlaniBul(secici.prompt);
+    const promptEl = metinAlaniBul(secici.prompt, izler.prompt);
     if (!promptEl) {
       throw new Error("sayfada yazı kutusu bulunamadı (öğretilen: " + secici.prompt + ")");
     }
 
     // Üretimden ÖNCEKİ sonuçlar not edilir; yenisi bunların dışında çıkacak.
-    const oncekiler = new Set(sonucAdresleri(secici.sonuc));
+    const oncekiler = new Set(sonucAdresleri(secici.sonuc, izler.sonuc));
 
-    if (gorsel && secici.gorsel) await gorselEkle(secici.gorsel, gorsel.veri, gorsel.ad);
+    if (gorsel && secici.gorsel) await gorselEkle(secici.gorsel, izler.gorsel, gorsel.veri, gorsel.ad);
     degerYaz(promptEl, prompt);
     await bekle(250);
 
-    const uretEl = await bulBekle(secici.uret);
+    const uretEl = await bulBekle(secici.uret, izler.uret, "üret");
     if (!uretEl) throw new Error("üret düğmesi bulunamadı: " + secici.uret);
     uretEl.click();
 
     const bitis = Date.now() + zamanAsimi;
     while (Date.now() < bitis) {
       await bekle(1500);
-      const yeni = sonucAdresleri(secici.sonuc).filter((u) => !oncekiler.has(u));
-      if (yeni.length) return { adresler: yeni };
+      const yeni = sonucAdresleri(secici.sonuc, izler.sonuc).filter((u) => !oncekiler.has(u));
+      if (yeni.length) return { adresler: yeni, kurtarmalar: kurtarmaNotlari.slice() };
     }
     throw new Error(`sonuç ${Math.round(zamanAsimi / 1000)} sn içinde gelmedi`);
   }
@@ -313,12 +402,18 @@
   //
   // Ekran görüntüsü üzerinden teşhis yavaş ve seçiciler panoda kesik
   // görünüyordu; kullanıcı artık kendisi bakabilsin.
-  function seciciSina(secici, alan) {
+  function seciciSina(secici, alan, iz) {
     let ogeler;
     try { ogeler = document.querySelectorAll(secici); }
     catch (e) { return { ok: false, mesaj: "geçersiz seçici: " + e.message }; }
 
-    if (!ogeler.length) return { ok: false, mesaj: "sayfada HİÇBİR öğeye uymuyor" };
+    if (!ogeler.length) {
+      const kurtarilan = izdenBul(iz);
+      return kurtarilan
+        ? { ok: true, mesaj: `seçici tutmuyor AMA öğe parmak izinden bulunabiliyor: ` +
+            `<${kurtarilan.tagName.toLowerCase()}>${kurtarilan.id ? "#" + kurtarilan.id : ""} — çalışır, yine de yeniden öğretmek daha sağlam` }
+        : { ok: false, mesaj: "sayfada HİÇBİR öğeye uymuyor ve parmak izinden de bulunamadı" };
+    }
     const oge = ogeler[0];
     const etiket = oge.tagName.toLowerCase();
     const kimlik = oge.id ? "#" + oge.id : "";
@@ -328,13 +423,13 @@
     const coklu = ogeler.length > 1 ? ` — DİKKAT: ${ogeler.length} öğeye birden uyuyor` : "";
 
     if (alan === "prompt") {
-      const alanOge = metinAlaniBul(secici);
+      const alanOge = metinAlaniBul(secici, iz);
       return alanOge
         ? { ok: true, mesaj: `${tanim} → yazı kutusu bulundu: <${alanOge.tagName.toLowerCase()}>${alanOge.id ? "#" + alanOge.id : ""}${coklu}` }
         : { ok: false, mesaj: `${tanim} → içinde veya yakınında yazı kutusu YOK` };
     }
     if (alan === "gorsel") {
-      const girdi = dosyaGirdisiBul(secici);
+      const girdi = dosyaGirdisiBul(secici, iz);
       return girdi
         ? { ok: true, mesaj: `${tanim} → dosya girdisi bulundu${girdi.id ? " #" + girdi.id : ""}${coklu}` }
         : { ok: false, mesaj: `${tanim} → yakınında input[type=file] YOK` };
@@ -347,7 +442,7 @@
         : { ok: false, mesaj: `${tanim} → tıklanamaz (SVG gibi bir öğe); düğmenin kendisini seçin` };
     }
     if (alan === "sonuc") {
-      const adresler = sonucAdresleri(secici);
+      const adresler = sonucAdresleri(secici, iz);
       return { ok: true, mesaj: `${tanim} → şu an içinde ${adresler.length} video/bağlantı var` +
         (etiket === "a" || etiket === "video" ? " — tek öğe seçilmiş; KAPSAYICI kutuyu seçmek daha güvenilir" : "") + coklu };
     }
@@ -361,7 +456,7 @@
         if (mesaj.tur === "ogren") { ogrenmeyiBaslat(); return cevapla({ ok: true }); }
         if (mesaj.tur === "is") return cevapla({ ok: true, sonuc: await isYurut(mesaj.is) });
         if (mesaj.tur === "oku") return cevapla({ ok: true, dosya: await adresiOku(mesaj.adres) });
-        if (mesaj.tur === "sina") return cevapla({ ok: true, sonuc: seciciSina(mesaj.secici, mesaj.alan) });
+        if (mesaj.tur === "sina") return cevapla({ ok: true, sonuc: seciciSina(mesaj.secici, mesaj.alan, mesaj.iz) });
         cevapla({ ok: false, hata: "bilinmeyen mesaj" });
       } catch (e) {
         cevapla({ ok: false, hata: e.message });
