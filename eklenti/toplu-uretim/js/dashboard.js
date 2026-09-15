@@ -230,8 +230,21 @@ chrome.runtime.onMessage.addListener((m, gonderen) => {
 
 // ---------------------------------------------------------------- girdi/kuyruk
 
+// Prompt listeleri iki biçimde geliyor: her satır bir prompt (üretilen .txt
+// dosyaları böyle) ya da boş satırla ayrılmış çok satırlı bloklar.
+//
+// Kullanıcı 80 satırlık bir dosya verdi; yalnızca boş satıra bakan ayırıcı
+// hepsini TEK prompt sayıp tek iş açtı. Artık metinde boş satır ayracı varsa
+// bloklara, yoksa satırlara bölünüyor; hangisinin seçildiği panoda yazıyor.
+function promptAyraci() {
+  const m = el.promptlar.value.trim();
+  return /\n[ \t]*\n/.test(m) ? "blok" : "satir";
+}
+
 function promptlariAyikla() {
-  return el.promptlar.value.split(/\n\s*\n/).map((s) => s.trim()).filter(Boolean);
+  const m = el.promptlar.value;
+  const parcalar = promptAyraci() === "blok" ? m.split(/\n\s*\n/) : m.split(/\n/);
+  return parcalar.map((s) => s.trim()).filter(Boolean);
 }
 const gorselleriAl = () => [...(el.gorseller.files || [])]
   .sort((a, b) => a.name.localeCompare(b.name, "tr", { numeric: true }));
@@ -241,9 +254,12 @@ const islerVar = () => promptlariAyikla().length > 0;
 function eslesmeyiGoster() {
   const p = promptlariAyikla(), g = gorselleriAl();
   if (!p.length) { el.eslesme.textContent = ""; el.panelKuyruk.hidden = true; return hazirMi(); }
-  el.eslesme.textContent = g.length
+  const nasil = promptAyraci() === "blok"
+    ? "boş satırla ayrılmış bloklar"
+    : "her satır bir prompt";
+  el.eslesme.textContent = (g.length
     ? `${p.length} prompt, ${g.length} görsel` + (g.length !== p.length ? " — sayılar eşit değil, eşleşenler işlenir." : " — birebir eşleşiyor.")
-    : `${p.length} prompt, görsel yok (metinden üretim).`;
+    : `${p.length} prompt, görsel yok (metinden üretim).`) + `  ·  okuma biçimi: ${nasil}`;
   kuyrugaCiz();
   hazirMi();
 }
@@ -270,7 +286,8 @@ el.promptDosya.addEventListener("change", async () => {
   if (!d) return;
   el.promptlar.value = await d.text();
   eslesmeyiGoster();
-  gunlukYaz(`Prompt dosyası okundu: ${d.name}`);
+  gunlukYaz(`Prompt dosyası okundu: ${d.name} — ${promptlariAyikla().length} prompt ` +
+    `(${promptAyraci() === "blok" ? "boş satırla ayrılmış bloklar" : "her satır bir prompt"}).`);
 });
 
 const satirDurum = (i, metin, sinif) => {
