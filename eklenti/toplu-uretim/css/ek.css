@@ -1,0 +1,52 @@
+/* Toplu Üretim'e özel eklemeler; ortak stil dosyasının üzerine biner. */
+textarea {
+  width: 100%; background: #0b1322; color: var(--metin); border: 1px solid var(--cizgi);
+  border-radius: 10px; padding: 11px; font: 13.5px/1.5 ui-monospace, Consolas, monospace;
+  resize: vertical;
+}
+input[type="text"], input[type="number"] {
+  background: #0b1322; color: var(--metin); border: 1px solid var(--cizgi);
+  border-radius: 9px; padding: 8px 11px; font-size: 14px;
+}
+.secici-tablo { width: 100%; border-collapse: collapse; }
+.secici-tablo td { padding: 9px 10px; border-bottom: 1px solid #172236; vertical-align: middle; }
+.secici-tablo td.ad { width: 250px; font-size: 14px; }
+.secici-tablo td .ops { color: var(--soluk); font-size: 12.5px; }
+.secici-tablo code { display: inline-block; max-width: 520px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
+.secici-tablo td:last-child { width: 110px; text-align: right; }
+.gunluk {
+  background: #080e1a; border: 1px solid var(--cizgi); border-radius: 10px; padding: 14px;
+  max-height: 320px; overflow-y: auto; font: 12.5px/1.6 ui-monospace, Consolas, monospace;
+  color: var(--soluk); white-space: pre-wrap; margin: 0;
+}
+.gunluk .hata { color: var(--kirmizi); }
+.gunluk .iyi { color: var(--yesil); }
+tr.calisiyor td { color: var(--camgobegi); }
+tr.tamam td { color: var(--yesil); }
+tr.hatali td { color: var(--kirmizi); }
+
+/* Öğrenme beklerken pano geri planda kalsın, dikkat siteye gitsin. */
+body.ogrenme-bekliyor .kahraman,
+body.ogrenme-bekliyor .kartlar,
+body.ogrenme-bekliyor .eylem { opacity: .35; pointer-events: none; }
+#ogrenme-uyari { font-size: 14.5px; line-height: 1.5; }
+
+/* Seçiciler kesilmesin: teşhis için tamamının görünmesi gerekiyor. */
+.secici-tablo code {
+  max-width: none; white-space: normal; word-break: break-all; overflow: visible;
+  text-overflow: clip; line-height: 1.5;
+}
+.secici-tablo td:last-child { width: 190px; white-space: nowrap; }
+.secici-tablo td:last-child button { padding: 7px 12px; font-size: 13px; }
+.sina-sonuc { display: block; margin-top: 6px; font-size: 12.5px; line-height: 1.45; }
+.sina-sonuc.iyi { color: var(--yesil); }
+.sina-sonuc.hata { color: var(--kirmizi); }
+
+.ilerleme-satir {
+  display: flex; justify-content: space-between; gap: 16px; margin-top: 12px;
+  font-size: 14px; color: var(--soluk);
+}
+.ilerleme-satir span:last-child { font-family: ui-monospace, monospace; white-space: nowrap; }
+#ilerleme-sayac { font-size: 13.5px; }
+#ilerleme-sayac b { color: var(--yesil); }
+#ilerleme-sayac i { color: var(--kirmizi); font-style: normal; }

@@ -35,13 +35,21 @@ python asmr.py --tema gece --anlatim "..."      # yumuşak anlatımlı ASMR
 
 Kendi ürettiğiniz kısa video kliplerini **`klipler/`** klasörüne koyup push
 ettiğinizde iş akışı **otomatik** çalışır: klipleri sırayla yumuşak geçişle
-birleştirir, hedef süreye (varsayılan **30 dk**) **döngüler**. **Klip sesleri
-korunur.**
+birleştirir ve hedef süreye getirir. **Klip sesleri korunur.**
+
+Varsayılan kurulum **30 saniyelik kısa ASMR** üretir: **7 klip × 5 sn**, yumuşak
+geçişle birleşince `7×5 − 6×0,8 = 30,2 sn` → **30 sn, 1920x1080**. Uzun form
+isterseniz `klip.sure` değerini artırın (1800 = 30 dk); aradaki fark temel
+videonun döngülenmesiyle doldurulur.
 
 ```bash
-python birlestir.py                               # klipler/ , 30 dk
+python birlestir.py                               # klipler/ , 30 sn (7 klip x 5 sn)
+python birlestir.py --sure 1800                   # ayni kliplerden 30 dk (donguler)
 python birlestir.py --klasor klipler --sure 3600  # 60 dk
 ```
+
+> Sahne planı, görüntü/video promptları ve kalite kontrol listesi için:
+> [`promptlar/ASMR_MASTER_PROMPT.md`](promptlar/ASMR_MASTER_PROMPT.md)
 
 - **Yükleme:** `klipler/` altına doğrudan (`01.mp4, 02.mp4…`) veya tarih
   alt-klasörü ile (`klipler/2026-09-02/…`). Alt-klasör varsa **en yenisi** işlenir.
