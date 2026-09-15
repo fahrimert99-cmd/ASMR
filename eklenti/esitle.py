@@ -18,30 +18,44 @@ from pathlib import Path
 
 KOK = Path(__file__).resolve().parent
 ORTAK = KOK / "ortak"
-EKLENTILER = ["kurgu-canavari", "gorsel-kurgu"]
-
-# (kaynak, eklenti icindeki hedef)
-DOSYALAR = [
-    ("render.js", "js/render.js"),
-    ("arka_plan.js", "js/arka_plan.js"),
-    ("dashboard.css", "css/dashboard.css"),
-    ("altyazi.js", "js/altyazi.js"),
-    ("eslestirme.js", "js/eslestirme.js"),
-    ("vendor/mediabunny.min.mjs", "vendor/mediabunny.min.mjs"),
-    ("vendor/mp4-muxer.mjs", "vendor/mp4-muxer.mjs"),
-    ("vendor/webm-muxer.mjs", "vendor/webm-muxer.mjs"),
-]
+# Her eklentinin ortak/ altindan aldigi dosyalar farkli: toplu-uretim render
+# motorunu paylasmaz, yalnizca gorunumu ayni tutmak icin stil dosyasini alir.
+PAYLASIM = {
+    "kurgu-canavari": [
+        ("render.js", "js/render.js"),
+        ("altyazi.js", "js/altyazi.js"),
+        ("eslestirme.js", "js/eslestirme.js"),
+        ("arka_plan.js", "js/arka_plan.js"),
+        ("dashboard.css", "css/dashboard.css"),
+        ("vendor/mediabunny.min.mjs", "vendor/mediabunny.min.mjs"),
+        ("vendor/mp4-muxer.mjs", "vendor/mp4-muxer.mjs"),
+        ("vendor/webm-muxer.mjs", "vendor/webm-muxer.mjs"),
+    ],
+    "gorsel-kurgu": [
+        ("render.js", "js/render.js"),
+        ("altyazi.js", "js/altyazi.js"),
+        ("eslestirme.js", "js/eslestirme.js"),
+        ("arka_plan.js", "js/arka_plan.js"),
+        ("dashboard.css", "css/dashboard.css"),
+        ("vendor/mediabunny.min.mjs", "vendor/mediabunny.min.mjs"),
+        ("vendor/mp4-muxer.mjs", "vendor/mp4-muxer.mjs"),
+        ("vendor/webm-muxer.mjs", "vendor/webm-muxer.mjs"),
+    ],
+    "toplu-uretim": [
+        ("dashboard.css", "css/dashboard.css"),
+    ],
+}
 
 
 def main() -> int:
     denetim = "--denetle" in sys.argv      # kopyalama, yalnizca farkliysa bildir
     farkli = []
-    for eklenti in EKLENTILER:
+    for eklenti, dosyalar in PAYLASIM.items():
         hedef_kok = KOK / eklenti
         if not hedef_kok.is_dir():
             print(f"atlandi (klasor yok): {eklenti}")
             continue
-        for kaynak_ad, hedef_ad in DOSYALAR:
+        for kaynak_ad, hedef_ad in dosyalar:
             kaynak = ORTAK / kaynak_ad
             hedef = hedef_kok / hedef_ad
             if not kaynak.is_file():

@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Toplu Üretim",
+  "version": "0.1.0",
+  "description": "Bir üretim sitesinin arayüzünü sürerek prompt listesini sırayla işler ve çıkan klipleri numaralı olarak indirir.",
+  "icons": {
+    "16": "ikonlar/ikon16.png",
+    "32": "ikonlar/ikon32.png",
+    "48": "ikonlar/ikon48.png",
+    "128": "ikonlar/ikon128.png"
+  },
+  "action": {
+    "default_title": "Toplu Üretim'i aç",
+    "default_icon": { "16": "ikonlar/ikon16.png", "32": "ikonlar/ikon32.png" }
+  },
+  "background": { "service_worker": "js/arka_plan.js", "type": "module" },
+  "permissions": ["storage", "downloads", "scripting", "tabs"],
+  "optional_host_permissions": ["*://*/*"],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}

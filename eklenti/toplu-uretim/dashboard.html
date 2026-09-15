@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8">
+  <title>Toplu Üretim</title>
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/ek.css">
+</head>
+<body>
+<div class="sarmal">
+
+  <header class="kahraman">
+    <div class="rozet-satir">
+      <img src="ikonlar/ikon128.png" alt="">
+      <span class="rozet-yazi">Yapay Zihin &middot; Üretim Aracı</span>
+    </div>
+    <h1>Toplu <span class="vurgu">Üretim</span></h1>
+    <p>Prompt listesini üretim sitesinde sırayla işler, çıkan klipleri numaralı olarak indirir.</p>
+  </header>
+
+  <div class="bilgi" id="uyari-kutusu">
+    <b>Önce okuyun:</b> Bu araç sitenin arayüzünü sizin yerinize kullanır; erişemediğiniz
+    bir şeyi açamaz. Çoğu servis arayüzün otomatik sürülmesini şartlarında sınırlar ve
+    hız limiti uygular — <b>gecikmeyi düşük tutmayın</b>. Kendi hesabınızla kendi işinizi
+    üretirken bile hesabınıza kısıtlama gelebilir.
+  </div>
+
+  <section class="panel">
+    <h2>1 &middot; Siteye bağlan</h2>
+    <div class="ayarlar" style="margin:0">
+      <div class="alan" style="flex:1; min-width:320px">
+        <label for="site">Üretim sayfasının adresi</label>
+        <input type="text" id="site" value="https://pika.art/" style="width:100%">
+      </div>
+      <button class="ikincil" id="izin-ver">İzin ver ve sekmeyi aç</button>
+      <div class="durum" id="baglanti-durum">Henüz bağlanılmadı.</div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>2 &middot; Seçicileri öğret</h2>
+    <p class="durum" style="margin:-6px 0 14px">
+      Her satırda <b>Öğret</b>'e basın, açılan sekmede ilgili öğeye tıklayın. Seçiciler
+      tahmin edilmez; site arayüzünü değiştirirse yalnızca burayı yenilersiniz.
+    </p>
+    <table class="secici-tablo">
+      <tbody>
+        <tr><td class="ad">Prompt kutusu</td><td><code id="s-prompt">—</code></td>
+            <td><button class="ikincil" data-alan="prompt">Öğret</button></td></tr>
+        <tr><td class="ad">Görsel yükleme alanı <span class="ops">(isteğe bağlı)</span></td><td><code id="s-gorsel">—</code></td>
+            <td><button class="ikincil" data-alan="gorsel">Öğret</button></td></tr>
+        <tr><td class="ad">Üret düğmesi</td><td><code id="s-uret">—</code></td>
+            <td><button class="ikincil" data-alan="uret">Öğret</button></td></tr>
+        <tr><td class="ad">Sonucun çıktığı alan</td><td><code id="s-sonuc">—</code></td>
+            <td><button class="ikincil" data-alan="sonuc">Öğret</button></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="kartlar" style="grid-template-columns: repeat(2, 1fr)">
+    <div class="kart">
+      <span class="no">01</span>
+      <h3>Promptlar</h3>
+      <p class="aciklama">Her prompt arasında bir boş satır bırakın. Ya da .txt dosyası yükleyin.</p>
+      <textarea id="promptlar" rows="8" placeholder="Birinci prompt.&#10;Birden fazla satır olabilir.&#10;&#10;İkinci prompt.&#10;&#10;Üçüncü prompt."></textarea>
+      <input type="file" id="prompt-dosya" accept=".txt,.csv,text/plain" style="margin-top:10px">
+    </div>
+    <div class="kart">
+      <span class="no">02</span>
+      <h3>Görseller</h3>
+      <p class="aciklama">İsteğe bağlı. Sırayla eşleşir: 1. görsel → 1. prompt. Görsel vermezseniz metinden üretim yapılır.</p>
+      <input type="file" id="gorseller" multiple accept="image/*">
+      <div class="durum" id="eslesme" style="margin-top:12px"></div>
+    </div>
+  </section>
+
+  <section class="ayarlar">
+    <div class="alan">
+      <label for="gecikme-alt">Gecikme (sn) — en az</label>
+      <input type="number" id="gecikme-alt" value="8" min="0" max="600">
+    </div>
+    <div class="alan">
+      <label for="gecikme-ust">en çok</label>
+      <input type="number" id="gecikme-ust" value="20" min="0" max="600">
+    </div>
+    <div class="alan">
+      <label for="zaman-asimi">İş başına en fazla bekleme</label>
+      <select id="zaman-asimi">
+        <option value="120">2 dakika</option>
+        <option value="300" selected>5 dakika</option>
+        <option value="600">10 dakika</option>
+      </select>
+    </div>
+    <div class="alan">
+      <label for="klasor">İndirme klasörü</label>
+      <input type="text" id="klasor" value="toplu-uretim" style="min-width:180px">
+    </div>
+    <div class="alan">
+      <label for="baslangic-no">İlk dosya numarası</label>
+      <input type="number" id="baslangic-no" value="1" min="1" max="999">
+    </div>
+  </section>
+
+  <section class="eylem">
+    <button class="ana" id="basla" disabled>Üretimi Başlat</button>
+    <button class="ikincil" id="durdur" hidden>Durdur</button>
+    <div class="durum" id="durum">Önce siteye bağlanın ve seçicileri öğretin.</div>
+  </section>
+
+  <section class="panel" id="panel-kuyruk" hidden>
+    <h2>Kuyruk</h2>
+    <div class="kaydir">
+      <table>
+        <thead><tr><th>#</th><th>Görsel</th><th>Prompt</th><th>Durum</th><th>Sonuç</th></tr></thead>
+        <tbody id="kuyruk"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Günlük</h2>
+    <pre id="gunluk" class="gunluk"></pre>
+  </section>
+
+</div>
+<script type="module" src="js/dashboard.js"></script>
+</body>
+</html>
