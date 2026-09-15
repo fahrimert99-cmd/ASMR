@@ -17,6 +17,7 @@ const el = {
 const ALANLAR = ["prompt", "gorsel", "uret", "sonuc"];
 let secici = { prompt: "", gorsel: "", uret: "", sonuc: "" };
 let hedefSekmeId = null;
+let hedefCerceveId = 0;   // seçicinin öğrenildiği çerçeve; işler oraya gönderilir
 let calisiyor = false;
 let durdurIstendi = false;
 
@@ -86,7 +87,12 @@ el.izinVer.addEventListener("click", async () => {
 
 async function betigiEnjekteEt() {
   try {
-    await chrome.scripting.executeScript({ target: { tabId: hedefSekmeId }, files: ["js/icerik.js"] });
+    // allFrames: sitenin editörü bir iframe içinde olabilir; yalnızca üst
+    // çerçeveye enjekte etmek o durumda hiçbir şey yakalamaz.
+    const enjekte = await chrome.scripting.executeScript({
+      target: { tabId: hedefSekmeId, allFrames: true }, files: ["js/icerik.js"],
+    });
+    gunlukYaz(`İçerik betiği ${enjekte.length} çerçeveye yerleşti.`);
     const c = await chrome.tabs.sendMessage(hedefSekmeId, { tur: "canli" });
     el.baglantiDurum.textContent = `Bağlandı: ${c.baslik || c.adres}`;
     gunlukYaz("İçerik betiği çalışıyor.", "iyi");
@@ -107,9 +113,10 @@ document.querySelectorAll("[data-alan]").forEach((d) => {
     try {
       await chrome.tabs.update(hedefSekmeId, { active: true });
       await chrome.tabs.sendMessage(hedefSekmeId, { tur: "ogren" });
-      durumYaz(`Açılan sekmede "${alan}" öğesine tıklayın (ESC ile vazgeçin).`);
-      gunlukYaz(`Öğrenme kipi: ${alan}`);
+      durumYaz(`↗ PİKA SEKMESİNE GEÇİN ve "${alan}" öğesine tıklayın. (ESC ile vazgeçin)`);
+      gunlukYaz(`Öğrenme kipi: ${alan} — şimdi sitedeki öğeye tıklamanız bekleniyor`);
       beklenenAlan = alan;
+      bekleyisiGoster(alan);
     } catch (e) {
       gunlukYaz("Öğrenme başlatılamadı: " + e.message, "hata");
     }
@@ -117,20 +124,45 @@ document.querySelectorAll("[data-alan]").forEach((d) => {
 });
 
 let beklenenAlan = null;
-chrome.runtime.onMessage.addListener((m) => {
+let bekleyisZamanlayici = null;
+
+// Öğrenme, kullanıcı SİTEDE bir öğeye tıklayana kadar tamamlanmaz. Bu adım
+// atlanınca günlükte yalnızca "Öğrenme kipi" satırı kalıyor ve neyin eksik
+// olduğu anlaşılmıyordu; bekleyiş artık panoda açıkça görünür.
+function bekleyisiGoster(alan) {
+  clearTimeout(bekleyisZamanlayici);
+  document.body.classList.add("ogrenme-bekliyor");
+  const k = document.getElementById("ogrenme-uyari");
+  k.hidden = false;
+  k.textContent = `Bekleniyor: Pika sekmesine geçip "${alan}" öğesine tıklayın. Sayfanın üstünde mavi şerit görünmüyorsa betik o çerçevede çalışmıyordur — bunu bana bildirin.`;
+  bekleyisZamanlayici = setTimeout(() => {
+    if (beklenenAlan === alan) {
+      gunlukYaz(`"${alan}" için 45 sn'dir tıklama gelmedi. Sitede mavi şerit göründü mü?`, "hata");
+    }
+  }, 45000);
+}
+function bekleyisiKapat() {
+  clearTimeout(bekleyisZamanlayici);
+  document.body.classList.remove("ogrenme-bekliyor");
+  document.getElementById("ogrenme-uyari").hidden = true;
+}
+chrome.runtime.onMessage.addListener((m, gonderen) => {
   if (m.tur === "ogrenildi" && beklenenAlan) {
     secici[beklenenAlan] = m.secici;
+    if (typeof gonderen?.frameId === "number") hedefCerceveId = gonderen.frameId;
     gunlukYaz(`${beklenenAlan} ← ${m.secici}  (<${m.etiket}>)`, "iyi");
     if (beklenenAlan === "gorsel" && !m.dosyaGirdisi) {
       gunlukYaz("Not: tıkladığınız öğe dosya girdisi değil. Üretim sırasında " +
         "yakınındaki gizli input[type=file] aranacak; çalışmazsa farklı bir öğe deneyin.", "");
     }
     beklenenAlan = null;
+    bekleyisiKapat();
     seciciyiGoster();
     ayarlariKaydet();
     durumYaz("Seçici kaydedildi.");
   } else if (m.tur === "ogrenme-iptal") {
     beklenenAlan = null;
+    bekleyisiKapat();
     durumYaz("Öğrenme iptal edildi.");
   }
 });
@@ -229,13 +261,13 @@ el.basla.addEventListener("click", async () => {
       if (gorseller[i] && secici.gorsel) {
         is.gorsel = { ad: gorseller[i].name, veri: await dosyaOku(gorseller[i]) };
       }
-      const cevap = await chrome.tabs.sendMessage(hedefSekmeId, { tur: "is", is });
+      const cevap = await chrome.tabs.sendMessage(hedefSekmeId, { tur: "is", is }, { frameId: hedefCerceveId });
       if (!cevap?.ok) throw new Error(cevap?.hata || "yanıt yok");
 
       const adresler = cevap.sonuc.adresler;
       gunlukYaz(`${i + 1}. iş: ${adresler.length} sonuç bulundu.`);
       for (const adres of adresler) {
-        const okuma = await chrome.tabs.sendMessage(hedefSekmeId, { tur: "oku", adres });
+        const okuma = await chrome.tabs.sendMessage(hedefSekmeId, { tur: "oku", adres }, { frameId: hedefCerceveId });
         if (!okuma?.ok) throw new Error(okuma?.hata || "sonuç okunamadı");
         const bayt = Uint8Array.from(atob(okuma.dosya.veri), (c) => c.charCodeAt(0));
         const uzanti = okuma.dosya.tur.includes("webm") ? "webm" : "mp4";

@@ -24,3 +24,9 @@ input[type="text"], input[type="number"] {
 tr.calisiyor td { color: var(--camgobegi); }
 tr.tamam td { color: var(--yesil); }
 tr.hatali td { color: var(--kirmizi); }
+
+/* Öğrenme beklerken pano geri planda kalsın, dikkat siteye gitsin. */
+body.ogrenme-bekliyor .kahraman,
+body.ogrenme-bekliyor .kartlar,
+body.ogrenme-bekliyor .eylem { opacity: .35; pointer-events: none; }
+#ogrenme-uyari { font-size: 14.5px; line-height: 1.5; }
