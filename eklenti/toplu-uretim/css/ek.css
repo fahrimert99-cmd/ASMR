@@ -41,3 +41,12 @@ body.ogrenme-bekliyor .eylem { opacity: .35; pointer-events: none; }
 .sina-sonuc { display: block; margin-top: 6px; font-size: 12.5px; line-height: 1.45; }
 .sina-sonuc.iyi { color: var(--yesil); }
 .sina-sonuc.hata { color: var(--kirmizi); }
+
+.ilerleme-satir {
+  display: flex; justify-content: space-between; gap: 16px; margin-top: 12px;
+  font-size: 14px; color: var(--soluk);
+}
+.ilerleme-satir span:last-child { font-family: ui-monospace, monospace; white-space: nowrap; }
+#ilerleme-sayac { font-size: 13.5px; }
+#ilerleme-sayac b { color: var(--yesil); }
+#ilerleme-sayac i { color: var(--kirmizi); font-style: normal; }

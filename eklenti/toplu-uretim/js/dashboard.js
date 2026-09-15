@@ -12,6 +12,9 @@ const el = {
   zamanAsimi: $("zaman-asimi"), klasor: $("klasor"), baslangicNo: $("baslangic-no"),
   basla: $("basla"), durdur: $("durdur"), durum: $("durum"),
   panelKuyruk: $("panel-kuyruk"), kuyruk: $("kuyruk"), gunluk: $("gunluk"),
+  panelIlerleme: $("panel-ilerleme"), ilerlemeBaslik: $("ilerleme-baslik"),
+  ilerlemeSayac: $("ilerleme-sayac"), cubuk: $("cubuk"),
+  ilerlemeMetin: $("ilerleme-metin"), ilerlemeSure: $("ilerleme-sure"),
 };
 
 const ALANLAR = ["prompt", "gorsel", "uret", "sonuc"];
@@ -56,7 +59,8 @@ function seciciyiGoster() {
 }
 
 function hazirMi() {
-  const tamam = hedefSekmeId && secici.prompt && secici.uret && secici.sonuc && islerVar();
+  // sonuç seçicisi zorunlu değil: boşsa tüm sayfa izlenir
+  const tamam = hedefSekmeId && secici.prompt && secici.uret && islerVar();
   el.basla.disabled = !tamam || calisiyor;
   return tamam;
 }
@@ -130,6 +134,18 @@ let bekleyisZamanlayici = null;
 
 // Her seçicinin sayfada neye denk geldiğini yerinde gösterir. Teşhis için
 // ekran görüntüsü alıp göndermek gerekmesin.
+document.querySelectorAll("[data-temizle]").forEach((d) => {
+  d.addEventListener("click", () => {
+    const alan = d.dataset.temizle;
+    secici[alan] = "";
+    delete izler[alan];
+    ayarlariKaydet();
+    seciciyiGoster();
+    document.getElementById("s-" + alan).parentElement.querySelector(".sina-sonuc")?.remove();
+    gunlukYaz(`${alan} seçicisi temizlendi — artık tüm sayfa izlenecek.`, "iyi");
+  });
+});
+
 document.querySelectorAll("[data-sina]").forEach((d) => {
   d.addEventListener("click", async () => {
     const alan = d.dataset.sina;
@@ -142,7 +158,11 @@ document.querySelectorAll("[data-sina]").forEach((d) => {
       kutu.parentElement.appendChild(n);
     };
     if (!hedefSekmeId) return yaz("Önce siteye bağlanın.", "hata");
-    if (!secici[alan]) return yaz("Bu seçici henüz öğretilmedi.", "hata");
+    if (!secici[alan]) {
+      return alan === "sonuc"
+        ? yaz("Boş — üretim sırasında tüm sayfa izlenecek. En dayanıklı ayar budur.", "iyi")
+        : yaz("Bu seçici henüz öğretilmedi.", "hata");
+    }
     try {
       const c = await chrome.tabs.sendMessage(hedefSekmeId, { tur: "sina", secici: secici[alan], alan, iz: izler[alan] },
         hedefCerceveId ? { frameId: hedefCerceveId } : undefined);
@@ -270,11 +290,63 @@ const dosyaOku = (dosya) => new Promise((coz, red) => {
   o.readAsDataURL(dosya);
 });
 
-el.durdur.addEventListener("click", () => {
+el.durdur.addEventListener("click", async () => {
   durdurIstendi = true;
   el.durdur.disabled = true;
-  durumYaz("Bu iş bitince duracak…");
+  durumYaz("Durduruluyor — süren iş kesiliyor…");
+  el.ilerlemeMetin.textContent = "Durduruluyor — süren iş kesiliyor…";
+  // Süren iş zaman aşımını beklemesin: içerik betiğine de haber ver.
+  // Beklerken bulduğu sonuç varsa geri gönderir, indirilir.
+  try {
+    if (hedefSekmeId !== null) {
+      await chrome.tabs.sendMessage(hedefSekmeId, { tur: "durdur" }, { frameId: hedefCerceveId });
+    }
+  } catch { /* sekme kapanmış olabilir, sorun değil */ }
 });
+
+// İlerleme göstergesi.
+//
+// Seksen klipte "işleniyor…" yazısı yetmiyor: kullanıcı ne kadar kaldığını ve
+// tek bir işin ne süredir beklediğini görmeli. Tahmini süre, o ana kadar
+// TAMAMLANMIŞ işlerin ortalamasından hesaplanır; ilk iş bitmeden tahmin
+// verilmez, yanıltıcı olur.
+const sureBicim = (sn) => {
+  if (!isFinite(sn) || sn < 0) return "—";
+  const s = Math.round(sn), d = Math.floor(s / 60), st = Math.floor(d / 60);
+  return st ? `${st} sa ${d % 60} dk` : d ? `${d} dk ${s % 60} sn` : `${s} sn`;
+};
+
+let ilerlemeZamanlayici = null;
+
+function ilerlemeKur(toplam) {
+  el.panelIlerleme.hidden = false;
+  el.ilerlemeBaslik.textContent = "Üretim sürüyor…";
+  el.cubuk.style.width = "0%";
+  el.ilerlemeSayac.innerHTML = `0 / ${toplam}`;
+  el.ilerlemeMetin.textContent = "Başlıyor…";
+  el.ilerlemeSure.textContent = "";
+}
+
+function ilerlemeGuncelle({ biten, toplam, basarili, hatali, baslangic, durum, isBaslangici }) {
+  const oran = toplam ? biten / toplam : 0;
+  el.cubuk.style.width = Math.round(oran * 100) + "%";
+  el.ilerlemeSayac.innerHTML =
+    `${biten} / ${toplam}  ·  <b>${basarili} başarılı</b>` + (hatali ? `  ·  <i>${hatali} hatalı</i>` : "");
+  el.ilerlemeMetin.textContent = durum;
+
+  clearInterval(ilerlemeZamanlayici);
+  const yaz = () => {
+    const gecen = (Date.now() - baslangic) / 1000;
+    let metin = `geçen ${sureBicim(gecen)}`;
+    if (biten > 0 && biten < toplam) {
+      metin += ` · tahmini kalan ${sureBicim((gecen / biten) * (toplam - biten))}`;
+    }
+    if (isBaslangici) metin += ` · bu iş ${sureBicim((Date.now() - isBaslangici) / 1000)}`;
+    el.ilerlemeSure.textContent = metin;
+  };
+  yaz();
+  if (isBaslangici) ilerlemeZamanlayici = setInterval(yaz, 1000);
+}
 
 el.basla.addEventListener("click", async () => {
   if (!hazirMi()) return;
@@ -290,12 +362,17 @@ el.basla.addEventListener("click", async () => {
   calisiyor = true; durdurIstendi = false;
   el.basla.disabled = true; el.durdur.hidden = false; el.durdur.disabled = false;
   gunlukYaz(`Üretim başlıyor: ${adet} iş.`, "iyi");
+  ilerlemeKur(adet);
+  const baslangicAn = Date.now();
 
   let basarili = 0, hatali = 0;
   for (let i = 0; i < adet; i++) {
     if (durdurIstendi) { gunlukYaz("Kullanıcı durdurdu."); break; }
     satirDurum(i, "çalışıyor…", "calisiyor");
     durumYaz(`${i + 1}/${adet} işleniyor…`);
+    const isAn = Date.now();
+    ilerlemeGuncelle({ biten: i, toplam: adet, basarili, hatali, baslangic: baslangicAn,
+      durum: `${i + 1}. iş üretiliyor — sonuç bekleniyor`, isBaslangici: isAn });
 
     try {
       const is = { secici, izler, prompt: promptlar[i], zamanAsimi };
@@ -306,6 +383,7 @@ el.basla.addEventListener("click", async () => {
       if (!cevap?.ok) throw new Error(cevap?.hata || "yanıt yok");
 
       for (const not of cevap.sonuc.kurtarmalar || []) gunlukYaz("kurtarma — " + not, "hata");
+      for (const not of cevap.sonuc.notlar || []) gunlukYaz("not — " + not);
       const adresler = cevap.sonuc.adresler;
       gunlukYaz(`${i + 1}. iş: ${adresler.length} sonuç bulundu.`);
       for (const adres of adresler) {
@@ -321,8 +399,17 @@ el.basla.addEventListener("click", async () => {
         gunlukYaz(`indirildi: ${ad} (${(okuma.dosya.boyut / 1048576).toFixed(1)} MB)`, "iyi");
         no++;
       }
-      satirDurum(i, "tamam", "tamam");
-      basarili++;
+      if (cevap.sonuc.durduruldu) {
+        // Kesilen iş ne başarılı ne hatalı: indirilen çıktı varsa sayılır,
+        // yoksa hiç yapılmamış işlerle birlikte eksik kalır.
+        satirDurum(i, adresler.length ? "durduruldu (indirildi)" : "durduruldu", "hatali");
+        if (!adresler.length) satirSonuc(i, "durduruldu — sonuç çıkmamıştı");
+        gunlukYaz(`${i + 1}. iş kullanıcı isteğiyle kesildi.`);
+        if (adresler.length) basarili++;
+      } else {
+        satirDurum(i, "tamam", "tamam");
+        basarili++;
+      }
     } catch (e) {
       satirDurum(i, "hata", "hatali");
       satirSonuc(i, e.message);
@@ -333,12 +420,25 @@ el.basla.addEventListener("click", async () => {
     if (i < adet - 1 && !durdurIstendi) {
       const s = altGecikme + Math.random() * (ustGecikme - altGecikme);
       gunlukYaz(`${s.toFixed(1)} sn bekleniyor…`);
+      ilerlemeGuncelle({ biten: i + 1, toplam: adet, basarili, hatali, baslangic: baslangicAn,
+        durum: `Sıradaki iş için ${s.toFixed(0)} sn bekleniyor…`, isBaslangici: null });
       await bekle(s * 1000);
     }
   }
 
   calisiyor = false;
   el.durdur.hidden = true;
+  clearInterval(ilerlemeZamanlayici);
+  // Durdurulduysa cubuk gercekten islenen orani gostermeli; %100 yalan olurdu.
+  const biten = basarili + hatali;
+  el.cubuk.style.width = (adet ? Math.round((biten / adet) * 100) : 100) + "%";
+  el.ilerlemeBaslik.textContent = durdurIstendi ? "Üretim durduruldu" : "Üretim tamamlandı";
+  el.ilerlemeSayac.innerHTML = `${biten} / ${adet}  ·  <b>${basarili} başarılı</b>` +
+    (hatali ? `  ·  <i>${hatali} hatalı</i>` : "");
+  el.ilerlemeMetin.textContent = durdurIstendi
+    ? `${adet - biten} iş tamamlanmadan durduruldu.`
+    : hatali ? "Hatalı işler için günlüğe bakın." : "Tüm işler tamamlandı.";
+  el.ilerlemeSure.textContent = `toplam ${sureBicim((Date.now() - baslangicAn) / 1000)}`;
   durumYaz(`Bitti — ${basarili} başarılı, ${hatali} hatalı.`);
   gunlukYaz(`Üretim bitti: ${basarili} başarılı, ${hatali} hatalı.`, hatali ? "hata" : "iyi");
   hazirMi();

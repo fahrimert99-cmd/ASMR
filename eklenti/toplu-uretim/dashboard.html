@@ -52,8 +52,8 @@
             <td><button class="ikincil" data-sina="gorsel">Sına</button> <button class="ikincil" data-alan="gorsel">Öğret</button></td></tr>
         <tr><td class="ad">Üret düğmesi</td><td><code id="s-uret">—</code></td>
             <td><button class="ikincil" data-sina="uret">Sına</button> <button class="ikincil" data-alan="uret">Öğret</button></td></tr>
-        <tr><td class="ad">Sonucun çıktığı alan</td><td><code id="s-sonuc">—</code></td>
-            <td><button class="ikincil" data-sina="sonuc">Sına</button> <button class="ikincil" data-alan="sonuc">Öğret</button></td></tr>
+        <tr><td class="ad">Sonucun çıktığı alan <span class="ops">(boş = tüm sayfa)</span></td><td><code id="s-sonuc">—</code></td>
+            <td><button class="ikincil" data-temizle="sonuc">Temizle</button> <button class="ikincil" data-sina="sonuc">Sına</button> <button class="ikincil" data-alan="sonuc">Öğret</button></td></tr>
       </tbody>
     </table>
   </section>
@@ -106,6 +106,18 @@
     <button class="ana" id="basla" disabled>Üretimi Başlat</button>
     <button class="ikincil" id="durdur" hidden>Durdur</button>
     <div class="durum" id="durum">Önce siteye bağlanın ve seçicileri öğretin.</div>
+  </section>
+
+  <section class="panel" id="panel-ilerleme" hidden>
+    <div class="onizleme-bas">
+      <h2 style="margin:0" id="ilerleme-baslik">Üretim sürüyor…</h2>
+      <div class="onizleme-bilgi" id="ilerleme-sayac"></div>
+    </div>
+    <div class="cubuk"><i id="cubuk"></i></div>
+    <div class="ilerleme-satir">
+      <span id="ilerleme-metin">Hazırlanıyor…</span>
+      <span id="ilerleme-sure"></span>
+    </div>
   </section>
 
   <section class="panel" id="panel-kuyruk" hidden>

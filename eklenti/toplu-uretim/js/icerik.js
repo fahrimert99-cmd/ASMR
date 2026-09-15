@@ -236,6 +236,7 @@
   const bul = (s) => { try { return s ? document.querySelector(s) : null; } catch (_) { return null; } };
 
   let kurtarmaNotlari = [];
+  let durdurIstendi = false;   // panodan gelen Durdur, süren işi keser
 
   // Önce seçiciyi dener; tutmazsa parmak izinden arar.
   function bulEsnek(secici, iz, ad) {
@@ -345,22 +346,51 @@
     await bekle(300);
   }
 
-  // Sonuçtaki bağlantıyı toplar: video[src], source[src] veya a[href].
-  function sonucAdresleri(secici, iz) {
-    const kok = bulEsnek(secici, iz, "sonuç") || document;
+  const MEDYA_UZANTI = /\.(mp4|webm|mov|m4v)(\?|#|$)/i;
+
+  // Bir adresin video olup olmadığına karar verir.
+  //
+  // Eskiden her a[href] toplanıyordu; gerçek bir sitede bu yüzlerce gezinme
+  // bağlantısı demek ve üretimden sonra beliren herhangi bir bağlantı sonuç
+  // sanılabilirdi. Artık yalnızca video öğeleri ve medya adresleri sayılır.
+  const medyaAdresiMi = (u) => !!u && !u.startsWith("data:") &&
+    (u.startsWith("blob:") || MEDYA_UZANTI.test(u));
+
+  // Sonuç adreslerini toplar.
+  //
+  // Seçici verilmezse (veya tutmazsa) TÜM SAYFA izlenir. Kullanıcıyı videoların
+  // belireceği kutuyu tam isabetle göstermeye zorlamak kırılgan bir gereksinim;
+  // sayfanın tamamında yeni beliren videoyu aramak hem daha basit hem daha
+  // dayanıklı.
+  function medyaTopla(kok) {
     const adresler = new Set();
-    const ekle = (u) => u && !u.startsWith("data:") && adresler.add(u);
+    const ekle = (u) => medyaAdresiMi(u) && adresler.add(u);
     if (kok.tagName === "VIDEO") ekle(kok.currentSrc || kok.src);
-    if (kok.tagName === "A") ekle(kok.href);
-    kok.querySelectorAll?.("video, source, a[href]").forEach((e) => {
-      ekle(e.tagName === "A" ? e.href : (e.currentSrc || e.src));
-    });
-    return [...adresler];
+    kok.querySelectorAll?.("video, source").forEach((e) => ekle(e.currentSrc || e.src));
+    kok.querySelectorAll?.("a[href]").forEach((e) => ekle(e.href));
+    return adresler;
+  }
+
+  // Sonuç iki yerde birden aranır: öğretilen kutuda VE sayfanın tamamında.
+  //
+  // Kullanıcı sonuç alanı diye bir menü bağlantısını (#library) öğretmişti;
+  // kutunun içinde eski bir bağlantı durduğu için "içi boş" sayılmıyor,
+  // yedeğe de düşmüyor ve iş 300 sn sonra boşuna zaman aşımına uğruyordu.
+  // Artık kutu yalnızca ÖNCELİK: orada yeni bir şey çıkarsa o alınır,
+  // çıkmazsa sayfanın tamamındaki yeni adresler kullanılır.
+  function sonucAdresleri(secici, iz) {
+    const kok = (secici && bulEsnek(secici, iz, "sonuç")) || document;
+    const kapsayici = medyaTopla(kok);
+    if (kok === document) return { kap: [...kapsayici], tum: [...kapsayici] };
+    const tum = medyaTopla(document);
+    for (const u of kapsayici) tum.add(u);
+    return { kap: [...kapsayici], tum: [...tum] };
   }
 
   async function isYurut(is) {
     const { secici, izler = {}, prompt, gorsel, zamanAsimi = 300000 } = is;
     kurtarmaNotlari = [];
+    durdurIstendi = false;
 
     const promptEl = metinAlaniBul(secici.prompt, izler.prompt);
     if (!promptEl) {
@@ -368,7 +398,8 @@
     }
 
     // Üretimden ÖNCEKİ sonuçlar not edilir; yenisi bunların dışında çıkacak.
-    const oncekiler = new Set(sonucAdresleri(secici.sonuc, izler.sonuc));
+    const once = sonucAdresleri(secici.sonuc, izler.sonuc);
+    const oncekiKap = new Set(once.kap), oncekiTum = new Set(once.tum);
 
     if (gorsel && secici.gorsel) await gorselEkle(secici.gorsel, izler.gorsel, gorsel.veri, gorsel.ad);
     degerYaz(promptEl, prompt);
@@ -379,11 +410,30 @@
     uretEl.click();
 
     const bitis = Date.now() + zamanAsimi;
+    const tara = () => {
+      const s = sonucAdresleri(secici.sonuc, izler.sonuc);
+      const kap = s.kap.filter((u) => !oncekiKap.has(u));
+      return kap.length ? { adresler: kap, nerede: "kutu" }
+                        : { adresler: s.tum.filter((u) => !oncekiTum.has(u)), nerede: "sayfa" };
+    };
+
     while (Date.now() < bitis) {
       await bekle(1500);
-      const yeni = sonucAdresleri(secici.sonuc, izler.sonuc).filter((u) => !oncekiler.has(u));
-      if (yeni.length) return { adresler: yeni, kurtarmalar: kurtarmaNotlari.slice() };
+      const b = tara();
+      if (b.adresler.length) {
+        // Kutu dışında bulunmak bir hata değil, bilgi: günlükte kırmızı durmasın.
+        const notlar = (b.nerede === "sayfa" && secici.sonuc)
+          ? ["sonuç öğretilen kutunun dışında, sayfanın tamamında bulundu"] : [];
+        return { adresler: b.adresler, kurtarmalar: kurtarmaNotlari.slice(), notlar };
+      }
+      // Durdur'a basıldıysa beklemeyi kesip o ana kadar çıkanı geri ver;
+      // üretilmiş bir klibi elde kalmış sayıp atmak kullanıcının hakkı değil.
+      if (durdurIstendi) {
+        return { adresler: [], kurtarmalar: kurtarmaNotlari.slice(), durduruldu: true };
+      }
     }
+    const kalan = tara().adresler;
+    if (kalan.length) return { adresler: kalan, kurtarmalar: kurtarmaNotlari.slice() };
     throw new Error(`sonuç ${Math.round(zamanAsimi / 1000)} sn içinde gelmedi`);
   }
 
@@ -442,9 +492,11 @@
         : { ok: false, mesaj: `${tanim} → tıklanamaz (SVG gibi bir öğe); düğmenin kendisini seçin` };
     }
     if (alan === "sonuc") {
-      const adresler = sonucAdresleri(secici, iz);
-      return { ok: true, mesaj: `${tanim} → şu an içinde ${adresler.length} video/bağlantı var` +
-        (etiket === "a" || etiket === "video" ? " — tek öğe seçilmiş; KAPSAYICI kutuyu seçmek daha güvenilir" : "") + coklu };
+      const icerde = sonucAdresleri(secici, iz).kap.length;
+      const sayfada = sonucAdresleri("", null).tum.length;
+      return { ok: true, mesaj: `${tanim} → şu an ${icerde} video adresi görünüyor ` +
+        `(sayfanın tamamında ${sayfada}). Kutuda yeni bir sonuç çıkmazsa sayfanın ` +
+        `tamamı da taranır, iş boşuna beklemez. Emin değilseniz bu alanı BOŞ bırakın.` + coklu };
     }
     return { ok: true, mesaj: tanim + coklu };
   }
@@ -454,6 +506,7 @@
       try {
         if (mesaj.tur === "canli") return cevapla({ ok: true, baslik: document.title, adres: location.href });
         if (mesaj.tur === "ogren") { ogrenmeyiBaslat(); return cevapla({ ok: true }); }
+        if (mesaj.tur === "durdur") { durdurIstendi = true; return cevapla({ ok: true }); }
         if (mesaj.tur === "is") return cevapla({ ok: true, sonuc: await isYurut(mesaj.is) });
         if (mesaj.tur === "oku") return cevapla({ ok: true, dosya: await adresiOku(mesaj.adres) });
         if (mesaj.tur === "sina") return cevapla({ ok: true, sonuc: seciciSina(mesaj.secici, mesaj.alan, mesaj.iz) });
