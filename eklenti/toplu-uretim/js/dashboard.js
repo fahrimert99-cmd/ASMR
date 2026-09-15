@@ -126,6 +126,33 @@ document.querySelectorAll("[data-alan]").forEach((d) => {
 let beklenenAlan = null;
 let bekleyisZamanlayici = null;
 
+// Her seçicinin sayfada neye denk geldiğini yerinde gösterir. Teşhis için
+// ekran görüntüsü alıp göndermek gerekmesin.
+document.querySelectorAll("[data-sina]").forEach((d) => {
+  d.addEventListener("click", async () => {
+    const alan = d.dataset.sina;
+    const kutu = document.getElementById("s-" + alan);
+    const yaz = (metin, sinif) => {
+      kutu.parentElement.querySelector(".sina-sonuc")?.remove();
+      const n = document.createElement("span");
+      n.className = "sina-sonuc " + sinif;
+      n.textContent = metin;
+      kutu.parentElement.appendChild(n);
+    };
+    if (!hedefSekmeId) return yaz("Önce siteye bağlanın.", "hata");
+    if (!secici[alan]) return yaz("Bu seçici henüz öğretilmedi.", "hata");
+    try {
+      const c = await chrome.tabs.sendMessage(hedefSekmeId, { tur: "sina", secici: secici[alan], alan },
+        hedefCerceveId ? { frameId: hedefCerceveId } : undefined);
+      const r = c.sonuc;
+      yaz(r.mesaj, r.ok ? "iyi" : "hata");
+      gunlukYaz(`sına ${alan}: ${r.mesaj}`, r.ok ? "iyi" : "hata");
+    } catch (e) {
+      yaz("Sınanamadı: " + e.message, "hata");
+    }
+  });
+});
+
 // Öğrenme, kullanıcı SİTEDE bir öğeye tıklayana kadar tamamlanmaz. Bu adım
 // atlanınca günlükte yalnızca "Öğrenme kipi" satırı kalıyor ve neyin eksik
 // olduğu anlaşılmıyordu; bekleyiş artık panoda açıkça görünür.

@@ -309,6 +309,51 @@
     return { veri: btoa(s), tur: y.headers.get("content-type") || "video/mp4", boyut: b.length };
   }
 
+  // Seçiciyi sayfada sınar ve neye denk geldiğini anlatır.
+  //
+  // Ekran görüntüsü üzerinden teşhis yavaş ve seçiciler panoda kesik
+  // görünüyordu; kullanıcı artık kendisi bakabilsin.
+  function seciciSina(secici, alan) {
+    let ogeler;
+    try { ogeler = document.querySelectorAll(secici); }
+    catch (e) { return { ok: false, mesaj: "geçersiz seçici: " + e.message }; }
+
+    if (!ogeler.length) return { ok: false, mesaj: "sayfada HİÇBİR öğeye uymuyor" };
+    const oge = ogeler[0];
+    const etiket = oge.tagName.toLowerCase();
+    const kimlik = oge.id ? "#" + oge.id : "";
+    const aria = oge.getAttribute("aria-label");
+    const yazi = (oge.textContent || "").trim().replace(/\s+/g, " ").slice(0, 40);
+    const tanim = `<${etiket}>${kimlik}` + (aria ? ` aria-label="${aria}"` : "") + (yazi ? ` "${yazi}"` : "");
+    const coklu = ogeler.length > 1 ? ` — DİKKAT: ${ogeler.length} öğeye birden uyuyor` : "";
+
+    if (alan === "prompt") {
+      const alanOge = metinAlaniBul(secici);
+      return alanOge
+        ? { ok: true, mesaj: `${tanim} → yazı kutusu bulundu: <${alanOge.tagName.toLowerCase()}>${alanOge.id ? "#" + alanOge.id : ""}${coklu}` }
+        : { ok: false, mesaj: `${tanim} → içinde veya yakınında yazı kutusu YOK` };
+    }
+    if (alan === "gorsel") {
+      const girdi = dosyaGirdisiBul(secici);
+      return girdi
+        ? { ok: true, mesaj: `${tanim} → dosya girdisi bulundu${girdi.id ? " #" + girdi.id : ""}${coklu}` }
+        : { ok: false, mesaj: `${tanim} → yakınında input[type=file] YOK` };
+    }
+    if (alan === "uret") {
+      const tiklanabilir = typeof oge.click === "function";
+      const dugme = etiket === "button" || oge.getAttribute("role") === "button" || etiket === "a";
+      return tiklanabilir
+        ? { ok: true, mesaj: `${tanim} → tıklanabilir${dugme ? "" : " (ama düğme değil, emin olun)"}${coklu}` }
+        : { ok: false, mesaj: `${tanim} → tıklanamaz (SVG gibi bir öğe); düğmenin kendisini seçin` };
+    }
+    if (alan === "sonuc") {
+      const adresler = sonucAdresleri(secici);
+      return { ok: true, mesaj: `${tanim} → şu an içinde ${adresler.length} video/bağlantı var` +
+        (etiket === "a" || etiket === "video" ? " — tek öğe seçilmiş; KAPSAYICI kutuyu seçmek daha güvenilir" : "") + coklu };
+    }
+    return { ok: true, mesaj: tanim + coklu };
+  }
+
   chrome.runtime.onMessage.addListener((mesaj, _gonderen, cevapla) => {
     (async () => {
       try {
@@ -316,6 +361,7 @@
         if (mesaj.tur === "ogren") { ogrenmeyiBaslat(); return cevapla({ ok: true }); }
         if (mesaj.tur === "is") return cevapla({ ok: true, sonuc: await isYurut(mesaj.is) });
         if (mesaj.tur === "oku") return cevapla({ ok: true, dosya: await adresiOku(mesaj.adres) });
+        if (mesaj.tur === "sina") return cevapla({ ok: true, sonuc: seciciSina(mesaj.secici, mesaj.alan) });
         cevapla({ ok: false, hata: "bilinmeyen mesaj" });
       } catch (e) {
         cevapla({ ok: false, hata: e.message });

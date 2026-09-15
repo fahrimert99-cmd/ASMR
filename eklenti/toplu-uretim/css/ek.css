@@ -30,3 +30,14 @@ body.ogrenme-bekliyor .kahraman,
 body.ogrenme-bekliyor .kartlar,
 body.ogrenme-bekliyor .eylem { opacity: .35; pointer-events: none; }
 #ogrenme-uyari { font-size: 14.5px; line-height: 1.5; }
+
+/* Seçiciler kesilmesin: teşhis için tamamının görünmesi gerekiyor. */
+.secici-tablo code {
+  max-width: none; white-space: normal; word-break: break-all; overflow: visible;
+  text-overflow: clip; line-height: 1.5;
+}
+.secici-tablo td:last-child { width: 190px; white-space: nowrap; }
+.secici-tablo td:last-child button { padding: 7px 12px; font-size: 13px; }
+.sina-sonuc { display: block; margin-top: 6px; font-size: 12.5px; line-height: 1.45; }
+.sina-sonuc.iyi { color: var(--yesil); }
+.sina-sonuc.hata { color: var(--kirmizi); }
