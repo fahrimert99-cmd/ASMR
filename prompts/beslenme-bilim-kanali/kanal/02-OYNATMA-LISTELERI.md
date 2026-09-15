@@ -38,7 +38,20 @@ Which food molecules actually reach the brain, and what they do when they get th
 ```
 *(233 karakter)*
 
-**İçerecek video:** yok — **ilk video önerileri:**
+**İçerecek video:**
+1. **Goji × Makula** (Video 6) — hazırlanıyor.
+
+> **Neden bu listede?** Retina beyne bağlı bir organ değil, **beynin kendisidir**:
+> embriyo döneminde beyinden dışarı uzayarak oluşur ve ömür boyu merkezi sinir
+> sistemi dokusu olarak kalır. Makula da onun 1,5 mm'lik merkezi. Goji videosu
+> bu listeye zorlama bir yerleştirme değil; açılış cümlesi zaten bu bilgiyi
+> kuruyor.
+>
+> Altıncı bir liste (Gözler & Duyular) **açılmadı**. Bu belgenin kendi kuralı
+> gereği listeler tek videoyken değeri düşük ve beş listenin dolması için
+> zaten 15 video gerekiyor; yeni liste seyrelmeyi artırırdı.
+
+**Sonraki video önerileri:**
 1. **Yeşil çay × Beyin** — L-teanin ve kafeinin birlikte etkisi; EGCG'nin
    kan-beyin bariyerini geçip geçmediği tartışmalı, dürüst anlatım için ideal.
 2. **Yumurta × Beyin** — kolin → asetilkolin; net mekanizma, ölçülebilir veri.
