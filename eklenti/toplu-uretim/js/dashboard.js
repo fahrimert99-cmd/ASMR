@@ -151,6 +151,14 @@ chrome.runtime.onMessage.addListener((m, gonderen) => {
     secici[beklenenAlan] = m.secici;
     if (typeof gonderen?.frameId === "number") hedefCerceveId = gonderen.frameId;
     gunlukYaz(`${beklenenAlan} ← ${m.secici}  (<${m.etiket}>)`, "iyi");
+    if (beklenenAlan === "prompt" && !m.metinAlani) {
+      gunlukYaz("Not: tıkladığınız öğe yazı kutusu değil. Üretimde yakınındaki " +
+        "gerçek yazı alanı aranacak; olmazsa doğrudan metnin yazıldığı kutuya tıklayın.", "");
+    }
+    if (beklenenAlan === "sonuc" && ["a", "video", "img", "button"].includes(m.etiket)) {
+      gunlukYaz(`Dikkat: sonuç seçicisi bir <${m.etiket}> — tek bir öğe seçilmiş olabilir. ` +
+        "Videoların BELİRDİĞİ kutuyu seçmek daha güvenilirdir.", "hata");
+    }
     if (beklenenAlan === "gorsel" && !m.dosyaGirdisi) {
       gunlukYaz("Not: tıkladığınız öğe dosya girdisi değil. Üretim sırasında " +
         "yakınındaki gizli input[type=file] aranacak; çalışmazsa farklı bir öğe deneyin.", "");

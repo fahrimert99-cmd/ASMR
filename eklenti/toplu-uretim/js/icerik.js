@@ -104,9 +104,11 @@
     const hedef = e.target;
     const dosyaGirdisi = (hedef.tagName === "INPUT" && hedef.type === "file")
       || !!hedef.querySelector?.('input[type="file"]');
+    const metinAlani = metinAlaniMi(hedef) || !!hedef.querySelector?.(METIN_ALANI);
+    const etiketAdi = hedef.tagName.toLowerCase();
     ogrenmeyiBitir();
     chrome.runtime.sendMessage({
-      tur: "ogrenildi", secici, etiket: hedef.tagName.toLowerCase(), dosyaGirdisi,
+      tur: "ogrenildi", secici, etiket: etiketAdi, dosyaGirdisi, metinAlani,
     });
   };
 
@@ -141,12 +143,44 @@
   // React ve benzeri çatılar değer atamasını kendi durumlarında takip eder;
   // doğrudan .value yazmak arayüzü güncellemez. Yerel ayarlayıcıyı çağırıp
   // olay tetiklemek gerekir.
+  const METIN_ALANI = 'textarea, input[type="text"], input[type="search"], input:not([type]), [contenteditable="true"], [contenteditable=""]';
+
+  function metinAlaniMi(el) {
+    return el instanceof HTMLTextAreaElement
+      || (el instanceof HTMLInputElement && /^(text|search|)$/.test(el.type))
+      || el?.isContentEditable === true;
+  }
+
+  // Öğretilen öğeden gerçek yazı alanını bulur.
+  //
+  // Kullanıcı çoğu zaman metin alanının kendisine değil onu saran kutuya
+  // tıklar (öğe görsel olarak o kutudur). Yerel value ayarlayıcısını bir
+  // <div> üzerinde çağırmak "Illegal invocation" verir; bu yüzden önce gerçek
+  // alan aranır.
+  function metinAlaniBul(secici) {
+    const oge = bul(secici);
+    if (!oge) return null;
+    if (metinAlaniMi(oge)) return oge;
+    const icten = oge.querySelector?.(METIN_ALANI);
+    if (icten) return icten;
+    let ata = oge.parentElement;
+    for (let i = 0; i < 4 && ata; i++, ata = ata.parentElement) {
+      const k = ata.querySelector(METIN_ALANI);
+      if (k) return k;
+    }
+    return document.querySelector(METIN_ALANI);
+  }
+
   function degerYaz(el, metin) {
     if (el.isContentEditable) {
       el.focus();
       el.textContent = metin;
-      el.dispatchEvent(new InputEvent("input", { bubbles: true }));
+      el.dispatchEvent(new InputEvent("input", { bubbles: true, data: metin }));
       return true;
+    }
+    if (!(el instanceof HTMLTextAreaElement) && !(el instanceof HTMLInputElement)) {
+      throw new Error(`prompt alanı yazı kutusu değil (<${el.tagName.toLowerCase()}>); ` +
+        "seçiciyi metnin yazıldığı kutuya öğretin");
     }
     const proto = el instanceof HTMLTextAreaElement
       ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype;
@@ -206,8 +240,10 @@
   async function isYurut(is) {
     const { secici, prompt, gorsel, zamanAsimi = 300000 } = is;
 
-    const promptEl = bul(secici.prompt);
-    if (!promptEl) throw new Error("prompt alanı bulunamadı: " + secici.prompt);
+    const promptEl = metinAlaniBul(secici.prompt);
+    if (!promptEl) {
+      throw new Error("sayfada yazı kutusu bulunamadı (öğretilen: " + secici.prompt + ")");
+    }
 
     // Üretimden ÖNCEKİ sonuçlar not edilir; yenisi bunların dışında çıkacak.
     const oncekiler = new Set(sonucAdresleri(secici.sonuc));
