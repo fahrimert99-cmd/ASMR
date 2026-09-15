@@ -197,6 +197,26 @@ Hızı belirleyen değişiklikler:
   (75,2 < 78,9). Canvas'ın kare başına küçültmesi zaten ucuz; tek seferlik
   yeniden örnekleme karşılığını vermiyor. Kaldırıldı.
 
+## Çıktı nereye yazılır
+
+**Oluştur**'a bastığınızda tarayıcı kayıt yeri sorar ve video oradaki dosyaya
+**doğrudan akıtılır**. Bellekte kopya tutulmaz.
+
+Bu bir tercih değil, zorunluluktu: çıktı bellekte biriktirildiğinde 5,5
+dakikalık 28 Mbps'lik bir video ~1,2 GB ediyor ve tampon büyürken kısa
+süreliğine bunun iki katı gerekiyordu — render `Array buffer allocation failed`
+ile düşüyordu.
+
+İki sonucu var:
+
+- Bitince ön izleme ve "indir" bağlantısı görünmez; dosya zaten kaydedilmiştir.
+- MP4'te `moov` başlığı dosyanın **sonuna** yazılır (baştan yazan kip akışla
+  bağdaşmıyor). Yerel oynatmada ve YouTube yüklemesinde fark etmez.
+
+Sahneler de sırası geldikçe açılır, hepsi baştan değil: 1080p bir görsel
+bellekte ~8 MB tutar, elli sahnelik bir projede hepsini açık tutmak yüzlerce
+MB ederdi.
+
 ## Bilinen sınırlar
 
 - **Uzun projeler bellek ister.** Çıktı tamamlanana kadar bellekte tutulur;

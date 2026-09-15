@@ -4,8 +4,10 @@
 // eklentiye gömülü mp4-muxer / webm-muxer ile olur. Manifest V3 uzaktan kod
 // yüklemeyi yasakladığı için bu kütüphaneler vendor/ altında yerel durur.
 
-import { Muxer as Mp4Muxer, ArrayBufferTarget as Mp4Hedef } from "../vendor/mp4-muxer.mjs";
-import { Muxer as WebmMuxer, ArrayBufferTarget as WebmHedef } from "../vendor/webm-muxer.mjs";
+import { Muxer as Mp4Muxer, ArrayBufferTarget as Mp4Hedef,
+         FileSystemWritableFileStreamTarget as Mp4DosyaHedefi } from "../vendor/mp4-muxer.mjs";
+import { Muxer as WebmMuxer, ArrayBufferTarget as WebmHedef,
+         FileSystemWritableFileStreamTarget as WebmDosyaHedefi } from "../vendor/webm-muxer.mjs";
 import { Input, BlobSource, ALL_FORMATS, VideoSampleSink } from "../vendor/mediabunny.min.mjs";
 import { altyaziCiz, ANIMASYONLU } from "./altyazi.js";
 
@@ -153,20 +155,6 @@ export async function videoOnDenetim(dosya) {
 // Tek bir sahnenin kaynağını açar (canlı önizleme talep ettikçe kullanır).
 export async function sahneKaynagiAc(sahne) {
   return sahne.tur === "gorsel" ? gorselHazirla(sahne.dosya) : videoHazirla(sahne.dosya);
-}
-
-export async function sahneKaynaklariHazirla(parcalar, en, boy, ilerleme) {
-  const kaynaklar = new Map();
-  let n = 0;
-  for (const p of parcalar) {
-    if (!p.sahne || kaynaklar.has(p.sahne.no)) continue;
-    kaynaklar.set(
-      p.sahne.no,
-      p.sahne.tur === "gorsel" ? await gorselHazirla(p.sahne.dosya) : await videoHazirla(p.sahne.dosya)
-    );
-    ilerleme?.(++n);
-  }
-  return kaynaklar;
 }
 
 // Video sahnelerini KOD ÇÖZEREK besleyen akış (en hızlı yol).
@@ -526,7 +514,8 @@ function kuyrukBekle(kodlayici, ustSinir, altSinir) {
 }
 
 export async function render(ayar) {
-  const { parcalar, sesTamponu, en, boy, fps, hareket, efekt, bitOrani, altyazi, gecis, ilerleme, iptal } = ayar;
+  const { parcalar, sesTamponu, en, boy, fps, hareket, efekt, bitOrani, altyazi, gecis,
+          yazmaAkisi, ilerleme, iptal } = ayar;
 
   const secim = await kodekSec(en, boy, fps);
   // Ses varsa ana saat odur; yoksa süreyi çizelgenin sonu belirler.
@@ -535,7 +524,16 @@ export async function render(ayar) {
     : (parcalar.length ? parcalar[parcalar.length - 1].bit : 0);
   const toplamKare = Math.max(1, Math.round(toplamSure * fps));
 
-  const hedef = secim.kap === "mp4" ? new Mp4Hedef() : new WebmHedef();
+  // Çıktı hedefi.
+  //
+  // Bellekte biriktirmek uzun projelerde çöker: 5,5 dakikalık 28 Mbps'lik bir
+  // video ~1,2 GB eder ve tampon büyürken kısa süreliğine bunun iki katı
+  // gerekir ("Array buffer allocation failed"). Bir yazma akışı verilirse
+  // kareler doğrudan diske yazılır ve bellek sabit kalır.
+  const diskeYaz = !!yazmaAkisi;
+  const hedef = diskeYaz
+    ? (secim.kap === "mp4" ? new Mp4DosyaHedefi(yazmaAkisi) : new WebmDosyaHedefi(yazmaAkisi))
+    : (secim.kap === "mp4" ? new Mp4Hedef() : new WebmHedef());
   const muxer =
     secim.kap === "mp4"
       ? new Mp4Muxer({
@@ -544,7 +542,9 @@ export async function render(ayar) {
           // Ses izi yalnızca seslendirme verildiğinde açılır; boş bir iz
           // bazı oynatıcılarda bozuk dosya gibi görünür.
           ...(sesTamponu ? { audio: { codec: "aac", sampleRate: SES_ORNEKLEME, numberOfChannels: SES_KANAL } } : {}),
-          fastStart: "in-memory",   // moov başa alınır: dosya web'de anında oynar
+          // Diske akıtırken moov başa alınamaz (dosya baştan yazılır); sona
+          // konur. Yerel oynatma ve YouTube yüklemesi için sorun değildir.
+          fastStart: diskeYaz ? false : "in-memory",
         })
       : new WebmMuxer({
           target: hedef,
@@ -599,9 +599,25 @@ export async function render(ayar) {
   ilerleme?.({ asama: "ses", oran: 1 });
 
   // --- görüntü ---
-  const kaynaklar = await sahneKaynaklariHazirla(parcalar, en, boy, () =>
-    ilerleme?.({ asama: "hazirlik" })
-  );
+  // Sahneler sırası geldikçe açılır.
+  //
+  // Hepsini baştan açmak elli sahnelik bir projede yüzlerce MB tutar: 1080p bir
+  // ImageBitmap ~8 MB'dır. Render çizelgede ileri gittiği için aynı anda tek
+  // sahne yeterlidir; geçişler zaten tuvalden alınan anlık görüntüyü kullanır.
+  const kaynakOnbellek = new Map();
+  async function kaynakAl(sahne) {
+    const varOlan = kaynakOnbellek.get(sahne.no);
+    if (varOlan) return varOlan;
+    const yeni = await sahneKaynagiAc(sahne);
+    kaynakOnbellek.set(sahne.no, yeni);
+    for (const [no, k] of kaynakOnbellek) {
+      if (kaynakOnbellek.size <= 2) break;
+      if (no === sahne.no) continue;
+      try { k.serbest(); } catch (_) {}
+      kaynakOnbellek.delete(no);
+    }
+    return yeni;
+  }
 
   const tuval = new OffscreenCanvas(en, boy);
   const ctx = tuval.getContext("2d", { alpha: false });
@@ -610,6 +626,7 @@ export async function render(ayar) {
 
   let aktifAkis = null, aktifSahneNo = null, sonYerel = -1, sonImza = null;
   let kullanilanYol = null;   // "cozucu" | "oynatma" | "arama" — sonuçta bildirilir
+  let acikSahneNo = null, acikKaynak = null;
 
   const altyaziAcik = !!altyazi && altyazi.stil && altyazi.stil !== "kapali";
   const altyaziAnimasyonlu = altyaziAcik && ANIMASYONLU.has(altyazi.stil);
@@ -630,7 +647,14 @@ export async function render(ayar) {
       const bulunan = parcaBul(parcalar, t);
       parcaIdx = bulunan.indeks;
       const parca = bulunan.parca;
-      const kaynak = parca.sahne ? kaynaklar.get(parca.sahne.no) : null;
+      if (parca.sahne && parca.sahne.no !== acikSahneNo) {
+        acikKaynak = await kaynakAl(parca.sahne);
+        acikSahneNo = parca.sahne.no;
+      } else if (!parca.sahne) {
+        acikKaynak = null;
+        acikSahneNo = null;
+      }
+      const kaynak = acikKaynak;
 
       // Video sahnesinden çıkıldıysa akışı bırak: oynatma arka planda sürerse
       // boşuna kod çözme yapılır.
@@ -720,8 +744,11 @@ export async function render(ayar) {
     muxer.finalize();
     if (hataMesaji) throw new Error(hataMesaji);
 
+    if (diskeYaz) await yazmaAkisi.close();
+
     return {
-      veri: hedef.buffer,
+      veri: diskeYaz ? null : hedef.buffer,
+      diskeYazildi: diskeYaz,
       kap: secim.kap,
       mime: secim.kap === "mp4" ? "video/mp4" : "video/webm",
       kodekAdi: sesTamponu ? `${secim.video.ad} + ${secim.ses.ad}` : `${secim.video.ad} • sessiz`,
@@ -731,7 +758,7 @@ export async function render(ayar) {
     };
   } finally {
     if (aktifAkis) { try { await aktifAkis.kapat(); } catch (_) {} }
-    for (const k of kaynaklar.values()) { try { k.serbest(); } catch (_) {} }
+    for (const k of kaynakOnbellek.values()) { try { k.serbest(); } catch (_) {} }
     try { videoKodlayici.state !== "closed" && videoKodlayici.close(); } catch (_) {}
     try { sesKodlayici && sesKodlayici.state !== "closed" && sesKodlayici.close(); } catch (_) {}
   }

@@ -27,6 +27,7 @@ const bozukVideolar = new Set();
 const klipSureleri = new Map();
 let iptalIstendi = false;
 let sonUrl = null;
+let kodekSecimi = null;   // açılışta ölçülür; dosya seçiciyi geciktirmemek için
 
 function mesaj(tur, metin) {
   const d = document.createElement("div");
@@ -194,6 +195,26 @@ function cizelgeyiCiz(parcalar, dosyaSayisi) {
   }
 }
 
+
+// Çıktıyı doğrudan diske akıtmak için kayıt yeri sorar.
+//
+// Bellekte biriktirmek uzun projelerde çöküyordu: 5,5 dakikalık 28 Mbps'lik bir
+// video ~1,2 GB eder. Dosya seçici kullanıcı etkileşimi ister, bu yüzden
+// tıklama işleyicisinin BAŞINDA, herhangi bir uzun işlemden önce çağrılır.
+async function kayitYeriSor(onerilenAd, kap, mime) {
+  if (!window.showSaveFilePicker) return { akis: null, ad: null, destek: false };
+  try {
+    const tutamac = await window.showSaveFilePicker({
+      suggestedName: onerilenAd,
+      types: [{ description: kap.toUpperCase() + " video", accept: { [mime]: ["." + kap] } }],
+    });
+    return { akis: await tutamac.createWritable(), ad: tutamac.name, destek: true };
+  } catch (e) {
+    if (e.name === "AbortError") return { iptal: true };
+    return { akis: null, ad: null, destek: false };
+  }
+}
+
 // ---------------------------------------------------------------- oluşturma
 
 el.durdur.addEventListener("click", () => {
@@ -204,6 +225,15 @@ el.durdur.addEventListener("click", () => {
 
 el.olustur.addEventListener("click", async () => {
   if (!durum.hazir) return;
+
+  const kap = kodekSecimi?.kap || "mp4";
+  const onerilenAd = ((durum.sesAdi || "").replace(/\.[^.]+$/, "") || "kurgu") + "." + kap;
+  const kayit = await kayitYeriSor(onerilenAd, kap, kap === "mp4" ? "video/mp4" : "video/webm");
+  if (kayit.iptal) return;
+  if (!kayit.destek) {
+    mesaj("uyari", "Tarayıcı dosyaya doğrudan yazmayı desteklemiyor; çıktı bellekte tutulacak. " +
+      "Uzun ve yüksek bit oranlı projelerde bellek yetmeyebilir.");
+  }
 
   const [en, boy] = el.cozunurluk.value.split("x").map(Number);
   const fps = Number(el.fps.value);
@@ -234,6 +264,7 @@ el.olustur.addEventListener("click", async () => {
       efekt: el.efekt.value,
       altyazi: altyaziAyari(),
       gecis: gecisAyari(),
+      yazmaAkisi: kayit.akis,
       iptal: () => iptalIstendi,
       ilerleme: (d) => {
         if (d.asama === "hazirlik") { el.ilerlemeMetin.textContent = "Sahneler hazırlanıyor…"; return; }
@@ -248,20 +279,31 @@ el.olustur.addEventListener("click", async () => {
       },
     });
 
-    const blob = new Blob([sonuc.veri], { type: sonuc.mime });
-    if (sonUrl) URL.revokeObjectURL(sonUrl);
-    sonUrl = URL.createObjectURL(blob);
-
-    const ad = ((durum.sesAdi || "").replace(/\.[^.]+$/, "") || "kurgu") + "." + sonuc.kap;
-    el.onizleme.src = sonUrl;
-    el.indir.href = sonUrl;
-    el.indir.download = ad;
+    const sureBilgisi = `${zamanBicimle(sonuc.sure)} • ${en}×${boy} • ${fps} fps • ` +
+      `${sonuc.kodekAdi} • ${((performance.now() - baslangic) / 1000).toFixed(0)} sn'de üretildi`;
     el.sonucBilgi.innerHTML = "";
     const bilgi = document.createElement("div");
     bilgi.className = "mesaj iyi";
-    bilgi.textContent =
-      `${ad} — ${zamanBicimle(sonuc.sure)} • ${en}×${boy} • ${fps} fps • ${sonuc.kodekAdi} • ` +
-      `${(blob.size / 1048576).toFixed(1)} MB • ${((performance.now() - baslangic) / 1000).toFixed(0)} sn'de üretildi`;
+
+    if (sonuc.diskeYazildi) {
+      // Diske akıtıldı: bellekte kopya yok, dolayısıyla ön izleme ve indirme
+      // bağlantısı da yok. Dosya kullanıcının seçtiği yerde hazır.
+      bilgi.textContent = `${kayit.ad} kaydedildi — ${sureBilgisi}`;
+      el.onizleme.removeAttribute("src");
+      el.onizleme.hidden = true;
+      el.indir.hidden = true;
+    } else {
+      const blob = new Blob([sonuc.veri], { type: sonuc.mime });
+      if (sonUrl) URL.revokeObjectURL(sonUrl);
+      sonUrl = URL.createObjectURL(blob);
+      const ad = ((durum.sesAdi || "").replace(/\.[^.]+$/, "") || "kurgu") + "." + sonuc.kap;
+      el.onizleme.src = sonUrl;
+      el.onizleme.hidden = false;
+      el.indir.href = sonUrl;
+      el.indir.download = ad;
+      el.indir.hidden = false;
+      bilgi.textContent = `${ad} — ${sureBilgisi} • ${(blob.size / 1048576).toFixed(1)} MB`;
+    }
     el.sonucBilgi.appendChild(bilgi);
     el.panelSonuc.hidden = false;
     el.ilerlemeBaslik.textContent = "Render tamamlandı";
@@ -464,6 +506,7 @@ stilKartlariniKur();
 (async () => {
   try {
     const s = await kodekSec(1920, 1080, 30);
+    kodekSecimi = s;
     durumYaz(
       `Hazır. Bu tarayıcı ${s.video.ad}${s.ses ? " + " + s.ses.ad : ""} destekliyor; çıktı ${s.kap.toUpperCase()} olacak. ` +
       `Başlamak için üç dosya grubunu da seçin.`
