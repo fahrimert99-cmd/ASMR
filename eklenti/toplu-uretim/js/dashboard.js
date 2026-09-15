@@ -121,6 +121,10 @@ chrome.runtime.onMessage.addListener((m) => {
   if (m.tur === "ogrenildi" && beklenenAlan) {
     secici[beklenenAlan] = m.secici;
     gunlukYaz(`${beklenenAlan} ← ${m.secici}  (<${m.etiket}>)`, "iyi");
+    if (beklenenAlan === "gorsel" && !m.dosyaGirdisi) {
+      gunlukYaz("Not: tıkladığınız öğe dosya girdisi değil. Üretim sırasında " +
+        "yakınındaki gizli input[type=file] aranacak; çalışmazsa farklı bir öğe deneyin.", "");
+    }
     beklenenAlan = null;
     seciciyiGoster();
     ayarlariKaydet();

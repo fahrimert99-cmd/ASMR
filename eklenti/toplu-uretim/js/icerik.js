@@ -101,8 +101,13 @@
     e.preventDefault();
     e.stopPropagation();
     const secici = secikiCikar(e.target);
+    const hedef = e.target;
+    const dosyaGirdisi = (hedef.tagName === "INPUT" && hedef.type === "file")
+      || !!hedef.querySelector?.('input[type="file"]');
     ogrenmeyiBitir();
-    chrome.runtime.sendMessage({ tur: "ogrenildi", secici, etiket: e.target.tagName.toLowerCase() });
+    chrome.runtime.sendMessage({
+      tur: "ogrenildi", secici, etiket: hedef.tagName.toLowerCase(), dosyaGirdisi,
+    });
   };
 
   const tusa = (e) => {
@@ -153,9 +158,29 @@
     return true;
   }
 
+  // Öğretilen öğeden gerçek dosya girdisini bulur.
+  //
+  // Sitelerin çoğunda input[type=file] gizlidir ve görünen şey onu tetikleyen
+  // süslü bir düğme/alandır. Kullanıcı görünene tıklamak zorunda olduğu için,
+  // öğretilen öğe girdinin kendisi değilse önce içinde, sonra sayfanın
+  // tamamında aranır.
+  function dosyaGirdisiBul(secici) {
+    const oge = bul(secici);
+    if (oge?.tagName === "INPUT" && oge.type === "file") return oge;
+    const icten = oge?.querySelector?.('input[type="file"]');
+    if (icten) return icten;
+    // Öğretilen öğenin en yakın ortak atasında ara (düğme ile girdi genelde kardeştir).
+    let ata = oge?.parentElement;
+    for (let i = 0; i < 4 && ata; i++, ata = ata.parentElement) {
+      const k = ata.querySelector('input[type="file"]');
+      if (k) return k;
+    }
+    return document.querySelector('input[type="file"]');
+  }
+
   async function gorselEkle(secici, veri, ad) {
-    const girdi = bul(secici);
-    if (!girdi) throw new Error("görsel alanı bulunamadı: " + secici);
+    const girdi = dosyaGirdisiBul(secici);
+    if (!girdi) throw new Error("sayfada dosya girdisi bulunamadı (öğretilen: " + secici + ")");
     const bayt = Uint8Array.from(atob(veri), (c) => c.charCodeAt(0));
     const dosya = new File([bayt], ad, { type: "image/png" });
     const aktarim = new DataTransfer();
