@@ -1,0 +1,485 @@
+1
+00:00:00,190 --> 00:00:05,544
+Two weeks ago, the rule was simple:
+never boil your broccoli, because
+
+2
+00:00:05,544 --> 00:00:10,510
+heat destroys the enzyme that
+makes its most important molecule.
+
+3
+00:00:12,510 --> 00:00:16,110
+Today, I am going to tell
+you to cook your tomatoes.
+
+4
+00:00:16,830 --> 00:00:20,239
+And the reason those two
+statements do not contradict
+
+5
+00:00:20,239 --> 00:00:23,070
+each other is the whole
+point of this video.
+
+6
+00:00:23,790 --> 00:00:27,150
+A raw tomato is not the
+best version of a tomato.
+
+7
+00:00:27,790 --> 00:00:28,750
+Cooking it
+
+8
+00:00:28,830 --> 00:00:34,677
+The thing everyone tells you destroys
+nutrients, makes its most valuable
+
+9
+00:00:34,677 --> 00:00:39,550
+molecule several times easier
+for your body to actually use.
+
+10
+00:00:40,270 --> 00:00:43,950
+The red in a tomato is a
+pigment called lycopene.
+
+11
+00:00:44,510 --> 00:00:49,230
+It belongs to the same family as the
+beta carotene that makes carrots orange.
+
+12
+00:00:49,870 --> 00:00:53,470
+But inside a raw tomato,
+lycopene is not free.
+
+13
+00:00:54,230 --> 00:00:57,869
+It sits inside structures
+called chromoplasts,
+
+14
+00:00:57,869 --> 00:01:01,350
+bound into a matrix of
+protein and membrane.
+
+15
+00:01:02,390 --> 00:01:05,190
+Your digestion is not good
+at breaking that open.
+
+16
+00:01:05,830 --> 00:01:10,075
+Eat a raw tomato, and much of
+the lycopene passes through you
+
+17
+00:01:10,075 --> 00:01:14,390
+still locked inside the fragments
+of plant cell it arrived in.
+
+18
+00:01:15,750 --> 00:01:17,910
+Heat does three things to that.
+
+19
+00:01:18,630 --> 00:01:21,830
+First, it ruptures the cell walls.
+
+20
+00:01:22,470 --> 00:01:24,270
+Mechanical release.
+
+21
+00:01:24,470 --> 00:01:29,510
+The pigment is no longer trapped behind
+cellulose your enzymes cannot cut.
+
+22
+00:01:30,070 --> 00:01:34,947
+Second, it denatures the proteins
+holding the pigment in place, so
+
+23
+00:01:34,947 --> 00:01:39,750
+the molecule comes free rather
+than staying bound to a structure.
+
+24
+00:01:40,630 --> 00:01:43,446
+Third, and this is the
+interesting one, heat
+
+25
+00:01:43,446 --> 00:01:46,070
+changes the shape of the molecule itself.
+
+26
+00:01:47,270 --> 00:01:51,427
+In a raw tomato, most
+lycopene is a straight,
+
+27
+00:01:51,427 --> 00:01:55,030
+rod-like form, called the trans isomer.
+
+28
+00:01:55,910 --> 00:02:02,191
+Heat bends it into cis isomers, and that
+bent shape packs far more easily into
+
+29
+00:02:02,191 --> 00:02:08,150
+the micelles that carry fat-soluble
+molecules across your intestinal wall.
+
+30
+00:02:09,350 --> 00:02:11,510
+Straight molecules stack badly.
+
+31
+00:02:12,310 --> 00:02:14,110
+Bent ones fit.
+
+32
+00:02:14,350 --> 00:02:17,818
+So the same amount of
+lycopene, cooked, reaches
+
+33
+00:02:17,818 --> 00:02:20,990
+your bloodstream in
+much larger quantities.
+
+34
+00:02:21,710 --> 00:02:27,420
+In controlled human studies, lycopene
+from tomato paste was absorbed several
+
+35
+00:02:27,420 --> 00:02:32,830
+times better than lycopene from an
+equivalent portion of fresh tomatoes.
+
+36
+00:02:33,550 --> 00:02:35,350
+There is a second multiplier.
+
+37
+00:02:36,030 --> 00:02:41,710
+Lycopene is fat-soluble, so without fat,
+there are no micelles waiting for it.
+
+38
+00:02:42,470 --> 00:02:45,830
+Cooking tomatoes in olive
+oil is not just flavour.
+
+39
+00:02:46,390 --> 00:02:48,310
+It completes the delivery system.
+
+40
+00:02:48,950 --> 00:02:51,430
+Same mechanism we covered with avocado.
+
+41
+00:02:51,990 --> 00:02:53,790
+The fat is not the nutrient.
+
+42
+00:02:54,070 --> 00:02:55,830
+The fat is the vehicle.
+
+43
+00:02:55,910 --> 00:02:57,710
+Now follow it past the intestine.
+
+44
+00:02:58,630 --> 00:03:02,911
+Absorbed lycopene is packed
+into chylomicrons, enters
+
+45
+00:03:02,911 --> 00:03:07,030
+the lymphatic system, and
+reaches your bloodstream.
+
+46
+00:03:07,750 --> 00:03:11,350
+From there, it transfers
+into your lipoproteins.
+
+47
+00:03:11,750 --> 00:03:13,550
+And this is where it gets specific.
+
+48
+00:03:14,470 --> 00:03:18,710
+Lycopene concentrates
+inside LDL particles.
+
+49
+00:03:19,510 --> 00:03:20,870
+That matters.
+
+50
+00:03:20,950 --> 00:03:25,670
+Because the first step in
+arterial plaque is not LDL itself.
+
+51
+00:03:26,950 --> 00:03:31,830
+It is LDL becoming oxidised
+inside the artery wall.
+
+52
+00:03:32,470 --> 00:03:36,505
+An oxidised LDL particle
+is what a macrophage
+
+53
+00:03:36,505 --> 00:03:40,630
+swallows uncontrollably
+to become a foam cell.
+
+54
+00:03:41,310 --> 00:03:46,670
+Lycopene riding inside that particle
+sits exactly where the damage starts.
+
+55
+00:03:47,230 --> 00:03:49,390
+It also builds up in tissue.
+
+56
+00:03:50,270 --> 00:03:54,546
+The liver, the adrenal glands,
+the testes and the prostate
+
+57
+00:03:54,546 --> 00:03:57,790
+hold the highest
+concentrations in the body.
+
+58
+00:03:58,830 --> 00:04:00,750
+So what does the evidence say?
+
+59
+00:04:01,790 --> 00:04:03,950
+Here it splits, and I want to be careful.
+
+60
+00:04:05,310 --> 00:04:08,510
+On observational data, it is consistent.
+
+61
+00:04:09,950 --> 00:04:13,908
+People with higher lycopene
+intake, and more importantly
+
+62
+00:04:13,908 --> 00:04:17,936
+higher lycopene measured in
+their blood, show lower rates
+
+63
+00:04:17,936 --> 00:04:21,470
+of cardiovascular disease
+across many populations.
+
+64
+00:04:22,270 --> 00:04:24,590
+Meta-analyses of those studies agree.
+
+65
+00:04:25,310 --> 00:04:27,630
+On randomised trials, it is thinner.
+
+66
+00:04:29,390 --> 00:04:33,514
+Supplementing isolated lycopene
+has not reliably reproduced
+
+67
+00:04:33,514 --> 00:04:36,590
+the benefit seen in
+people who eat tomatoes.
+
+68
+00:04:37,110 --> 00:04:39,910
+That gap usually means one of two things.
+
+69
+00:04:40,390 --> 00:04:44,108
+Either the whole food matters
+more than the single molecule,
+
+70
+00:04:44,108 --> 00:04:46,710
+or the association was never fully causal.
+
+71
+00:04:47,350 --> 00:04:49,510
+We do not yet know which.
+
+72
+00:04:50,710 --> 00:04:54,310
+On prostate cancer, be sceptical
+of what you have heard.
+
+73
+00:04:54,870 --> 00:04:58,079
+The claim was strong in the
+nineteen nineties, and has
+
+74
+00:04:58,079 --> 00:05:01,110
+been steadily downgraded
+as better studies arrived.
+
+75
+00:05:01,590 --> 00:05:04,270
+Regulators now describe that
+evidence as very limited.
+
+76
+00:05:06,070 --> 00:05:07,150
+Mechanism.
+
+77
+00:05:07,230 --> 00:05:08,990
+Strong.
+
+78
+00:05:09,070 --> 00:05:11,390
+Population data, consistent.
+
+79
+00:05:12,270 --> 00:05:15,150
+Isolated supplement trials, disappointing.
+
+80
+00:05:15,870 --> 00:05:17,630
+So, four rules.
+
+81
+00:05:17,710 --> 00:05:18,830
+One.
+
+82
+00:05:18,910 --> 00:05:20,190
+Cook them.
+
+83
+00:05:20,270 --> 00:05:24,030
+Sauce, roasted, stewed, or paste.
+
+84
+00:05:24,910 --> 00:05:28,379
+The processed form is genuinely
+the better source here,
+
+85
+00:05:28,379 --> 00:05:31,470
+which is rare enough to
+be worth saying out loud.
+
+86
+00:05:32,830 --> 00:05:33,950
+Two.
+
+87
+00:05:34,030 --> 00:05:35,830
+Cook them in oil.
+
+88
+00:05:36,030 --> 00:05:38,830
+Without fat, the lycopene
+has no way across.
+
+89
+00:05:40,030 --> 00:05:41,310
+Three.
+
+90
+00:05:41,390 --> 00:05:46,270
+Tomato paste is the most concentrated
+lycopene source in an ordinary kitchen.
+
+91
+00:05:46,990 --> 00:05:50,990
+One spoonful carries more
+than several fresh tomatoes.
+
+92
+00:05:51,950 --> 00:05:53,310
+Four.
+
+93
+00:05:53,390 --> 00:05:57,710
+Keep some raw, because cooking
+does cost you vitamin C.
+
+94
+00:05:58,270 --> 00:06:00,590
+This is a real trade, not a free upgrade.
+
+95
+00:06:02,070 --> 00:06:06,070
+Cooked for lycopene, raw
+for vitamin C, and eat both.
+
+96
+00:06:06,790 --> 00:06:08,150
+Two quick notes.
+
+97
+00:06:08,230 --> 00:06:13,110
+Very high long-term intake can
+tint the skin faintly orange.
+
+98
+00:06:13,590 --> 00:06:15,830
+It is harmless, and it reverses.
+
+99
+00:06:16,510 --> 00:06:20,259
+And if you have reflux, tomato
+is a common trigger, which has
+
+100
+00:06:20,259 --> 00:06:24,070
+nothing to do with lycopene and
+everything to do with acidity.
+
+101
+00:06:24,830 --> 00:06:26,910
+None of this was really about a tomato.
+
+102
+00:06:27,310 --> 00:06:32,415
+It was about a molecule that is
+present but unavailable, and the fact
+
+103
+00:06:32,415 --> 00:06:37,150
+that how you prepare your food
+decides which of those two it is.
+
+104
+00:06:38,270 --> 00:06:40,070
+So which molecule should we follow next?
+
+105
+00:06:41,390 --> 00:06:44,340
+Write a food and an organ in the comments,
+
+106
+00:06:44,340 --> 00:06:47,150
+and we will take it apart, cell by cell.

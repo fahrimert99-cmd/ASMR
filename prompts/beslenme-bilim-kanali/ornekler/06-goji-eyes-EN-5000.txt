@@ -1,0 +1,61 @@
+There is a piece of your brain that sits outside your skull, and you are using it right now.
+
+The retina is not an organ attached to the brain. It grows out of the brain while you are an embryo and stays brain tissue for life. Near its centre is a spot one and a half millimetres across called the macula, and that patch does almost all of your detailed vision. Every word you read happens there.
+
+Now here is the problem with that spot.
+
+The macula is the most light exposed tissue in your body, and one of the most oxygen hungry. Add a dense layer of fatty membranes that oxidise easily. If you were designing a tissue to be damaged, you would design this one.
+
+So your body puts a filter in front of it.
+
+The macula is visibly yellow, and that colour comes from three molecules: lutein, zeaxanthin, and meso zeaxanthin. Together they are called macular pigment, and they do two jobs. They absorb blue light before it reaches the photoreceptors underneath, taking the highest energy part of the visible range first. And they quench singlet oxygen, the exact damage that high light and high oxygen produce.
+
+Here is the part that matters. Your body cannot make any of them. Every molecule of pigment in your macula arrived there from something you ate.
+
+So what actually gets it there?
+
+This is where goji comes in. It is the richest known dietary source of zeaxanthin. But the interesting thing is not the amount, it is the form.
+
+In most plants zeaxanthin is free. In goji it is esterified. The molecule arrives with two palmitic acid chains attached, a form called zeaxanthin dipalmitate. It is already bonded to fat before it reaches you.
+
+That matters for absorption, and if you watched the last two videos you know why. Carotenoids are fat soluble. They need micelles, and micelles need fat. We said it with avocado, we said it again with tomato, and this is the third time. The fat is not the nutrient, the fat is the vehicle.
+
+Now follow it past the intestine.
+
+Carotenoids are packed into chylomicrons, enter the bloodstream, and transfer into your lipoproteins. Here the two stories separate. Lycopene concentrates in LDL particles, which is why it ends up inside the artery wall. Zeaxanthin and lutein travel mostly in HDL, and HDL takes them somewhere else entirely.
+
+They go to the eye, and not by accident.
+
+The retina carries a protein whose only job is to catch this molecule. It binds zeaxanthin selectively and pulls it into the tissue, and a second protein holds it in place so it does not drift away. Your eye has a dedicated receiving station for a molecule it cannot make.
+
+So does eating goji change anything measurable?
+
+This is the unusual part, because macular pigment can be measured directly. The number is called macular pigment optical density.
+
+In a randomised trial at the University of California, Davis, twenty seven adults aged forty five to sixty five were split into two groups for ninety days. One ate twenty eight grams of goji berries, five times a week. The other took a supplement with six milligrams of lutein and four milligrams of zeaxanthin.
+
+The berry group showed a significant increase in macular pigment. The supplement group showed no change at all.
+
+I want to be careful, because that is easy to oversell. It was a pilot study, twenty seven people, not blinded. And macular pigment optical density is a surrogate. It tells you the filter became denser, not that anyone kept their sight longer.
+
+Large supplement trials have shown lutein and zeaxanthin can slow progression in people who already have age related macular degeneration. That is a different question, and this study does not replace it.
+
+But the comparison inside the trial is interesting, because it is the exact question we ended the tomato video on. Is it the whole food, or the single molecule? Here the whole food won and the isolated molecule did nothing.
+
+We do not know why. It could be the ester form, the fat that came with the berry, the other carotenoids beside it, or poor absorption of the supplement. One trial cannot separate those.
+
+So, four rules.
+
+One. About twenty eight grams a day, a small handful of dried berries. That is the dose that was studied.
+
+Two. Eat them with fat. No fat, no micelle, no delivery. Third time we have said it.
+
+Three. Whole berries, not an extract. That is what worked in the trial.
+
+Four. Think in months rather than weeks. The change was measured after ninety days.
+
+One warning that matters. Goji appears to affect a liver enzyme that clears certain drugs, and there are reported cases of altered clotting values in people taking warfarin. If you are on a blood thinner, speak to your doctor first.
+
+None of this was really about a berry. It was about a molecule your body cannot build, travelling to a place that is waiting for it, with a protein standing at the door.
+
+So which molecule should we follow next? Write a food and an organ in the comments, and we will take it apart, cell by cell.
