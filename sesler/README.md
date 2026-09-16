@@ -45,6 +45,7 @@ Altyazılar: `prompts/moskova-belgeseli/` altında `SES1-part1.srt`,
 | `03-muz-kaslar_Arthur.mp3` | 6:17.65 | `prompts/beslenme-bilim-kanali/ornekler/03-banana-muscles-EN-5000.txt` |
 | `04-avokado-emilim_Edward.mp3` | 6:23.82 | `prompts/beslenme-bilim-kanali/ornekler/04-avocado-absorption-EN-5000.txt` |
 | `05-domates-damar_Edward.mp3` | 6:47.28 | `prompts/beslenme-bilim-kanali/ornekler/05-tomato-arteries-EN-5000.txt` |
+| `06-goji-goz_Edward.mp3` | 6:36.64 | `prompts/beslenme-bilim-kanali/ornekler/06-goji-eyes-EN-5000.txt` |
 
 Ses: Arthur (Clear, Engaging, American Male Audiobook Narrator) ·
 Ayarlar: `sp100 s62 sb71 f25`
@@ -61,7 +62,7 @@ Süre tahminlerinde kullanılacak katsayılar (gerçek ölçümlerden):
 | Ses | sn/karakter | Aralık | Ölçüm |
 |---|---|---|---|
 | Arthur | **0,0760** | 0,0760–0,0761 | 2 (brokoli, muz) |
-| Edward | **0,0811** (ort.) | 0,0782–0,0839 | 5 (Moskova ×3, avokado, domates) |
+| Edward | **0,0809** (ort.) | 0,0782–0,0839 | 6 (Moskova ×3, avokado, domates, goji) |
 
 Arthur çok kararlı; iki ölçümü neredeyse aynı. **Edward içeriğe göre
 değişiyor** — avokadoda 0,0782'ye indi, domateste 0,0839'a çıktı. Bu %7'lik
@@ -74,6 +75,10 @@ sayısı**. Kısa cümle yoğunluğu yüksek metinlerde üst sınırı kullanın
 
 **Edward için tahmin yaparken aralık verin:** `karakter × 0,078` ile
 `karakter × 0,084` arası. Tek sayıya güvenmeyin.
+
+Goji metninde **0,0799** çıktı ve tahmin aralığı (6:27–6:57) gerçeği (6:36,64)
+kapsadı. Altı ölçümün tamamı 0,078–0,084 bandının içinde kaldı; aralık
+yöntemi çalışıyor.
 
 **Hedef süreden karakter hesabı:** `karakter = hedef_saniye ÷ katsayı`
 

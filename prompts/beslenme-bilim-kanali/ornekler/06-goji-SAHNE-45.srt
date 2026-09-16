@@ -1,0 +1,179 @@
+1
+00:00:00,000 --> 00:00:07,186
+There is a piece of your brain that sits outside your skull, and you are using it right now.
+
+2
+00:00:07,186 --> 00:00:11,314
+The retina is not an organ attached to the brain.
+
+3
+00:00:11,314 --> 00:00:17,789
+It grows out of the brain while you are an embryo and stays brain tissue for life.
+
+4
+00:00:17,789 --> 00:00:27,963
+Near its centre is a spot one and a half millimetres across called the macula, and that patch does almost all of your detailed vision.
+
+5
+00:00:27,963 --> 00:00:34,440
+Every word you read happens there. Now here is the problem with that spot.
+
+6
+00:00:34,440 --> 00:00:41,626
+The macula is the most light exposed tissue in your body, and one of the most oxygen hungry.
+
+7
+00:00:41,626 --> 00:00:52,086
+Add a dense layer of fatty membranes that oxidise easily. If you were designing a tissue to be damaged, you would design this one.
+
+8
+00:00:52,086 --> 00:00:55,716
+So your body puts a filter in front of it.
+
+9
+00:00:55,716 --> 00:01:04,467
+The macula is visibly yellow, and that colour comes from three molecules: lutein, zeaxanthin, and meso zeaxanthin.
+
+10
+00:01:04,467 --> 00:01:09,591
+Together they are called macular pigment, and they do two jobs.
+
+11
+00:01:09,591 --> 00:01:26,453
+They absorb blue light before it reaches the photoreceptors underneath, taking the highest energy part of the visible range first. And they quench singlet oxygen, the exact damage that high light and high oxygen produce.
+
+12
+00:01:26,453 --> 00:01:41,327
+Here is the part that matters. Your body cannot make any of them. Every molecule of pigment in your macula arrived there from something you ate. So what actually gets it there?
+
+13
+00:01:41,327 --> 00:01:48,372
+This is where goji comes in. It is the richest known dietary source of zeaxanthin.
+
+14
+00:01:48,372 --> 00:01:56,343
+But the interesting thing is not the amount, it is the form. In most plants zeaxanthin is free.
+
+15
+00:01:56,343 --> 00:02:06,376
+In goji it is esterified. The molecule arrives with two palmitic acid chains attached, a form called zeaxanthin dipalmitate.
+
+16
+00:02:06,376 --> 00:02:16,979
+It is already bonded to fat before it reaches you. That matters for absorption, and if you watched the last two videos you know why.
+
+17
+00:02:16,979 --> 00:02:23,242
+Carotenoids are fat soluble. They need micelles, and micelles need fat.
+
+18
+00:02:23,242 --> 00:02:34,058
+We said it with avocado, we said it again with tomato, and this is the third time. The fat is not the nutrient, the fat is the vehicle.
+
+19
+00:02:34,058 --> 00:02:37,047
+Now follow it past the intestine.
+
+20
+00:02:37,047 --> 00:02:44,873
+Carotenoids are packed into chylomicrons, enter the bloodstream, and transfer into your lipoproteins.
+
+21
+00:02:44,873 --> 00:02:47,649
+Here the two stories separate.
+
+22
+00:02:47,649 --> 00:02:54,480
+Lycopene concentrates in LDL particles, which is why it ends up inside the artery wall.
+
+23
+00:02:54,480 --> 00:03:01,311
+Zeaxanthin and lutein travel mostly in HDL, and HDL takes them somewhere else entirely.
+
+24
+00:03:01,311 --> 00:03:04,798
+They go to the eye, and not by accident.
+
+25
+00:03:04,798 --> 00:03:10,419
+The retina carries a protein whose only job is to catch this molecule.
+
+26
+00:03:10,419 --> 00:03:20,096
+It binds zeaxanthin selectively and pulls it into the tissue, and a second protein holds it in place so it does not drift away.
+
+27
+00:03:20,096 --> 00:03:25,930
+Your eye has a dedicated receiving station for a molecule it cannot make.
+
+28
+00:03:25,930 --> 00:03:29,916
+So does eating goji change anything measurable?
+
+29
+00:03:29,916 --> 00:03:40,305
+This is the unusual part, because macular pigment can be measured directly. The number is called macular pigment optical density.
+
+30
+00:03:40,305 --> 00:03:57,025
+In a randomised trial at the University of California, Davis, twenty seven adults aged forty five to sixty five were split into two groups for ninety days. One ate twenty eight grams of goji berries, five times a week.
+
+31
+00:03:57,025 --> 00:04:09,477
+The other took a supplement with six milligrams of lutein and four milligrams of zeaxanthin. The berry group showed a significant increase in macular pigment.
+
+32
+00:04:09,477 --> 00:04:17,874
+The supplement group showed no change at all. I want to be careful, because that is easy to oversell.
+
+33
+00:04:17,874 --> 00:04:32,960
+It was a pilot study, twenty seven people, not blinded. And macular pigment optical density is a surrogate. It tells you the filter became denser, not that anyone kept their sight longer.
+
+34
+00:04:32,960 --> 00:04:48,684
+Large supplement trials have shown lutein and zeaxanthin can slow progression in people who already have age related macular degeneration. That is a different question, and this study does not replace it.
+
+35
+00:04:48,684 --> 00:05:06,331
+But the comparison inside the trial is interesting, because it is the exact question we ended the tomato video on. Is it the whole food, or the single molecule? Here the whole food won and the isolated molecule did nothing.
+
+36
+00:05:06,331 --> 00:05:18,356
+We do not know why. It could be the ester form, the fat that came with the berry, the other carotenoids beside it, or poor absorption of the supplement.
+
+37
+00:05:18,356 --> 00:05:21,274
+One trial cannot separate those.
+
+38
+00:05:21,274 --> 00:05:32,235
+So, four rules. One. About twenty eight grams a day, a small handful of dried berries. That is the dose that was studied.
+
+39
+00:05:32,235 --> 00:05:40,564
+Two. Eat them with fat. No fat, no micelle, no delivery. Third time we have said it.
+
+40
+00:05:40,564 --> 00:05:47,398
+Three. Whole berries, not an extract. That is what worked in the trial.
+
+41
+00:05:47,398 --> 00:05:55,085
+Four. Think in months rather than weeks. The change was measured after ninety days.
+
+42
+00:05:55,085 --> 00:06:13,372
+One warning that matters. Goji appears to affect a liver enzyme that clears certain drugs, and there are reported cases of altered clotting values in people taking warfarin. If you are on a blood thinner, speak to your doctor first.
+
+43
+00:06:13,372 --> 00:06:26,607
+None of this was really about a berry. It was about a molecule your body cannot build, travelling to a place that is waiting for it, with a protein standing at the door.
+
+44
+00:06:26,607 --> 00:06:30,094
+So which molecule should we follow next?
+
+45
+00:06:30,094 --> 00:06:36,640
+Write a food and an organ in the comments, and we will take it apart, cell by cell.
