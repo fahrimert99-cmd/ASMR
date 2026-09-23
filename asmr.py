@@ -112,7 +112,7 @@ def _preset_coz(tema: str, tip_override: str):
 
 
 def _gorselleri_uret(gorsel_promptlari, adet, ayar, cikti):
-    """Sakinlestirici gorselleri uretir (Pollinations/Pexels); yollarini dondurur."""
+    """Sakinlestirici gorselleri uretir (Pollinations/Pexels/MuAPI); yollarini dondurur."""
     ayar.setdefault("sahne", {})
     ayar["sahne"]["stil"] = ASMR_STIL
     # ASMR'de AI gorsel tercih ediyoruz; pexels_video hareketli olsa da burada
@@ -156,11 +156,16 @@ def main():
     p.add_argument("--anlatim", default="",
                    help="Opsiyonel yumusak anlatim metni (ya da .txt dosya yolu). "
                         "Bos ise sadece ambient ses.")
+    p.add_argument("--motor", default="",
+                   help="Gorsel motoru: pollinations | pexels_foto | yerel_sd | muapi "
+                        "(bos ise config'teki sahne.motor kullanilir)")
     p.add_argument("--yukle", action="store_true", help="Bitince YouTube'a yukle")
     args = p.parse_args()
 
     ayar = ayarlari_yukle()
     ayar.setdefault("asmr", {})
+    if args.motor.strip():
+        ayar.setdefault("sahne", {})["motor"] = args.motor.strip()
 
     tip, gorsel_promptlari, baslik = _preset_coz(args.tema, args.tip.strip())
     print(f"ASMR temasi: {args.tema}  |  ses tipi: {asmr_ses.tip_coz(tip)}  "
