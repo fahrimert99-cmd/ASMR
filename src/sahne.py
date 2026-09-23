@@ -5,12 +5,19 @@ Alternatifler:
   - yerel_sd     : yerel Stable Diffusion (diffusers ile, GPU onerilir)
   - pexels_foto  : Pexels stok FOTOGRAFI (sabit arka plan, gercek foto)
   - pexels_video : Pexels stok VIDEOSU (HAREKETLI arka plan)
+  - muapi        : MuAPI (https://muapi.ai) uzerinden 400+ modelden biriyle
+                   AI gorsel (varsayilan: FLUX.1 Dev). Ucretli/kredilidir.
 
 Pexels ucretsiz API anahtari gerektirir (https://www.pexels.com/api/).
 Anahtar `ayar["sahne"]["pexels_api_key"]` veya PEXELS_API_KEY ortam
 degiskeninden okunur. Pexels basarisiz olursa otomatik Pollinations'a duser.
+
+MuAPI anahtari `ayar["sahne"]["muapi_api_key"]` veya MUAPI_API_KEY ortam
+degiskeninden okunur. Anahtar yoksa / kredi biterse / hata olursa otomatik
+Pollinations'a duser (uretim durmaz).
 """
 import os
+import time
 import urllib.parse
 from pathlib import Path
 
@@ -212,6 +219,90 @@ def _pexels_video(prompt: str, ayar: dict, hedef: Path, en: int, boy: int) -> Pa
         return _pollinations(prompt, ayar, hedef, en, boy)
 
 
+MUAPI_TABAN = "https://api.muapi.ai/api/v1"
+_MUAPI_BASARILI = {"completed", "succeeded", "success"}
+_MUAPI_HATALI = {"failed", "error", "cancelled", "canceled"}
+
+
+def _muapi_anahtar(ayar: dict) -> str:
+    """MuAPI anahtarini ayar dosyasindan veya ortam degiskeninden alir."""
+    return (ayar.get("sahne", {}).get("muapi_api_key")
+            or os.environ.get("MUAPI_API_KEY") or "").strip()
+
+
+def _muapi_sonuc_bekle(istek_id: str, anahtar: str, bekleme: float,
+                       zaman_asimi: float) -> dict:
+    """MuAPI tahmin sonucunu hazir olana kadar sorgular (Open-Generative-AI
+    istemcisindeki predictions/{id}/result akisi ile ayni)."""
+    url = f"{MUAPI_TABAN}/predictions/{istek_id}/result"
+    bitis = time.monotonic() + zaman_asimi
+    while time.monotonic() < bitis:
+        time.sleep(bekleme)
+        try:
+            yanit = requests.get(url, headers={"x-api-key": anahtar}, timeout=30)
+        except requests.RequestException:
+            continue
+        if yanit.status_code >= 500:
+            continue
+        yanit.raise_for_status()
+        sonuc = yanit.json()
+        durum = str(sonuc.get("status", "")).lower()
+        if durum in _MUAPI_BASARILI:
+            return sonuc
+        if durum in _MUAPI_HATALI:
+            raise RuntimeError(f"MuAPI uretimi basarisiz: {sonuc.get('error') or durum}")
+    raise TimeoutError(f"MuAPI sonucu {zaman_asimi:.0f} sn icinde gelmedi (istek {istek_id})")
+
+
+def _muapi_cikti_url(sonuc: dict) -> str:
+    """Yanittan ilk cikti dosyasinin URL'sini ayiklar."""
+    ciktilar = sonuc.get("outputs") or []
+    url = (ciktilar[0] if ciktilar else None) or sonuc.get("url") \
+        or (sonuc.get("output") or {}).get("url")
+    if not url:
+        raise ValueError("MuAPI yanitinda cikti URL'si yok")
+    return url
+
+
+def _muapi(prompt: str, ayar: dict, hedef: Path, en: int, boy: int) -> Path:
+    """MuAPI ile AI arka plan gorseli uretir. Basarisizsa Pollinations."""
+    anahtar = _muapi_anahtar(ayar)
+    if not anahtar:
+        print("[muapi] API anahtari yok (muapi_api_key / MUAPI_API_KEY), "
+              "Pollinations'a dusuluyor.")
+        return _pollinations(prompt, ayar, hedef, en, boy)
+
+    sd = ayar["sahne"]
+    model = sd.get("muapi_model", "flux-dev-image")
+    # FLUX genislik/yukseklik 64'un kati ve 128-2048 araliginda olmali.
+    def _kat64(x):
+        return max(128, min(2048, int(round(x / 64)) * 64))
+    govde = {"prompt": _sahne_prompt(prompt, ayar),
+             "width": _kat64(en), "height": _kat64(boy)}
+    govde.update(sd.get("muapi_params") or {})
+
+    try:
+        yanit = requests.post(f"{MUAPI_TABAN}/{model}",
+                              headers={"x-api-key": anahtar,
+                                       "Content-Type": "application/json"},
+                              json=govde, timeout=60)
+        yanit.raise_for_status()
+        gonderim = yanit.json()
+        istek_id = gonderim.get("request_id") or gonderim.get("id")
+        sonuc = gonderim if not istek_id else _muapi_sonuc_bekle(
+            istek_id, anahtar,
+            bekleme=float(sd.get("muapi_bekleme", 2)),
+            zaman_asimi=float(sd.get("muapi_zaman_asimi", 300)))
+        gorsel = requests.get(_muapi_cikti_url(sonuc), timeout=120)
+        gorsel.raise_for_status()
+        hedef.parent.mkdir(parents=True, exist_ok=True)
+        hedef.write_bytes(gorsel.content)
+        return hedef
+    except Exception as e:
+        print(f"[muapi] gorsel uretilemedi ({e}), Pollinations'a dusuluyor.")
+        return _pollinations(prompt, ayar, hedef, en, boy)
+
+
 def arka_plan_uret(prompt: str, ayar: dict, hedef: Path) -> Path:
     motor = ayar["sahne"].get("motor", "pollinations")
     en, boy = ayar["sahne"].get("cozunurluk", "1280x720").split("x")
@@ -225,6 +316,8 @@ def arka_plan_uret(prompt: str, ayar: dict, hedef: Path) -> Path:
         return _pexels_foto(prompt, ayar, hedef, en, boy)
     if motor == "pexels_video":
         return _pexels_video(prompt, ayar, hedef, en, boy)
+    if motor == "muapi":
+        return _muapi(prompt, ayar, hedef, en, boy)
 
     raise ValueError(f"Bilinmeyen sahne motoru: {motor}")
 

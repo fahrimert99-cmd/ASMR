@@ -64,6 +64,21 @@ cp config/ayarlar.ornek.yaml config/ayarlar.yaml   # (opsiyonel; varsayılanlar 
 > `ayarlar.yaml` `.gitignore`'dadır; anahtarlarınız (varsa) repoya gitmez.
 > Hiç anahtar girmeseniz de sistem çalışır (ambient ses + Pollinations görsel).
 
+### 🎨 Opsiyonel: MuAPI ile üst kalite AI görsel
+
+[Open-Generative-AI](https://github.com/Anil-matcha/Open-Generative-AI) projesinin
+kullandığı [MuAPI](https://muapi.ai) (400+ görsel/video modeli) görsel motoru olarak
+seçilebilir. **Ücretli/kredilidir**; anahtar yoksa, kredi biterse veya hata olursa
+sistem otomatik olarak Pollinations'a düşer (üretim durmaz).
+
+```bash
+export MUAPI_API_KEY="..."                          # veya ayarlar.yaml → sahne.muapi_api_key
+python asmr.py --tema yagmur --motor muapi          # varsayılan model: FLUX.1 Dev
+```
+
+Model `config/ayarlar.yaml` → `sahne.muapi_model` ile değiştirilir
+(ör. `flux-schnell-image`); modele özel ek parametreler `sahne.muapi_params` altına yazılır.
+
 ## ☁️ GitHub Actions ile otomatik üretim (bedava, GPU gerekmez)
 
 - **`ASMR`** iş akışı: her gün ~21:00 TR otomatik + manuel (`workflow_dispatch`);
@@ -96,7 +111,7 @@ Eklemezseniz video her zaman Artifacts'te hazır bekler.
     ├── asmr_ses.py          # Telifsiz ambient ses üreteci (numpy)
     ├── asmr_montaj.py       # ASMR montajı (Ken Burns + ffmpeg döngü)
     ├── klip_montaj.py       # Klipleri birleştir + ffmpeg döngü
-    ├── sahne.py             # Pollinations/Pexels görsel üretimi
+    ├── sahne.py             # Pollinations/Pexels/MuAPI görsel üretimi
     ├── seslendirme.py       # edge-tts anlatım
     ├── uyku_muzik.py        # yumuşak müzik üreteci (yardımcı)
     ├── masal_montaj.py      # Ken Burns / geçiş yardımcıları
