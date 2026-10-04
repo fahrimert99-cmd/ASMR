@@ -5,7 +5,7 @@ ASMR / rahatlama / uyku videoları üreten sistem. **Hiçbir API anahtarı
 gerektirmez** — ambient ses `numpy` ile telifsiz üretilir, görseller
 Pollinations (anahtarsız) ile gelir.
 
-İki bağımsız üretim yolu vardır:
+Üç bağımsız üretim yolu vardır:
 
 ---
 
@@ -51,6 +51,38 @@ python birlestir.py --klasor klipler --sure 3600  # 60 dk
 
 ---
 
+## 3) Osmanlı haritası animasyonu (20 sn, sesli) — `osmanli.py`
+
+Osmanlı'nın **kuruluşundan (1299, Söğüt) en geniş sınırlarına (1683)** kadar
+olan dönemi **20 saniyelik** bir harita animasyonuyla anlatır. Görüntü de ses
+de **tamamen kodla** üretilir (telifsiz, API anahtarı ya da GPU gerekmez).
+
+```bash
+python osmanli.py                      # yatay 1920x1080 + dikey 1080x1920 (Shorts/Reels)
+python osmanli.py --format yatay       # yalnızca YouTube yatay
+python osmanli.py --format dikey --fps 60
+python osmanli.py --onizleme 7.0       # 7. saniyenin tek kare PNG önizlemesi
+```
+
+- **Harita:** Natural Earth kıyı/göl/nehir verisi, Lambert konik projeksiyon,
+  parşömen dokulu kara + koyu deniz. Sınırlar fetih sırasına göre **mevcut
+  sınırdan ya da fethedilen şehirden dışa doğru yayılır**; vasal devletler
+  taralı gösterilir.
+- **Anlatım:** yıl sayacı, 11 dönüm noktası (Kuruluş, Bursa, Edirne, I. Kosova,
+  İstanbul, Mısır, Mohaç, Preveze, Kıbrıs, Girit, 1683), padişah/komutan adı,
+  canlı yüzölçümü sayacı (1683'te ≈ 5 milyon km²), başkent yıldızı, zaman çizelgesi.
+- **Sentez ses (`src/osmanli_ses.py`):** mehter davulu (düyek usulü) ve zil,
+  Hicaz makamında ney ezgisi, Re demi, top atışları (İstanbul, Mohaç, Girit),
+  kılıç şakırtısı ve savaş narası (Kosova), dalga + top (Preveze), gong,
+  kamera "whoosh"ları, yıl sayacı tıkırtısı, sınırlar büyüdükçe artan gürleme,
+  final öncesi yükselen gerilim ve büyük vuruş. Ses −14 LUFS'a normalize edilir.
+- **Çıktı:** `cikti/osmanli/osmanli_1299_1683_{yatay,dikey}.mp4`
+  (hazır örnekler: `videolar/`).
+- **Veri:** Tarihsel bölgeler/olaylar `src/osmanli_veri.py` içinde; harita verisi
+  `veri/osmanli/harita.json` (yenilemek için `scripts/osmanli_veri_hazirla.py`).
+  Sınırlar 20 saniyelik anlatım için özetlenmiştir (1402 Fetret kayıpları ve
+  1683'te elde olmayan geçici fetihler gösterilmez).
+
 ## 🚀 Kurulum
 
 ```bash
@@ -84,6 +116,7 @@ Eklemezseniz video her zaman Artifacts'te hazır bekler.
 .
 ├── asmr.py                  # Sıfırdan ASMR orkestratörü
 ├── birlestir.py             # Kliplerden uzun ASMR birleştirici
+├── osmanli.py               # Osmanlı 1299–1683 harita animasyonu (20 sn)
 ├── requirements.txt
 ├── config/
 │   └── ayarlar.ornek.yaml   # Örnek ayar dosyası (asmr / klip bölümleri)
@@ -95,6 +128,9 @@ Eklemezseniz video her zaman Artifacts'te hazır bekler.
 └── src/
     ├── asmr_ses.py          # Telifsiz ambient ses üreteci (numpy)
     ├── asmr_montaj.py       # ASMR montajı (Ken Burns + ffmpeg döngü)
+    ├── osmanli_harita.py    # Harita animasyonu render çekirdeği
+    ├── osmanli_ses.py       # Sentez ses efektleri (davul, top, ney...)
+    ├── osmanli_veri.py      # Tarihsel bölgeler, olaylar, kamera
     ├── klip_montaj.py       # Klipleri birleştir + ffmpeg döngü
     ├── sahne.py             # Pollinations/Pexels görsel üretimi
     ├── seslendirme.py       # edge-tts anlatım
