@@ -111,6 +111,31 @@ python harita.py --siradaki --format dikey --yukle   # kuyruktaki konu → YouTu
    gelene kadar iş akışını `yukleme-yok` modunda çalıştırıp videoyu Artifacts'ten
    indirerek elle yükleyebilirsiniz.
 
+## 4) Resimli kitap üslubunda masal videoları — `masal.py`
+
+Görüntü, müzik ve efektlerin tamamı kodla üretilen, 2–3 dakikalık yatay
+(1920×1080) masal videoları. İlk masal: **Keloğlan ile Kapı** (13 sayfa, ~2,5 dk).
+
+```bash
+pip install skia-python numpy scipy pillow     # Linux'ta skia için: sudo apt install libegl1
+python masal.py --liste
+python masal.py --masal keloglan_kapi --kontak       # her sayfadan iki kare (hızlı kontrol)
+python masal.py --masal keloglan_kapi --onizleme 52  # tek kare
+python masal.py --masal keloglan_kapi                # tam video → cikti/masal/keloglan_kapi/
+```
+
+- **Görsel dil:** krem kağıt dokusu üzerinde sulu boya/guaş (pigment dokusu,
+  kenarda koyulaşan boya, ıslak lekeler), titrek sepya mürekkep çizgileri; eklemli
+  kukla karakterler (yürüme, koşma, konuşma, göz kırpma); sayfa altında süslü ilk
+  harfli metin kartı, cümle cümle belirir; sayfalar arasında kıvrılan sayfa çevirme.
+- **Ses:** bağlama (Karplus-Strong), kaval, def, düğünde davul-zurna; makamlar
+  koma doğruluğunda (Rast, Uşşak, Hüseyni, Hicaz). Kapı gıcırtısı, GÜM, cırcır böceği,
+  baykuş, kurt, ateş, altın şıngırtısı, horoz, sayfa hışırtısı; −14 LUFS.
+- **Yeni masal:** `masallar/<kimlik>.py` içinde `SAYFALAR` listesi; her sayfa bir
+  sahne sınıfı (`arka`: bir kez çizilen resim, `on`: her karede çizilen hareketli
+  katman), metin, konuşanlar, kamera ve ses ipuçları (`sesler`) içerir. Karakter ve
+  dekorlar `src/masal_cizim.py` kütüphanesindedir.
+
 ## 🚀 Kurulum
 
 ```bash
@@ -146,6 +171,8 @@ Eklemezseniz video her zaman Artifacts'te hazır bekler.
 ├── birlestir.py             # Kliplerden uzun ASMR birleştirici
 ├── harita.py                # Tarihi harita Shorts'ları (senaryolar/ + otonom yayın)
 ├── senaryolar/              # Konu başına bir veri dosyası + sira.json yayın kuyruğu
+├── masal.py                 # Resimli kitap üslubunda masal videoları
+├── masallar/                # Masal başına bir dosya (sayfalar, sahneler, ses ipuçları)
 ├── requirements.txt
 ├── config/
 │   └── ayarlar.ornek.yaml   # Örnek ayar dosyası (asmr / klip bölümleri)
@@ -163,6 +190,9 @@ Eklemezseniz video her zaman Artifacts'te hazır bekler.
     ├── harita_ses.py        # Sentez müzik ve ses efektleri
     ├── harita_kontrol.py    # Senaryo doğrulayıcı
     ├── harita_yayin.py      # Yayın kuyruğu + zamanlı YouTube yükleme
+    ├── masal_motoru.py      # Masal: sulu boya fırça, kağıt, metin kartı, sayfa çevirme
+    ├── masal_cizim.py       # Masal: karakterler (eklemli kukla) ve dekorlar
+    ├── masal_ses.py         # Masal: bağlama, kaval, def, zurna + efektler
     ├── klip_montaj.py       # Klipleri birleştir + ffmpeg döngü
     ├── sahne.py             # Pollinations/Pexels görsel üretimi
     ├── seslendirme.py       # edge-tts anlatım

@@ -7,6 +7,9 @@ moviepy                  # video montaj / birlestirme
 imageio-ffmpeg           # ffmpeg saglar
 Pillow                   # gorsel isleme
 
+# --- Masal videolari (masal.py): vektor cizim; Linux'ta libegl1 gerekir ---
+skia-python
+
 # --- Sahne / gorsel (asmr.py sifirdan uretim icin) ---
 requests                 # Pollinations.ai / Pexels cagrilari
 
