@@ -171,35 +171,36 @@ def _doku_resimleri():
     return img(pig), img(gran)
 
 
-@lru_cache(maxsize=1)
-def kagit_dokusu():
-    """Ekran uzayinda kagit carpani (H, W, 1) ~ 1.0 civari + vinyet + kitap sirti golgesi."""
+@lru_cache(maxsize=4)
+def kagit_dokusu(w=W, h=H, sirt=True):
+    """Ekran uzayinda kagit carpani (h, w, 1) ~ 1.0 civari + vinyet (+ kitap sirti golgesi)."""
     rng = np.random.default_rng(5)
-    kucuk = rng.standard_normal((H // 6, W // 6)).astype(np.float32)
+    kucuk = rng.standard_normal((h // 6, w // 6)).astype(np.float32)
     kucuk = ndimage.gaussian_filter(kucuk, 3.0)
     lek = np.asarray(skia.Image.fromarray(np.dstack([((kucuk - kucuk.min()) / (np.ptp(kucuk) + 1e-6) * 255).astype(np.uint8)] * 3
                                                     + [np.full(kucuk.shape, 255, np.uint8)]),
                                           colorType=skia.kRGBA_8888_ColorType)
-                     .resize(W, H, skia.SamplingOptions(skia.FilterMode.kLinear))
+                     .resize(w, h, skia.SamplingOptions(skia.FilterMode.kLinear))
                      .toarray(colorType=skia.kRGBA_8888_ColorType)[..., 0], np.float32) / 255.0
-    gren = ndimage.gaussian_filter(rng.standard_normal((H, W)).astype(np.float32), 0.6)
+    gren = ndimage.gaussian_filter(rng.standard_normal((h, w)).astype(np.float32), 0.6)
     gren /= gren.std() + 1e-6
-    lif = np.zeros((H, W), np.float32)
-    for _ in range(900):                                    # kagit lifleri
-        x, y = rng.uniform(0, W), rng.uniform(0, H)
+    lif = np.zeros((h, w), np.float32)
+    for _ in range(int(900 * w * h / (W * H))):             # kagit lifleri
+        x, y = rng.uniform(0, w), rng.uniform(0, h)
         a, L = rng.uniform(0, np.pi), rng.uniform(8, 40)
         for s in np.linspace(0, 1, int(L)):
             xi = int(x + math.cos(a) * L * s + 3 * math.sin(s * 6 + a))
             yi = int(y + math.sin(a) * L * s)
-            if 0 <= xi < W and 0 <= yi < H:
+            if 0 <= xi < w and 0 <= yi < h:
                 lif[yi, xi] += 1
     lif = ndimage.gaussian_filter(lif, 0.5)
     carpan = 1.0 + 0.035 * (lek - 0.5) * 2 + 0.018 * gren - 0.05 * np.clip(lif, 0, 1)
-    yy, xx = np.mgrid[0:H, 0:W].astype(np.float32)
-    rv = np.hypot((xx / W - 0.5) * 1.1, (yy / H - 0.5) * 1.25)
+    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
+    rv = np.hypot((xx / w - 0.5) * 1.1, (yy / h - 0.5) * 1.25)
     vinyet = 1.0 - 0.32 * np.clip((rv - 0.38) / 0.45, 0, 1) ** 1.7
-    sirt = 1.0 - 0.22 * np.exp(-xx / 26.0) - 0.08 * np.exp(-xx / 140.0)     # kitap sirti
-    return (carpan * vinyet * sirt).astype(np.float32)[..., None]
+    if sirt:                                                # kitap sirti
+        vinyet = vinyet * (1.0 - 0.22 * np.exp(-xx / 26.0) - 0.08 * np.exp(-xx / 140.0))
+    return (carpan * vinyet).astype(np.float32)[..., None]
 
 
 # ================================================================ firca
@@ -347,9 +348,10 @@ class MetinKarti:
     BOY = 39
     SATIR = 1.36
 
-    def __init__(self, metin, sure, konusanlar=None, gen=1580, suslu=True):
+    def __init__(self, metin, sure, konusanlar=None, gen=1580, suslu=True, boy=None):
         self.metin = metin
         self.suslu = suslu
+        self.BOY = boy or MetinKarti.BOY
         self.cumleler = cumlelere_bol(metin)
         self.konusanlar = list(konusanlar or [])
         self.f = font("EBGaramond.ttf", self.BOY)
@@ -496,6 +498,9 @@ class Kamera:
 
     @staticmethod
     def matris(z, cx, cy, sars=(0.0, 0.0)):
+        z = max(z, 1.0)                                    # gorus alani resmin icinde kalsin
+        cx = min(max(cx, W / (2 * z)), W - W / (2 * z))
+        cy = min(max(cy, H / (2 * z)), H - H / (2 * z))
         m = skia.Matrix()
         m.setTranslate(W / 2 + sars[0], H / 2 + sars[1])
         m.preScale(z, z)
@@ -636,8 +641,8 @@ class Sayfa:
             self._arka = s.makeImageSnapshot()
         return self._arka
 
-    def kare(self, t):
-        """Sayfanin t anindaki karesi -> (H, W, 3) uint8."""
+    def kare(self, t, kart=True):
+        """Sayfanin t anindaki karesi -> (H, W, 3) uint8. kart=False: metin karti cizilmez (Shorts)."""
         s = skia.Surface(W, H)
         c = s.getCanvas()
         c.clear(renk4(KAGIT).toColor())
@@ -656,7 +661,7 @@ class Sayfa:
         c.restore()
         if hasattr(self.sahne, "ust"):                          # kameradan bagimsiz ust katman
             self.sahne.ust(c, self.firca, t, durum)
-        if self.kart:
+        if self.kart and kart:
             self.kart.ciz(c, t)
         a = s.makeImageSnapshot().toarray(colorType=skia.kRGBA_8888_ColorType)[..., :3].astype(np.float32)
         a *= kagit_dokusu()
@@ -721,18 +726,19 @@ class Masal:
                 return ("cevir", i, (t - b - s.sure) / CEVIRME)
         return ("sayfa", len(self.sayfalar) - 1, self.sayfalar[-1].sure)
 
-    def kare(self, t):
+    def kare(self, t, kart=True):
         tur, i, x = self.nerede(t)
         if tur == "sayfa":
-            img = self.sayfalar[i].kare(x)
+            img = self.sayfalar[i].kare(x, kart)
             if i == 0 and x < 0.8:                                  # giris kararmasi
                 img = (img.astype(np.float32) * _ss(x / 0.8)).astype(np.uint8)
             son = self.sayfalar[-1]
             if i == len(self.sayfalar) - 1 and x > son.sure - 1.2:
                 img = (img.astype(np.float32) * _ss((son.sure - x) / 1.2)).astype(np.uint8)
             return img
-        if getattr(self, "_cevir_onbellek", (None,))[0] != i:            # gecis boyunca A ve B sabit
-            self._cevir_onbellek = (i, self.sayfalar[i].kare(self.sayfalar[i].sure), self.sayfalar[i + 1].kare(0.0))
+        if getattr(self, "_cevir_onbellek", (None,))[0] != (i, kart):    # gecis boyunca A ve B sabit
+            self._cevir_onbellek = ((i, kart), self.sayfalar[i].kare(self.sayfalar[i].sure, kart),
+                                    self.sayfalar[i + 1].kare(0.0, kart))
         _, A, B = self._cevir_onbellek
         return sayfa_cevir(A, B, x)
 

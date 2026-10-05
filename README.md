@@ -114,14 +114,16 @@ python harita.py --siradaki --format dikey --yukle   # kuyruktaki konu → YouTu
 ## 4) Resimli kitap üslubunda masal videoları — `masal.py`
 
 Görüntü, müzik ve efektlerin tamamı kodla üretilen, 2–3 dakikalık yatay
-(1920×1080) masal videoları. İlk masal: **Keloğlan ile Kapı** (13 sayfa, ~2,5 dk).
+(1920×1080) masal videoları ve her masaldan ~30 sn'lik dikey (1080×1920) Shorts
+tanıtımı. İlk masal: **Keloğlan ile Kapı** (13 sayfa, ~2,5 dk).
 
 ```bash
 pip install skia-python numpy scipy pillow     # Linux'ta skia için: sudo apt install libegl1
-python masal.py --liste
-python masal.py --masal keloglan_kapi --kontak       # her sayfadan iki kare (hızlı kontrol)
-python masal.py --masal keloglan_kapi --onizleme 52  # tek kare
-python masal.py --masal keloglan_kapi                # tam video → cikti/masal/keloglan_kapi/
+python masal.py --liste                               # masallar + yayın kuyruğu
+python masal.py --masal keloglan_kapi --kontrol       # doğrula + her sahneyi dene + kontak.png
+python masal.py --masal keloglan_kapi --onizleme 52   # tek kare
+python masal.py --masal keloglan_kapi --format ikisi  # yatay video + Shorts → cikti/masal/keloglan_kapi/
+python masal.py --masal keloglan_kapi --seslendirme piper --format ikisi   # anlatımlı
 ```
 
 - **Görsel dil:** krem kağıt dokusu üzerinde sulu boya/guaş (pigment dokusu,
@@ -136,17 +138,42 @@ python masal.py --masal keloglan_kapi                # tam video → cikti/masal
   sayfa süreleri, sahne animasyonları ve efektler seslendirmeye göre kayar; anlatıcı
   konuşurken müzik kısılır. Gerekenler: `ELEVENLABS_API_KEY` ve `ELEVENLABS_VOICE_ID`
   (Voice Library'den **Türkçe** bir ses; karakter sesleri için `ELEVENLABS_SES_KELOGLAN`,
-  `ELEVENLABS_SES_ANA`, `ELEVENLABS_SES_HARAMI`). Sesler `cikti/masal/<kimlik>/seslendirme/`
-  altında önbelleğe alınır, aynı metin tekrar ücretlendirilmez. GitHub'da **Masal videosu**
+  `ELEVENLABS_SES_ANA`, `ELEVENLABS_SES_HARAMI`). Sesler `veri/seslendirme/<kimlik>/`
+  altında önbelleğe alınır ve repoya kaydedilir; aynı metin tekrar sentezlenmez/ücretlendirilmez. GitHub'da **Masal videosu**
   iş akışı aynı işi repo secret'larıyla yapar. `--seslendirme piper` ücretsiz ve
   anahtarsız Türkçe sinir ağı sesi kullanır (`pip install piper-tts`; ses modeli ilk
   çalıştırmada huggingface.co'dan iner). Masal dosyalarını değiştiren PR'larda **Masal
   videosu** iş akışı Piper sesiyle kendiliğinden çalışır. `--seslendirme espeak` yalnızca
   hattı anahtarsız denemek içindir (mekanik ses).
+- **Shorts tanıtımı:** masal dosyasındaki `SHORTS = dict(sayfalar=(...))` ile seçilen
+  1–3 ardışık sayfa (en komik an) dikey sayfaya yerleştirilir: üstte masal adı, ortada
+  çerçeveli resim, altta büyük puntolu metin, sonda "Masalın tamamı kanalımızda ▶".
 - **Yeni masal:** `masallar/<kimlik>.py` içinde `SAYFALAR` listesi; her sayfa bir
   sahne sınıfı (`arka`: bir kez çizilen resim, `on`: her karede çizilen hareketli
   katman), metin, konuşanlar, kamera ve ses ipuçları (`sesler`) içerir. Karakter ve
-  dekorlar `src/masal_cizim.py` kütüphanesindedir.
+  dekorlar `src/masal_cizim.py` kütüphanesindedir. Ayrıntılı kurallar:
+  [`masallar/YAZIM_REHBERI.md`](masallar/YAZIM_REHBERI.md); konu havuzu:
+  [`masallar/KONULAR.md`](masallar/KONULAR.md).
+
+### 🤖 Otonom masal üretimi (haftada 1)
+
+1. **Pazartesi — yazım (Claude rutini):** kuyrukta 3'ten az masal varsa rutin
+   `KONULAR.md`'deki sıradaki konuyu seçer, masalı kendi cümleleriyle yeniden anlatır,
+   sahnelerini (gerekirse yeni karakterleri) kodlar, `--kontrol` ile doğrular,
+   `masallar/sira.json` kuyruğuna ekler ve **PR açar**.
+2. **Önizleme (otomatik):** **Masal videosu** iş akışı PR'da masalı doğrular, Piper
+   sesiyle seslendirir (seslendirmeyi PR dalına kaydeder) ve yatay video + Shorts'u
+   *Artifacts* altına koyar.
+3. **Onay (siz):** videoları izleyin; beğendiyseniz PR'ı birleştirin. İstemediğiniz
+   bir şey varsa PR'a yorum yazın ya da kapatın — birleşmeyen masal yayınlanmaz.
+4. **Cuma — yayın (otomatik):** **Masal yayını (haftalık)** iş akışı kuyruktaki ilk
+   masalı üretir, iki videoyu YouTube'a gizli yükler ve **cumartesi 19:00'da (TR)**
+   kendiliğinden yayınlanacak şekilde zamanlar ("çocuklara özel" beyanıyla). Shorts
+   açıklamasında ana videonun bağlantısı bulunur. Elle çalıştırırken masal, yayın modu
+   (`zamanli`, `hemen`, `gizli`, `yukleme-yok`) ve anlatıcı seçilebilir.
+
+Kurulum, harita hattıyla aynıdır (yukarıdaki *Kurulum (bir kez)* adımları: `main`'e
+birleştirme, `YOUTUBE_TOKEN_JSON`, OAuth "Üretimde", iş akışı yazma izni, API denetimi).
 
 ## 🚀 Kurulum
 
@@ -184,7 +211,8 @@ Eklemezseniz video her zaman Artifacts'te hazır bekler.
 ├── harita.py                # Tarihi harita Shorts'ları (senaryolar/ + otonom yayın)
 ├── senaryolar/              # Konu başına bir veri dosyası + sira.json yayın kuyruğu
 ├── masal.py                 # Resimli kitap üslubunda masal videoları
-├── masallar/                # Masal başına bir dosya (sayfalar, sahneler, ses ipuçları)
+├── masallar/                # Masal başına bir dosya + sira.json kuyruğu, YAZIM_REHBERI, KONULAR
+├── veri/seslendirme/        # Masal seslendirme önbelleği (Piper/ElevenLabs; repoya kaydedilir)
 ├── requirements.txt
 ├── config/
 │   └── ayarlar.ornek.yaml   # Örnek ayar dosyası (asmr / klip bölümleri)
@@ -193,7 +221,8 @@ Eklemezseniz video her zaman Artifacts'te hazır bekler.
 ├── .github/workflows/
 │   ├── harita-shorts.yml    # Günlük harita Shorts'u (otomatik + manuel)
 │   ├── harita-onizleme.yml  # Senaryo PR'ları için doğrulama + önizleme
-│   ├── masal.yml            # Masal videosu (PR'da Piper sesiyle; elle ElevenLabs da)
+│   ├── masal.yml            # Masal PR önizlemesi: doğrula + Piper seslendir + video & Shorts
+│   ├── masal-yayin.yml      # Haftalık masal yayını (cuma üret → cumartesi 19:00 yayın)
 │   ├── asmr.yml             # Sıfırdan ASMR (günlük otomatik + manuel)
 │   └── klip-birlestir.yml   # Kliplerden ASMR (push ile otomatik)
 └── src/
@@ -206,7 +235,10 @@ Eklemezseniz video her zaman Artifacts'te hazır bekler.
     ├── masal_motoru.py      # Masal: sulu boya fırça, kağıt, metin kartı, sayfa çevirme
     ├── masal_cizim.py       # Masal: karakterler (eklemli kukla) ve dekorlar
     ├── masal_ses.py         # Masal: bağlama, kaval, def, zurna + efektler
-    ├── masal_seslendirme.py # Masal: ElevenLabs seslendirme (zaman damgalı, önbellekli)
+    ├── masal_seslendirme.py # Masal: Piper / ElevenLabs seslendirme (zaman damgalı, önbellekli)
+    ├── masal_shorts.py      # Masal: dikey Shorts tanıtımı
+    ├── masal_kontrol.py     # Masal doğrulayıcı (yapı + sahne denemesi)
+    ├── masal_yayin.py       # Masal yayın kuyruğu + zamanlı YouTube yükleme
     ├── klip_montaj.py       # Klipleri birleştir + ffmpeg döngü
     ├── sahne.py             # Pollinations/Pexels görsel üretimi
     ├── seslendirme.py       # edge-tts anlatım

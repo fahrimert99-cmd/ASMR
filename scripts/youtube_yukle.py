@@ -99,6 +99,7 @@ def video_yukle(
     kategori_id: str = "22",        # 22 = People & Blogs
     gizlilik: str = "public",
     yayin_zamani: str | None = None,  # "2026-10-05T16:00:00Z" -> gizli yükle, o an yayınla
+    cocuklara_ozel: bool = False,     # YouTube "çocuklara özel" (COPPA) beyanı
 ) -> str:
     """Videoyu YouTube'a yükler, video ID'sini döndürür.
 
@@ -124,7 +125,7 @@ def video_yukle(
         },
         "status": {
             "privacyStatus": gizlilik,
-            "selfDeclaredMadeForKids": False,
+            "selfDeclaredMadeForKids": bool(cocuklara_ozel),
         },
     }
     if yayin_zamani:

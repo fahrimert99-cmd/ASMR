@@ -33,6 +33,17 @@ MAKAM = {
 }
 
 
+# Sayfa "sesler" ipuclarinda kullanilabilen efekt adlari (Besteci.efekt)
+EFEKTLER = ("cinlama", "kuslar", "tavuk", "adimlar", "agir_adimlar", "kosma", "gicirti", "kopma", "dusme", "hayal",
+            "kurt", "circir", "baykus", "ates", "ates_uzak", "altin", "tirmanma", "kalp", "kayma", "whoosh", "gum",
+            "altin_sacilma", "horoz", "elma", "ruzgar", "sayfa", "gulme")
+
+
+def ruh_halleri():
+    """Sayfa "muzik" alaninda kullanilabilen ruh halleri (Besteci.b_*)."""
+    return sorted(a[2:] for a in dir(Besteci) if a.startswith("b_"))
+
+
 def perde(karar, makam, derece):
     o, s = divmod(int(derece), 7)
     return karar * 2 ** ((MAKAM[makam][s] + 1200 * o) / 1200)

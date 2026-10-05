@@ -1,0 +1,125 @@
+# Haftalık masal yayını: kuyruktaki (masallar/sira.json) ilk masalı Piper anlatımıyla
+# yatay video (1920x1080) + dikey Shorts tanıtımı (1080x1920) olarak üretir ve
+# YouTube'a ZAMANLI yükler.
+#
+# Akış: her cuma ~16:41 (TR) render + gizli yükleme -> YouTube iki videoyu cumartesi
+# 19:00'da (TR) kendiliğinden yayınlar. Arada YouTube Studio'dan izleyip isterseniz
+# yayını iptal edebilirsiniz. Shorts açıklamasında ana videonun bağlantısı bulunur.
+#
+# Masallar kuyruğa, haftalık Claude rutininin açtığı ve sizin onaylayıp birleştirdiğiniz
+# PR'larla girer (bkz. masallar/YAZIM_REHBERI.md). PR iş akışı seslendirmeyi
+# veri/seslendirme/<kimlik>/ altına kaydettiği için burada yeniden sentezlenmez.
+#
+# Gerekli repo sırları (Settings → Secrets and variables → Actions):
+#   YOUTUBE_TOKEN_JSON  (scripts/youtube_token_al.py ile üretilen token.json içeriği)
+#   YOUTUBE_OAUTH_JSON  (opsiyonel; client_secret.json içeriği)
+# Sırlar yoksa videolar yine üretilir ve "Artifacts" altında bekler; kuyruk ilerlemez.
+name: Masal yayını (haftalık)
+
+on:
+  schedule:
+    - cron: "41 13 * * 5"      # cuma 13:41 UTC = 16:41 TR
+  workflow_dispatch:
+    inputs:
+      masal:
+        description: "Masal kimliği (boş = kuyruktaki sıradaki masal)"
+        required: false
+        default: ""
+      yayin:
+        description: "Yayın modu"
+        type: choice
+        options: [zamanli, hemen, gizli, yukleme-yok]
+        default: zamanli
+      seslendirme:
+        description: "Anlatıcı sesi"
+        type: choice
+        options: [piper, elevenlabs, yok]
+        default: piper
+
+permissions:
+  contents: write
+
+concurrency:
+  group: masal-yayin
+  cancel-in-progress: false
+
+jobs:
+  yayin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Sistem paketleri
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg libegl1
+
+      - name: Bağımlılıklar
+        run: >
+          pip install numpy scipy pillow skia-python requests pyyaml piper-tts
+          google-api-python-client google-auth-oauthlib google-auth-httplib2
+
+      - name: Kuyruk durumu
+        run: python masal.py --liste
+
+      - name: Üret ve yükle
+        id: uret
+        env:
+          YOUTUBE_TOKEN_JSON: ${{ secrets.YOUTUBE_TOKEN_JSON }}
+          YOUTUBE_OAUTH_JSON: ${{ secrets.YOUTUBE_OAUTH_JSON }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID || vars.ELEVENLABS_VOICE_ID }}
+          MASAL: ${{ github.event.inputs.masal }}
+          YAYIN: ${{ github.event.inputs.yayin || 'zamanli' }}
+          SESLENDIRME: ${{ github.event.inputs.seslendirme || 'piper' }}
+        run: |
+          set -uo pipefail
+          case "$SESLENDIRME" in piper|elevenlabs|yok) ;; *) echo "Geçersiz motor"; exit 1;; esac
+          if [ -n "${MASAL}" ]; then
+            [[ "${MASAL}" =~ ^[a-z0-9]+[a-z0-9_]*$ ]] || { echo "Geçersiz masal kimliği"; exit 1; }
+            [ -f "masallar/${MASAL}.py" ] || { echo "masallar/${MASAL}.py yok"; exit 1; }
+            HEDEF=(--masal "${MASAL}")
+          else
+            HEDEF=(--siradaki)
+          fi
+          YUKLE=(--yukle --yayin "${YAYIN}")
+          [ "${YAYIN}" = "yukleme-yok" ] && YUKLE=()
+          python masal.py "${HEDEF[@]}" --seslendirme "${SESLENDIRME}" --format ikisi "${YUKLE[@]}"
+          kod=$?
+          if [ $kod -eq 2 ]; then
+            echo "::warning::Kuyrukta bekleyen masal yok. Haftalık Claude rutininin açtığı masal PR'ını birleştirin."
+            exit 0
+          fi
+          exit $kod
+
+      - name: Videoları sakla
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: masal-yayin-${{ github.run_number }}
+          path: cikti/masal/**/*.mp4
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Kuyruğu ve seslendirmeyi kaydet
+        if: steps.uret.outputs.kimlik != ''
+        env:
+          KIMLIK: ${{ steps.uret.outputs.kimlik }}
+          VIDEO_ID: ${{ steps.uret.outputs.video_id }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add masallar/sira.json
+          [ -d "veri/seslendirme/${KIMLIK}" ] && git add -f "veri/seslendirme/${KIMLIK}"
+          if git diff --cached --quiet; then echo "Değişiklik yok."; exit 0; fi
+          if [ -n "${VIDEO_ID}" ]; then
+            git commit -m "Masal yayın kuyruğu: ${KIMLIK} yüklendi (${VIDEO_ID})"
+          else
+            git commit -m "Seslendirme önbelleği: ${KIMLIK}"
+          fi
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

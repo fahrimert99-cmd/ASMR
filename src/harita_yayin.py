@@ -30,35 +30,36 @@ class YuklemeAtlandi(RuntimeError):
 
 
 # ------------------------------------------------------------------ kuyruk
-def sira_oku() -> dict:
-    if not SIRA.exists():
+def sira_oku(yol=None) -> dict:
+    yol = Path(yol or SIRA)
+    if not yol.exists():
         return {"sira": [], "yayinlanan": {}}
-    d = json.loads(SIRA.read_text(encoding="utf-8"))
+    d = json.loads(yol.read_text(encoding="utf-8"))
     d.setdefault("sira", [])
     d.setdefault("yayinlanan", {})
     return d
 
 
-def sira_yaz(d: dict):
-    SIRA.write_text(json.dumps(d, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+def sira_yaz(d: dict, yol=None):
+    Path(yol or SIRA).write_text(json.dumps(d, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
-def bekleyenler(d=None):
-    d = d or sira_oku()
+def bekleyenler(d=None, yol=None):
+    d = d or sira_oku(yol)
     return [k for k in d["sira"] if k not in d["yayinlanan"]]
 
 
-def siradaki():
-    b = bekleyenler()
+def siradaki(yol=None):
+    b = bekleyenler(yol=yol)
     return b[0] if b else None
 
 
-def isaretle(kimlik: str, bilgi: dict):
-    d = sira_oku()
+def isaretle(kimlik: str, bilgi: dict, yol=None):
+    d = sira_oku(yol)
     d["yayinlanan"][kimlik] = bilgi
     if kimlik not in d["sira"]:
         d["sira"].append(kimlik)
-    sira_yaz(d)
+    sira_yaz(d, yol)
 
 
 # ------------------------------------------------------------------ zaman
