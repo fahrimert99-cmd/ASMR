@@ -17,6 +17,9 @@ Ayarlar (öncelik sırasıyla):
 
 Motorlar:
     elevenlabs : gerçek seslendirme (ücretli anahtar; api.elevenlabs.io erişimi gerekir)
+    piper      : ücretsiz, anahtarsız, çevrimdışı sinir ağı sesi (piper-tts). Türkçe ses
+                 modeli ilk çalıştırmada huggingface.co'dan indirilir (varsayılan:
+                 tr_TR-fahrettin-medium; PIPER_SES ile değiştirilebilir).
     espeak     : yalnızca hattı denemek için mekanik çevrimdışı ses (espeak-ng)
 """
 import base64
@@ -33,6 +36,7 @@ KOK = Path(__file__).resolve().parent.parent
 API = "https://api.elevenlabs.io/v1"
 SR = 48000
 VARSAYILAN_AYAR = dict(stability=0.40, similarity_boost=0.85, style=0.35, use_speaker_boost=True)
+PIPER_URL = "https://huggingface.co/rhasspy/piper-voices/resolve/main/{aile}/{dil}/{ad}/{kalite}/{dil}-{ad}-{kalite}{uzanti}"
 
 
 class SeslendirmeHatasi(RuntimeError):
@@ -64,6 +68,8 @@ def ayarlar():
         ayar={**VARSAYILAN_AYAR, **(cfg.get("eleven_ayar") or {})},
         sesler=sesler,
         dil=cfg.get("eleven_dil"),
+        piper_ses=os.environ.get("PIPER_SES", "").strip() or cfg.get("piper_ses") or "tr_TR-fahrettin-medium",
+        piper_hiz=float(os.environ.get("PIPER_HIZ", "") or cfg.get("piper_hiz") or 1.12),
     )
 
 
@@ -132,6 +138,8 @@ class Seslendirici:
     def seslendir(self, metin, konusan=None, onceki="", sonraki=""):
         if self.motor == "espeak":
             return self._espeak(metin)
+        if self.motor == "piper":
+            return self._piper(metin)
         ses_id = self.ses_kimligi(konusan)
         anahtar = json.dumps([metin, ses_id, self.A["model"], self.A["ayar"], self.A["dil"]], ensure_ascii=False,
                              sort_keys=True)
@@ -176,6 +184,47 @@ class Seslendirici:
                 raise SeslendirmeHatasi(f"ElevenLabs istegi reddetti (422): {r.text[:300]}")
             son_hata = f"HTTP {r.status_code}: {r.text[:200]}"
         raise SeslendirmeHatasi(f"ElevenLabs seslendirmesi basarisiz ({son_hata}). api.elevenlabs.io erisimini kontrol edin.")
+
+    def _piper_sesi(self):
+        if getattr(self, "_piper_v", None) is not None:
+            return self._piper_v
+        try:
+            from piper import PiperVoice
+        except ImportError as e:
+            raise SeslendirmeHatasi("piper-tts kurulu degil: pip install piper-tts") from e
+        ad = self.A["piper_ses"]                          # ornek: tr_TR-fahrettin-medium
+        dil, isim, kalite = ad.split("-", 2)
+        dizin = KOK / "cikti" / "piper_sesler"
+        dizin.mkdir(parents=True, exist_ok=True)
+        onnx = dizin / f"{ad}.onnx"
+        for uzanti in (".onnx", ".onnx.json"):
+            hedef = dizin / f"{ad}{uzanti}"
+            if hedef.exists() and hedef.stat().st_size > 0:
+                continue
+            import requests
+            url = PIPER_URL.format(aile=dil.split("_")[0], dil=dil, ad=isim, kalite=kalite, uzanti=uzanti)
+            try:
+                r = requests.get(url, timeout=300)
+            except requests.RequestException as e:
+                raise SeslendirmeHatasi(f"Piper ses modeli indirilemedi ({e}). huggingface.co erisimi gerekir.") from e
+            if r.status_code != 200:
+                raise SeslendirmeHatasi(f"Piper ses modeli indirilemedi: HTTP {r.status_code} ({url})")
+            hedef.write_bytes(r.content)
+        self._piper_v = PiperVoice.load(str(onnx))
+        return self._piper_v
+
+    def _piper(self, metin):
+        import wave
+        from piper import SynthesisConfig
+        yol = self.dizin / ("piper_" + hashlib.sha1(f"{self.A['piper_ses']}|{self.A['piper_hiz']}|{metin}".encode())
+                            .hexdigest()[:14] + ".wav")
+        if not yol.exists():
+            ses = self._piper_sesi()
+            temiz = metin.replace("“", "").replace("”", "").replace("…", "...").replace("’", "'")
+            with wave.open(str(yol), "wb") as w:
+                ses.synthesize_wav(temiz, w, syn_config=SynthesisConfig(length_scale=self.A["piper_hiz"]))
+        ses, _ = _sessizlik_kirp(_wav_coz(yol))
+        return Klip(metin, ses)
 
     def _espeak(self, metin):
         exe = shutil.which("espeak-ng") or shutil.which("espeak")

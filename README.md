@@ -138,8 +138,11 @@ python masal.py --masal keloglan_kapi                # tam video → cikti/masal
   (Voice Library'den **Türkçe** bir ses; karakter sesleri için `ELEVENLABS_SES_KELOGLAN`,
   `ELEVENLABS_SES_ANA`, `ELEVENLABS_SES_HARAMI`). Sesler `cikti/masal/<kimlik>/seslendirme/`
   altında önbelleğe alınır, aynı metin tekrar ücretlendirilmez. GitHub'da **Masal videosu**
-  iş akışı aynı işi repo secret'larıyla yapar. `--seslendirme espeak` yalnızca hattı
-  anahtarsız denemek içindir (mekanik ses).
+  iş akışı aynı işi repo secret'larıyla yapar. `--seslendirme piper` ücretsiz ve
+  anahtarsız Türkçe sinir ağı sesi kullanır (`pip install piper-tts`; ses modeli ilk
+  çalıştırmada huggingface.co'dan iner). Masal dosyalarını değiştiren PR'larda **Masal
+  videosu** iş akışı Piper sesiyle kendiliğinden çalışır. `--seslendirme espeak` yalnızca
+  hattı anahtarsız denemek içindir (mekanik ses).
 - **Yeni masal:** `masallar/<kimlik>.py` içinde `SAYFALAR` listesi; her sayfa bir
   sahne sınıfı (`arka`: bir kez çizilen resim, `on`: her karede çizilen hareketli
   katman), metin, konuşanlar, kamera ve ses ipuçları (`sesler`) içerir. Karakter ve
@@ -190,7 +193,7 @@ Eklemezseniz video her zaman Artifacts'te hazır bekler.
 ├── .github/workflows/
 │   ├── harita-shorts.yml    # Günlük harita Shorts'u (otomatik + manuel)
 │   ├── harita-onizleme.yml  # Senaryo PR'ları için doğrulama + önizleme
-│   ├── masal.yml            # Masal videosu (elle; ElevenLabs seslendirmeli)
+│   ├── masal.yml            # Masal videosu (PR'da Piper sesiyle; elle ElevenLabs da)
 │   ├── asmr.yml             # Sıfırdan ASMR (günlük otomatik + manuel)
 │   └── klip-birlestir.yml   # Kliplerden ASMR (push ile otomatik)
 └── src/

@@ -1,11 +1,19 @@
-# Resimli masal videosu (elle tetiklenir): masallar/<kimlik>.py -> 1920x1080 video.
-# ElevenLabs seslendirmesi icin repo -> Settings -> Secrets and variables -> Actions:
-#   ELEVENLABS_API_KEY  (secret, zorunlu)
-#   ELEVENLABS_VOICE_ID (secret ya da variable: anlatici sesi; Voice Library'den Turkce bir ses)
-# Video ve seslendirme onbellegi "Artifacts" bolumune konur.
+# Resimli masal videosu: masallar/<kimlik>.py -> 1920x1080 video (Artifacts'e konur).
+#  - Masal dosyalarini degistiren PR'larda kendiliginden calisir (Piper Turkce sesiyle;
+#    anahtar gerekmez, ses modeli huggingface.co'dan indirilir).
+#  - Elle de tetiklenebilir: masal ve seslendirme motoru secilir.
+# ElevenLabs icin repo -> Settings -> Secrets and variables -> Actions:
+#   ELEVENLABS_API_KEY  (secret)
+#   ELEVENLABS_VOICE_ID (secret ya da variable: Voice Library'den Turkce bir anlatici sesi)
 name: Masal videosu
 
 on:
+  pull_request:
+    paths:
+      - "masallar/**"
+      - "src/masal_*.py"
+      - "masal.py"
+      - ".github/workflows/masal.yml"
   workflow_dispatch:
     inputs:
       masal:
@@ -14,16 +22,20 @@ on:
       seslendirme:
         description: "Anlatici sesi"
         type: choice
-        options: [elevenlabs, yok]
-        default: elevenlabs
+        options: [piper, elevenlabs, yok]
+        default: piper
 
 permissions:
   contents: read
 
+concurrency:
+  group: masal-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   masal:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
 
@@ -36,23 +48,24 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y ffmpeg libegl1
 
       - name: Bağımlılıklar
-        run: pip install numpy scipy pillow skia-python requests pyyaml
+        run: pip install numpy scipy pillow skia-python requests pyyaml piper-tts
 
       - name: Masali render et
         env:
-          MASAL: ${{ inputs.masal }}
-          SESLENDIRME: ${{ inputs.seslendirme }}
+          MASAL: ${{ inputs.masal || 'keloglan_kapi' }}
+          SESLENDIRME: ${{ inputs.seslendirme || 'piper' }}
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
           ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID || vars.ELEVENLABS_VOICE_ID }}
         run: |
           set -e
           [[ "$MASAL" =~ ^[a-z0-9]+[a-z0-9_]*$ ]] || { echo "gecersiz masal kimligi"; exit 1; }
           [ -f "masallar/$MASAL.py" ] || { echo "masallar/$MASAL.py yok"; exit 1; }
+          case "$SESLENDIRME" in piper|elevenlabs|yok) ;; *) echo "gecersiz motor"; exit 1;; esac
           python masal.py --masal "$MASAL" --seslendirme "$SESLENDIRME"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: masal-${{ inputs.masal }}-${{ github.run_number }}
+          name: masal-video-${{ github.run_number }}
           path: |
             cikti/masal/**/*.mp4
             cikti/masal/**/seslendirme/*

@@ -9,6 +9,7 @@ Resimli kitap üslubunda masal videosu — görüntü, müzik ve efektler tamame
     python masal.py --masal keloglan_kapi --sadece-ses    # yalnizca ses izi (wav)
     python masal.py --masal keloglan_kapi --seslendirme elevenlabs   # anlatici sesiyle
         (ELEVENLABS_API_KEY ve ELEVENLABS_VOICE_ID gerekir; sesler onbellege alinir)
+    python masal.py --masal keloglan_kapi --seslendirme piper        # ucretsiz Turkce ses (piper-tts)
 
 Çıktı: cikti/masal/<kimlik>/<kimlik>.mp4
 """
@@ -120,8 +121,9 @@ def main():
     p.add_argument("--onizleme", type=float, default=None, help="Yalnizca bu saniyenin PNG karesi")
     p.add_argument("--kontak", action="store_true", help="Her sayfadan iki kare (kontak.png)")
     p.add_argument("--sadece-ses", action="store_true")
-    p.add_argument("--seslendirme", choices=["yok", "elevenlabs", "espeak"], default="yok",
-                   help="Anlatici sesi: elevenlabs (gercek) | espeak (yalnizca hatti denemek icin)")
+    p.add_argument("--seslendirme", choices=["yok", "elevenlabs", "piper", "espeak"], default="yok",
+                   help="Anlatici sesi: elevenlabs (ucretli, en dogal) | piper (ucretsiz Turkce sinir agi sesi) | "
+                        "espeak (yalnizca hatti denemek icin)")
     a = p.parse_args()
 
     if a.liste:
