@@ -52,16 +52,16 @@ def ses_uret(masal, hedef: Path) -> Path:
     MS.uret(ham, masal)
     ff = _ffmpeg()
     olc = subprocess.run([ff, "-hide_banner", "-i", str(ham), "-af",
-                          "loudnorm=I=-14:TP=-1.5:LRA=11:print_format=json", "-f", "null", "-"],
+                          "loudnorm=I=-14:TP=-2.0:LRA=11:print_format=json", "-f", "null", "-"],
                          capture_output=True, text=True)
     try:
         js = json.loads(olc.stderr[olc.stderr.rindex("{"):olc.stderr.rindex("}") + 1])
-        af = ("loudnorm=I=-14:TP=-1.5:LRA=11:linear=true:"
+        af = ("loudnorm=I=-14:TP=-2.0:LRA=11:linear=true:"
               f"measured_I={js['input_i']}:measured_TP={js['input_tp']}:"
               f"measured_LRA={js['input_lra']}:measured_thresh={js['input_thresh']}:"
               f"offset={js['target_offset']}")
     except (ValueError, KeyError):
-        af = "loudnorm=I=-14:TP=-1.5:LRA=11"
+        af = "loudnorm=I=-14:TP=-2.0:LRA=11"
     subprocess.run([ff, "-hide_banner", "-loglevel", "error", "-y", "-i", str(ham), "-af", af, "-ar", "48000",
                     str(hedef)], check=True)
     ham.unlink(missing_ok=True)
@@ -77,7 +77,7 @@ def video_uret(masal, ses: Path, hedef: Path, fps: int, isci: int) -> Path:
              "-f", "rawvideo", "-pix_fmt", "rgb24", "-s", f"{MM.W}x{MM.H}", "-r", str(fps), "-i", "-",
              "-i", str(ses),
              "-c:v", "libx264", "-preset", "slow", "-crf", "18", "-pix_fmt", "yuv420p",
-             "-c:a", "aac", "-b:a", "192k", "-shortest", "-movflags", "+faststart", str(hedef)]
+             "-c:a", "aac", "-b:a", "256k", "-shortest", "-movflags", "+faststart", str(hedef)]
     ff = subprocess.Popen(komut, stdin=subprocess.PIPE)
     t0 = time.time()
     baglam = mp.get_context("fork") if "fork" in mp.get_all_start_methods() else mp.get_context()
