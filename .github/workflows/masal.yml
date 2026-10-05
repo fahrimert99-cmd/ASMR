@@ -1,0 +1,60 @@
+# Resimli masal videosu (elle tetiklenir): masallar/<kimlik>.py -> 1920x1080 video.
+# ElevenLabs seslendirmesi icin repo -> Settings -> Secrets and variables -> Actions:
+#   ELEVENLABS_API_KEY  (secret, zorunlu)
+#   ELEVENLABS_VOICE_ID (secret ya da variable: anlatici sesi; Voice Library'den Turkce bir ses)
+# Video ve seslendirme onbellegi "Artifacts" bolumune konur.
+name: Masal videosu
+
+on:
+  workflow_dispatch:
+    inputs:
+      masal:
+        description: "masallar/<kimlik>.py"
+        default: "keloglan_kapi"
+      seslendirme:
+        description: "Anlatici sesi"
+        type: choice
+        options: [elevenlabs, yok]
+        default: elevenlabs
+
+permissions:
+  contents: read
+
+jobs:
+  masal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Sistem paketleri
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg libegl1
+
+      - name: Bağımlılıklar
+        run: pip install numpy scipy pillow skia-python requests pyyaml
+
+      - name: Masali render et
+        env:
+          MASAL: ${{ inputs.masal }}
+          SESLENDIRME: ${{ inputs.seslendirme }}
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID || vars.ELEVENLABS_VOICE_ID }}
+        run: |
+          set -e
+          [[ "$MASAL" =~ ^[a-z0-9]+[a-z0-9_]*$ ]] || { echo "gecersiz masal kimligi"; exit 1; }
+          [ -f "masallar/$MASAL.py" ] || { echo "masallar/$MASAL.py yok"; exit 1; }
+          python masal.py --masal "$MASAL" --seslendirme "$SESLENDIRME"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: masal-${{ inputs.masal }}-${{ github.run_number }}
+          path: |
+            cikti/masal/**/*.mp4
+            cikti/masal/**/seslendirme/*
+          if-no-files-found: error
+          retention-days: 14

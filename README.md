@@ -131,6 +131,15 @@ python masal.py --masal keloglan_kapi                # tam video → cikti/masal
 - **Ses:** bağlama (Karplus-Strong), kaval, def, düğünde davul-zurna; makamlar
   koma doğruluğunda (Rast, Uşşak, Hüseyni, Hicaz). Kapı gıcırtısı, GÜM, cırcır böceği,
   baykuş, kurt, ateş, altın şıngırtısı, horoz, sayfa hışırtısı; −14 LUFS.
+- **ElevenLabs seslendirmesi (isteğe bağlı):** `--seslendirme elevenlabs` her sayfayı
+  cümle cümle seslendirir (zaman damgalı uç nokta). Cümleler anlatıcı okurken belirir;
+  sayfa süreleri, sahne animasyonları ve efektler seslendirmeye göre kayar; anlatıcı
+  konuşurken müzik kısılır. Gerekenler: `ELEVENLABS_API_KEY` ve `ELEVENLABS_VOICE_ID`
+  (Voice Library'den **Türkçe** bir ses; karakter sesleri için `ELEVENLABS_SES_KELOGLAN`,
+  `ELEVENLABS_SES_ANA`, `ELEVENLABS_SES_HARAMI`). Sesler `cikti/masal/<kimlik>/seslendirme/`
+  altında önbelleğe alınır, aynı metin tekrar ücretlendirilmez. GitHub'da **Masal videosu**
+  iş akışı aynı işi repo secret'larıyla yapar. `--seslendirme espeak` yalnızca hattı
+  anahtarsız denemek içindir (mekanik ses).
 - **Yeni masal:** `masallar/<kimlik>.py` içinde `SAYFALAR` listesi; her sayfa bir
   sahne sınıfı (`arka`: bir kez çizilen resim, `on`: her karede çizilen hareketli
   katman), metin, konuşanlar, kamera ve ses ipuçları (`sesler`) içerir. Karakter ve
@@ -181,6 +190,7 @@ Eklemezseniz video her zaman Artifacts'te hazır bekler.
 ├── .github/workflows/
 │   ├── harita-shorts.yml    # Günlük harita Shorts'u (otomatik + manuel)
 │   ├── harita-onizleme.yml  # Senaryo PR'ları için doğrulama + önizleme
+│   ├── masal.yml            # Masal videosu (elle; ElevenLabs seslendirmeli)
 │   ├── asmr.yml             # Sıfırdan ASMR (günlük otomatik + manuel)
 │   └── klip-birlestir.yml   # Kliplerden ASMR (push ile otomatik)
 └── src/
@@ -193,6 +203,7 @@ Eklemezseniz video her zaman Artifacts'te hazır bekler.
     ├── masal_motoru.py      # Masal: sulu boya fırça, kağıt, metin kartı, sayfa çevirme
     ├── masal_cizim.py       # Masal: karakterler (eklemli kukla) ve dekorlar
     ├── masal_ses.py         # Masal: bağlama, kaval, def, zurna + efektler
+    ├── masal_seslendirme.py # Masal: ElevenLabs seslendirme (zaman damgalı, önbellekli)
     ├── klip_montaj.py       # Klipleri birleştir + ffmpeg döngü
     ├── sahne.py             # Pollinations/Pexels görsel üretimi
     ├── seslendirme.py       # edge-tts anlatım

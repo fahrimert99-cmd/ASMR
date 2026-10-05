@@ -636,8 +636,36 @@ class Besteci:
             raise ValueError(f"bilinmeyen efekt: {ad}")
 
 
-def zaman_coz(z, sayfa_bas, sure, cumle_t):
-    """Efekt zamani: sayi (sayfa basindan; negatifse sayfa sonundan) ya da 'cN', 'cN+x', 'cN-x'."""
+def _anlatimla_karistir(muzik, anlatim, ir, muzik_rms=0.06, ses_rms=0.10, kis=0.6):
+    """Muzik yatagini seviyeye getirir, anlatici konusurken kisar (ducking), sesi ekler."""
+    n = muzik.shape[1]
+    m_rms = np.sqrt((muzik ** 2).mean()) + 1e-9
+    muzik = muzik * (muzik_rms / m_rms)
+    ses = np.zeros(n)
+    zarf = np.zeros(n)
+    for t, k in anlatim:
+        x = np.asarray(k.ses, np.float64)
+        r = np.sqrt((x ** 2).mean()) + 1e-9
+        x = _filtre(x * (ses_rms / r), "hp", 70)
+        i0 = int(round(t * SR))
+        m = min(len(x), n - i0)
+        if m <= 0:
+            continue
+        ses[i0:i0 + m] += x[:m]
+        zarf[max(0, i0 - int(0.12 * SR)):i0 + m] = 1.0
+    zarf = signal.sosfiltfilt(signal.butter(1, 1.6 / (SR / 2), output="sos"), zarf).clip(0, 1)
+    muzik = muzik * (1 - kis * zarf)
+    oda = signal.fftconvolve(ses, ir[0])[:n] * 0.10
+    return muzik + np.stack([ses + oda, ses + oda])
+
+
+def zaman_coz(z, sayfa_bas, sure, cumle_t, sayfa=None):
+    """Efekt zamani: sayi (sayfa basindan; negatifse sayfa sonundan), 'cN', 'cN+x', 'cN-x'
+    ya da 'k:kelime|yedek' (seslendirmede kelimenin basladigi an; seslendirme yoksa yedek)."""
+    if isinstance(z, str) and z.startswith("k:"):
+        kelime, _, yedek = z[2:].partition("|")
+        kz = sayfa.kelime_zamani(kelime) if sayfa is not None else None
+        return sayfa_bas + (kz if kz is not None else float(yedek or 0))
     if isinstance(z, str):
         z = z.strip()
         kayma = 0.0
@@ -654,8 +682,12 @@ def zaman_coz(z, sayfa_bas, sure, cumle_t):
     return sayfa_bas + yerel
 
 
-def uret(yol, masal, tohum=7):
-    """Masal nesnesinin zaman cizelgesinden tam ses izini uretir (wav)."""
+def uret(yol, masal, tohum=7, anlatim=None):
+    """Masal nesnesinin zaman cizelgesinden tam ses izini uretir (wav).
+
+    anlatim: [(t, Klip)] seslendirme — verilirse anlatici konusurken muzik/efekt
+    yatagi otomatik kisilir (ducking) ve ses one cikar.
+    """
     from src.masal_motoru import CEVIRME
     rng = np.random.default_rng(tohum)
     M = Mikser(masal.SURE + 1.0)
@@ -668,10 +700,10 @@ def uret(yol, masal, tohum=7):
         for kayit in s.t.get("sesler", []):
             ad, z = kayit[0], kayit[1]
             ops = kayit[2] if len(kayit) > 2 else {}
-            tt = zaman_coz(z, t0, s.sure, cumle_t)
+            tt = zaman_coz(z, t0, s.sure, cumle_t, s)
             sure = ops.get("sure")
             if isinstance(sure, str):
-                sure = zaman_coz(sure, t0, s.sure, cumle_t) - tt
+                sure = zaman_coz(sure, t0, s.sure, cumle_t, s) - tt
             cue[ad] = tt
             B.efekt(ad, tt, sure)
         bolum = dict(cue=cue, sayfa=s)
@@ -683,6 +715,8 @@ def uret(yol, masal, tohum=7):
     islak = np.stack([signal.fftconvolve(M.yanki[c], ir[c])[: M.n] for c in range(2)])
     mix = M.kuru + islak * 0.85
     mix = signal.sosfilt(_sos("hp", 30, 2), mix, axis=1)
+    if anlatim:
+        mix = _anlatimla_karistir(mix, anlatim, ir)
     tepe = np.abs(mix).max() + 1e-9
     mix = np.tanh(mix / tepe * 1.3) / np.tanh(1.3)
     son = int(1.2 * SR)

@@ -7,6 +7,8 @@ Resimli kitap üslubunda masal videosu — görüntü, müzik ve efektler tamame
     python masal.py --masal keloglan_kapi --onizleme 52   # tek kare (PNG)
     python masal.py --masal keloglan_kapi --kontak        # her sayfadan kareler (kontak sayfasi)
     python masal.py --masal keloglan_kapi --sadece-ses    # yalnizca ses izi (wav)
+    python masal.py --masal keloglan_kapi --seslendirme elevenlabs   # anlatici sesiyle
+        (ELEVENLABS_API_KEY ve ELEVENLABS_VOICE_ID gerekir; sesler onbellege alinir)
 
 Çıktı: cikti/masal/<kimlik>/<kimlik>.mp4
 """
@@ -47,9 +49,9 @@ def _kare(i):
 
 
 def ses_uret(masal, hedef: Path) -> Path:
-    """Sentez ses + iki gecisli loudnorm (-14 LUFS)."""
+    """Sentez ses (+ varsa seslendirme) + iki gecisli loudnorm (-14 LUFS)."""
     ham = hedef.with_name("ses_ham.wav")
-    MS.uret(ham, masal)
+    MS.uret(ham, masal, anlatim=masal.anlatim_olaylari() if masal.anlatimli else None)
     ff = _ffmpeg()
     olc = subprocess.run([ff, "-hide_banner", "-i", str(ham), "-af",
                           "loudnorm=I=-14:TP=-2.0:LRA=11:print_format=json", "-f", "null", "-"],
@@ -118,6 +120,8 @@ def main():
     p.add_argument("--onizleme", type=float, default=None, help="Yalnizca bu saniyenin PNG karesi")
     p.add_argument("--kontak", action="store_true", help="Her sayfadan iki kare (kontak.png)")
     p.add_argument("--sadece-ses", action="store_true")
+    p.add_argument("--seslendirme", choices=["yok", "elevenlabs", "espeak"], default="yok",
+                   help="Anlatici sesi: elevenlabs (gercek) | espeak (yalnizca hatti denemek icin)")
     a = p.parse_args()
 
     if a.liste:
@@ -130,6 +134,15 @@ def main():
     masal = MM.Masal(a.masal)
     cikti = Path(a.cikti) if a.cikti else KOK / "cikti" / "masal" / a.masal
     cikti.mkdir(parents=True, exist_ok=True)
+    if a.seslendirme != "yok":
+        from src import masal_seslendirme as SL
+        print(f"Seslendiriliyor ({a.seslendirme})...")
+        try:
+            plan = SL.masali_seslendir(masal, a.seslendirme, cikti / "seslendirme")
+        except SL.SeslendirmeHatasi as e:
+            print(f"HATA: {e}")
+            return 3
+        masal.seslendirme_uygula(plan)
     print(f"Masal: {a.masal} — {masal.BASLIK}  ({len(masal.sayfalar)} sayfa, {masal.SURE:.1f} sn)")
 
     if a.onizleme is not None:
@@ -148,7 +161,8 @@ def main():
         print(f"  {ses}")
         return 0
     print(f"Video render ediliyor ({a.fps} fps, {a.isci} isci)...")
-    yol = video_uret(masal, ses, cikti / f"{a.masal}.mp4", a.fps, a.isci)
+    ad = a.masal + ("" if a.seslendirme == "yok" else f"_{a.seslendirme}")
+    yol = video_uret(masal, ses, cikti / f"{ad}.mp4", a.fps, a.isci)
     print(f"BITTI ✅  {yol} ({yol.stat().st_size // 1024} KB)")
     return 0
 

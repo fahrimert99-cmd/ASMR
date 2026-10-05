@@ -364,6 +364,7 @@ class MetinKarti:
             self.zaman.append(t)
             t += 0.55 + len(cm.split()) / 2.7
         self.okuma_bitis = t
+        self.sureler = None                                # seslendirme varsa cumle sureleri
         self.sure = sure
 
     def _yerlestir(self):
@@ -447,7 +448,7 @@ class MetinKarti:
         for i in range(len(self.cumleler) - 1, -1, -1):
             if t >= self.zaman[i]:
                 if i < len(self.konusanlar) and self.konusanlar[i]:
-                    sure = 0.4 + len(self.cumleler[i].split()) / 3.2
+                    sure = self.sureler[i] if self.sureler else 0.4 + len(self.cumleler[i].split()) / 3.2
                     if t < self.zaman[i] + sure:
                         return self.konusanlar[i]
                 return None
@@ -597,6 +598,32 @@ class Sayfa:
         self.kamera = Kamera(tanim.get("kamera"))
         self.firca = firca
         self._arka = None
+        self.anlatim = []                                  # [(sayfa_ici_t, Klip)]
+
+    def anlatim_uygula(self, klipler, bas=0.8, ara=0.38):
+        """Seslendirme surelerine gore cumle zamanlarini ve sayfa suresini yeniden kurar."""
+        t = bas
+        self.anlatim = []
+        for k in klipler:
+            self.anlatim.append((t, k))
+            t += k.sure + ara
+        bitis = t - ara
+        if self.kart:
+            self.kart.zaman = [z for z, _ in self.anlatim]
+            self.kart.sureler = [k.sure for k in klipler]
+            self.kart.okuma_bitis = bitis
+        sabit = self.t.get("sure")
+        self.sure = float(max(sabit, bitis + 1.3) if sabit else max(8.0, bitis + 1.8))
+        if self.kart:
+            self.kart.sure = self.sure
+
+    def kelime_zamani(self, kelime):
+        """Seslendirmede kelimenin basladigi sayfa ici an (yoksa None)."""
+        for t0, k in self.anlatim:
+            z = k.kelime_zamani(kelime)
+            if z is not None:
+                return t0 + z
+        return None
 
     def arka_resmi(self):
         if self._arka is None:
@@ -624,7 +651,7 @@ class Sayfa:
         c.drawImage(self.arka_resmi(), 0, 0, skia.SamplingOptions(skia.FilterMode.kLinear, skia.MipmapMode.kLinear))
         c.restore()
         durum = dict(konusan=self.kart.konusan(t) if self.kart else None, sure=self.sure, u=u,
-                     cumle_t=list(self.kart.zaman) if self.kart else [])
+                     cumle_t=list(self.kart.zaman) if self.kart else [], sayfa=self)
         self.sahne.on(c, self.firca, t, durum)
         c.restore()
         if hasattr(self.sahne, "ust"):                          # kameradan bagimsiz ust katman
@@ -659,14 +686,30 @@ class Masal:
         self.mod = importlib.import_module(f"masallar.{kimlik}")
         self.firca = Firca()
         self.sayfalar = [Sayfa(t, self.firca) for t in self.mod.SAYFALAR]
-        # zaman cizelgesi: sayfa_i [bas, bit), aralarda CEVIRME
+        self.BASLIK = getattr(self.mod, "BASLIK", kimlik)
+        self.anlatimli = False
+        self._cizelge()
+
+    def _cizelge(self):
+        """Zaman cizelgesi: sayfa_i [bas, bit), aralarda CEVIRME."""
         self.bas = []
         t = 0.0
         for i, s in enumerate(self.sayfalar):
             self.bas.append(t)
             t += s.sure + (CEVIRME if i < len(self.sayfalar) - 1 else 0.0)
         self.SURE = t
-        self.BASLIK = getattr(self.mod, "BASLIK", kimlik)
+
+    def seslendirme_uygula(self, plan):
+        """plan: {sayfa_no: [Klip]} -> sayfa sureleri/cumle zamanlari seslendirmeye gore."""
+        for i, klipler in plan.items():
+            bas = self.sayfalar[i].t.get("seslendirme_bas", 0.8)
+            self.sayfalar[i].anlatim_uygula(klipler, bas=bas)
+        self.anlatimli = bool(plan)
+        self._cizelge()
+
+    def anlatim_olaylari(self):
+        """Ses miksajı icin mutlak zamanli seslendirme klipleri: [(t, Klip)]."""
+        return [(self.bas[i] + t0, k) for i, s in enumerate(self.sayfalar) for t0, k in s.anlatim]
 
     def nerede(self, t):
         """t -> ('sayfa', i, yerel_t) ya da ('cevir', i, u) (i -> i+1)."""

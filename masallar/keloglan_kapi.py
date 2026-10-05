@@ -734,8 +734,17 @@ class Elmalar:
         C.cimen_tutamlari(c, f, (-40, 640, 1960, 830), n=200, renk=(0.30, 0.45, 0.20), tohum=122)
         C.cicekler(c, f, (-40, 650, 1960, 830), n=70, tohum=123)
 
+    def zamanlar(self, d):
+        """Elmalar 'bana', 'anlatana', 'dinleyenlere' kelimelerinde yere dusecek sekilde (seslendirme varsa)."""
+        s = d.get("sayfa")
+        out = []
+        for kelime, varsayilan in zip(("bana", "anlatana", "dinleyenlere"), self.ZAMAN):
+            z = s.kelime_zamani(kelime) if s is not None else None
+            out.append(z - 0.75 if z is not None else varsayilan)
+        return out
+
     def on(self, c, f, t, d):
-        for i, (x, t0) in enumerate(zip((620, 960, 1300), self.ZAMAN)):
+        for i, (x, t0) in enumerate(zip((620, 960, 1300), self.zamanlar(d))):
             u = (t - t0) / 0.75
             if u < 0:
                 continue
@@ -764,7 +773,7 @@ class Elmalar:
 
 # ================================================================ sayfa listesi
 SAYFALAR = [
-    dict(kimlik="kapak", sesler=[("cinlama", 1.2), ("kuslar", 0.5, dict(sure=6))], sahne=Kapak(), sure=6.5, muzik="giris",
+    dict(kimlik="kapak", seslendirme="Bir varmış, bir yokmuş… Keloğlan ile Kapı.", seslendirme_bas=1.6, sesler=[("cinlama", 1.2), ("kuslar", 0.5, dict(sure=6))], sahne=Kapak(), sure=6.5, muzik="giris",
          kamera=[(0.0, 1.06, 960, 560), (1.0, 1.0, 960, 540)]),
     dict(kimlik="ev", sesler=[("kuslar", 0.3, dict(sure=10)), ("tavuk", 2.2), ("tavuk", 6.8)], sahne=Ev(), muzik="koy",
          metin="Evvel zaman içinde, kalbur saman içinde, bir köyün kıyısında Keloğlan ile anası yaşarmış. "
@@ -803,7 +812,7 @@ SAYFALAR = [
                "Derken kapı elinden kayıvermiş…",
          konusanlar=[None, "kel", "ana", None],
          kamera=[(0.0, 1.0, 960, 540), (1.0, 1.07, 900, 500)]),
-    dict(kimlik="gum", sesler=[("gum", 0.72), ("altin_sacilma", 0.8), ("kosma", "c2-0.3", dict(sure=4)), ("ates", 0.0, dict(sure=10)), ("circir", 4.0, dict(sure=6))], sahne=Gum(), muzik="kacis", suslu_harf=False,
+    dict(kimlik="gum", seslendirme_bas=0.85, sesler=[("gum", 0.72), ("altin_sacilma", 0.8), ("kosma", "c2-0.3", dict(sure=4)), ("ates", 0.0, dict(sure=10)), ("circir", 4.0, dict(sure=6))], sahne=Gum(), muzik="kacis", suslu_harf=False,
          metin="GÜM! Kapı haramilerin tepesine inmiş. “Gök yıkılıyor, kaçın!” diye bağrışarak "
                "altınları bırakıp tabanları yağlamışlar.",
          konusanlar=[None, None, "harami"],
@@ -816,7 +825,7 @@ SAYFALAR = [
          metin="Kapıyı yerine takmışlar, bir daha da yoksulluk yüzü görmemişler. "
                "Onlar ermiş muradına, biz çıkalım kerevetine.",
          kamera=[(0.0, 1.05, 1000, 520), (1.0, 1.0, 960, 540)]),
-    dict(kimlik="elmalar", sesler=[("elma", 1.75), ("elma", 3.05), ("elma", 4.35), ("cinlama", 4.6)], sahne=Elmalar(), muzik="son", sure=9.0,
+    dict(kimlik="elmalar", sesler=[("elma", "k:bana|1.75"), ("elma", "k:anlatana|3.05"), ("elma", "k:dinleyenlere|4.35"), ("cinlama", 4.6)], sahne=Elmalar(), muzik="son", sure=9.0,
          metin="Gökten üç elma düşmüş: biri bana, biri anlatana, biri de dinleyenlere.",
          kamera=[(0.0, 1.0, 960, 540), (1.0, 1.02, 960, 530)]),
 ]
