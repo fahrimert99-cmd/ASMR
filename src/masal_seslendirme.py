@@ -36,7 +36,8 @@ KOK = Path(__file__).resolve().parent.parent
 API = "https://api.elevenlabs.io/v1"
 SR = 48000
 VARSAYILAN_AYAR = dict(stability=0.40, similarity_boost=0.85, style=0.35, use_speaker_boost=True)
-PIPER_URL = "https://huggingface.co/rhasspy/piper-voices/resolve/main/{aile}/{dil}/{ad}/{kalite}/{dil}-{ad}-{kalite}{uzanti}"
+PIPER_DEPO = "https://huggingface.co/rhasspy/piper-voices/resolve/main/"
+PIPER_TERCIH = ("fahrettin", "fettah", "dfki")              # Turkce sesler icin tercih sirasi
 
 
 class SeslendirmeHatasi(RuntimeError):
@@ -192,26 +193,39 @@ class Seslendirici:
             from piper import PiperVoice
         except ImportError as e:
             raise SeslendirmeHatasi("piper-tts kurulu degil: pip install piper-tts") from e
-        ad = self.A["piper_ses"]                          # ornek: tr_TR-fahrettin-medium
-        dil, isim, kalite = ad.split("-", 2)
         dizin = KOK / "cikti" / "piper_sesler"
         dizin.mkdir(parents=True, exist_ok=True)
-        onnx = dizin / f"{ad}.onnx"
-        for uzanti in (".onnx", ".onnx.json"):
-            hedef = dizin / f"{ad}{uzanti}"
-            if hedef.exists() and hedef.stat().st_size > 0:
-                continue
-            import requests
-            url = PIPER_URL.format(aile=dil.split("_")[0], dil=dil, ad=isim, kalite=kalite, uzanti=uzanti)
-            try:
-                r = requests.get(url, timeout=300)
-            except requests.RequestException as e:
-                raise SeslendirmeHatasi(f"Piper ses modeli indirilemedi ({e}). huggingface.co erisimi gerekir.") from e
-            if r.status_code != 200:
-                raise SeslendirmeHatasi(f"Piper ses modeli indirilemedi: HTTP {r.status_code} ({url})")
-            hedef.write_bytes(r.content)
+        katalog = json.loads(self._indir("voices.json", dizin / "voices.json").read_text(encoding="utf-8"))
+        ad = self.A["piper_ses"]                          # ornek: tr_TR-fahrettin-medium
+        turkce = sorted(k for k, v in katalog.items() if v.get("language", {}).get("code") == "tr_TR")
+        if ad not in katalog:
+            secim = [k for isim in PIPER_TERCIH for k in turkce if f"-{isim}-" in k]
+            if not (secim or turkce):
+                raise SeslendirmeHatasi("Piper katalogunda Turkce ses bulunamadi.")
+            print(f"    Piper: '{ad}' katalogda yok; Turkce sesler: {', '.join(turkce)}", flush=True)
+            ad = (secim or turkce)[0]
+        print(f"    Piper sesi: {ad}", flush=True)
+        dosyalar = [f for f in katalog[ad]["files"] if f.endswith((".onnx", ".onnx.json"))]
+        yerel = {f: self._indir(f, dizin / Path(f).name) for f in dosyalar}
+        onnx = next(v for k, v in yerel.items() if k.endswith(".onnx"))
         self._piper_v = PiperVoice.load(str(onnx))
         return self._piper_v
+
+    @staticmethod
+    def _indir(goreli, hedef: Path) -> Path:
+        """Piper ses deposundan dosya indirir (varsa yeniden indirmez)."""
+        if hedef.exists() and hedef.stat().st_size > 0:
+            return hedef
+        import requests
+        url = PIPER_DEPO + goreli
+        try:
+            r = requests.get(url, timeout=300)
+        except requests.RequestException as e:
+            raise SeslendirmeHatasi(f"Piper dosyasi indirilemedi ({e}). huggingface.co erisimi gerekir.") from e
+        if r.status_code != 200:
+            raise SeslendirmeHatasi(f"Piper dosyasi indirilemedi: HTTP {r.status_code} ({url})")
+        hedef.write_bytes(r.content)
+        return hedef
 
     def _piper(self, metin):
         import wave
