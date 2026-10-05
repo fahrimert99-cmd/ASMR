@@ -6,7 +6,8 @@ Sinirlar ozet niteligindedir: Korint Birligi'ndeki Yunan sehirleri, Tuna'ya
 kadarki Trak boylari, Paflagonya-Kapadokya, Kirene ve Hint kralligi Poros
 "vasal / bagli" olarak; satraplıklar dogrudan yonetim olarak gosterilir.
 Iskender'in donus yolunda (MO 325) aldigi Asagi Indus, Gedrosya ve Karamanya
-en genis sinirlara dahildir.
+en genis sinirlara dahildir. Bitinya (Bas) bagimsiz kaldigi icin haritada
+delik olarak kalir; Birinci Katarakt'in guneyi (Nubya colu) Misir'a dahil degildir.
 """
 from senaryolar._ortak import b as _b
 

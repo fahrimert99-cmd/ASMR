@@ -36,7 +36,7 @@ Kimlik (dosya adı) küçük harf, Türkçe karaktersiz ve alt çizgili olmalı:
 | `SEHIRLER` | evet | `(ad, boylam, enlem, belirdiği yıl, tür)`; tür: `buyuk`, `kucuk`, `savas` (çapraz kılıç) |
 | `BOLGELER` | evet | Fetih bölgeleri (aşağıda) |
 | `KAMERA` | evet | `(t, (batı, güney, doğu, kuzey))` anahtar kareleri |
-| `KITALAR` | hayır | Finalde beliren büyük harfli adlar: `("ASYA", boylam, enlem, 0)` |
+| `KITALAR` | hayır | Finalde beliren büyük harfli adlar: `("ASYA", boylam, enlem, 0)`. Şehir işaret/etiketleriyle çakışırsa motor adı otomatik olarak biraz kaydırır |
 
 **Yıllar:** MÖ yıllar negatif yazılır (`-336`); ekranda "MÖ 336" görünür.
 Zaman çizelgesi MÖ'den MS'ye geçebilir (Roma örneği).
@@ -69,6 +69,9 @@ _b("Kuruluş bölgesi", "d", None, [...], tohum=[(61.83, 37.60)], zaman=(0.85, 1
 - **Komşu bölgeleri bindirin.** Sonra fethedilen bölge, önceki bölgenin içine
   0,2–0,5° taşabilir (erken olan kazanır). Kenarları "aynı çizgi" diye bırakmayın:
   aradaki ince şeritler delik olarak kalır.
+- **Bölgeler arasındaki iç kesimleri unutmayın** (ör. Moğollar için Cungarya ve
+  Tarım, Timur için Bedahşan). Dışa açık bu boşluklar delik sayılmaz ama haritayı
+  ikiye böler; `--kontrol` bunları `GIRINTI` olarak raporlar.
 - `yil=(a, b)`: bölge bu yıllar arasında **mevcut sınırdan dışa doğru** yayılır.
   `tohum` verilirse o şehir(ler)den yayılır (ör. Endülüs için Cebelitarık).
   Aralık `ilk_yil..son_yil` dışına çıkamaz.
@@ -98,6 +101,8 @@ _b("Kuruluş bölgesi", "d", None, [...], tohum=[(61.83, 37.60)], zaman=(0.85, 1
 
 - [ ] `python harita.py --senaryo X --kontrol` → **HATA yok**.
 - [ ] `DELIK` satırı yok; varsa tarihen gerçek bir boşluktur ve dosya açıklamasında yazılıdır.
+- [ ] `GIRINTI` satırı yok; varsa `kontrol.png`'de bakıldı ve çöl ya da gerçek bir sınır boyudur
+  (değilse bölgeler genişletildi).
 - [ ] `kontrol.png` incelendi: etiketler okunuyor, renkler seçilebiliyor, kamera tüm imparatorluğu gösteriyor.
 - [ ] Yüzölçümü yaygın değere yakın.
 - [ ] `senaryolar/sira.json` → `sira` listesinin sonuna kimlik eklendi.

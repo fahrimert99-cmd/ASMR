@@ -146,6 +146,9 @@ def kontrol(S, alanlar, cikti: Path) -> bool:
                   f"(cevrenin %{oran * 100:.0f}'i devlet topragi)")
         if not dl:
             print("  Delik yok (bolgeler arasinda bosluk kalmamis).")
+        for alan, lon, lat, oran in K.girintiler(alanlar)[:6]:
+            print(f"  GIRINTI: ~{alan:,.0f} km2  boylam {lon:.2f}  enlem {lat:.2f}  "
+                  f"(cevrenin %{oran * 100:.0f}'i devlet topragi; col/gercek sinir degilse bolgeleri genisletin)")
         print(f"  En genis yuzolcumu: ~{alanlar.alan(S.SURE) / 1e6:.2f} milyon km2")
         yol = K.kontak_sayfasi(H.Cizer(alanlar, "dikey"), cikti / "kontrol.png")
         print(f"  Kontak sayfasi: {yol}")

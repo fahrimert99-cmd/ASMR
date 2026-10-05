@@ -6,6 +6,7 @@ Sinirlar ozet niteligindedir: bagli krallıklar (Trakya, Galatya, Kapadokya,
 Kommagene, Yahudiye, Moritanya) once vasal, ilhak edildikleri yilda dogrudan
 yonetim olarak gosterilir. Traianus'un 114-117 Part seferindeki Ermenistan ve
 Mezopotamya eyaletleri (Hadrianus'un hemen biraktigi) en genis sinirlara dahildir.
+Suriye colunun ic kesimi (kontroldeki GIRINTI) gercek sinir boyudur.
 """
 from senaryolar._ortak import b as _b
 

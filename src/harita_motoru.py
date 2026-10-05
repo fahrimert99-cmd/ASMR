@@ -668,6 +668,7 @@ class Cizer:
             kutu = (hepsi[:, 0].min(), hepsi[:, 1].min(), hepsi[:, 0].max(), hepsi[:, 1].max())
             self.bolge_vektor.append((ta, tur, halkalar, kutu))
         self._etiket_plani()
+        self._kita_kayma = self._kita_yerlesimi()
 
     # ---------------------------------------------------------- hazirlik
     @staticmethod
@@ -784,6 +785,57 @@ class Cizer:
 
     def etiket_alfa(self, t, i):
         return float(np.interp(t, self._etiket_ts, self._etiket_vis[:, i]))
+
+    def _kita_boyu(self):
+        return 46 if self.duzen == "yatay" else 40
+
+    def _kita_yerlesimi(self):
+        """KITALAR adlari icin final karesinde sehir isaret/etiketleri, HUD ve birbirleriyle
+        cakismayan en yakin konum -> [(dx, dy)] harita kaymasi (km).
+
+        Bir kez hesaplanir; kayma harita biriminde tutuldugu icin ad haritayla birlikte
+        akar, kare kare ziplamaz. Cakisma yoksa ad tam verilen noktada kalir.
+        """
+        t = self.SURE
+        kam = self.kamera(t)
+        boy = self._kita_boyu()
+        engeller = list(self._hud_kutulari())
+        if self.duzen == "yatay":                       # finaldeki olay basligi
+            o = self.S.OLAYLAR[-1]
+            bb = self._baslik_sprite(o["baslik"], 46, 820)
+            gen = max(_metin_genislik(_font("Cinzel.ttf", bb, 700), o["baslik"], int(bb * 0.08)),
+                      _font("EBGaramond-Italic.ttf", 34, 500).getlength(o["alt"]))
+            engeller.append((0, 255, 64 + gen + 24, 400))
+        bas = self._baskent_ad(t)
+        for i, (ad, x, y, tb, tur) in enumerate(self.sehirler):
+            px, py = self.ekran(kam, x, y)
+            engeller.append((px - 14, py - 14, px + 14, py + 14))
+            if self.etiket_alfa(t, i) > 0.5:
+                fs, buyuk = self._etiket_boyu(ad, tur, ad == bas)
+                w = _font("EBGaramond.ttf", fs, 700 if buyuk else 600).getlength(ad)
+                engeller.append((px - 10, py - fs * 0.75, px + 16 + w, py + fs * 0.55))
+        f = _font("Cinzel.ttf", boy, 700)
+        kaymalar = []
+        for ad, lon, lat, _ in self.S.KITALAR:
+            x, y = self.PROJ.ileri(lon, lat)
+            px, py = self.ekran(kam, float(x), float(y))
+            gen = _metin_genislik(f, ad, int(boy * 0.55))
+            en_iyi = None
+            for dy in (0.0, -1.2, 1.2, -2.4, 2.4):
+                for dx in (0.0, -0.3, 0.3, -0.6, 0.6):
+                    kx, ky = dx * gen, dy * boy
+                    r = (px + kx - gen / 2 - 6, py + ky - boy * 0.6,
+                         px + kx + gen / 2 + 6, py + ky + boy * 0.55)
+                    cakisma = sum(max(0.0, min(r[2], q[2]) - max(r[0], q[0])) *
+                                  max(0.0, min(r[3], q[3]) - max(r[1], q[1])) for q in engeller)
+                    tasma = (max(0.0, 10 - r[0]) + max(0.0, r[2] - self.W + 10)) * (r[3] - r[1])
+                    puan = cakisma + 4 * tasma + 0.5 * (kx * kx + ky * ky)
+                    if en_iyi is None or puan < en_iyi[0]:
+                        en_iyi = (puan, kx, ky, r)
+            _, kx, ky, r = en_iyi
+            engeller.append(r)
+            kaymalar.append((kx / kam[0], -ky / kam[0]))
+        return kaymalar
 
     # ---------------------------------------------------------- kamera
     def kamera(self, t):
@@ -934,10 +986,10 @@ class Cizer:
 
     def _kitalar(self, img, kam, t):
         alfa = _ss((t - self.tson - 0.2) / 0.9) * 0.82
-        boy = 46 if self.duzen == "yatay" else 40
-        for ad, lon, lat, _ in self.S.KITALAR:
+        boy = self._kita_boyu()
+        for (ad, lon, lat, _), (kx, ky) in zip(self.S.KITALAR, self._kita_kayma):
             x, y = self.PROJ.ileri(lon, lat)
-            px, py = self.ekran(kam, float(x), float(y))
+            px, py = self.ekran(kam, float(x) + kx, float(y) + ky)
             sp = yazi(ad, "Cinzel.ttf", boy, (248, 236, 205, 255), agirlik=700,
                       aralik=int(boy * 0.55), golge=0.85, hiza="orta")
             yapistir(img, sp, px, py - boy * 0.6, alfa)

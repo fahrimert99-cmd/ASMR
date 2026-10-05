@@ -1,6 +1,7 @@
 """
 Senaryo dogrulayici: yeni bir senaryo yayina girmeden once yapisal hatalari,
-zamanlama sorunlarini ve bolgeler arasindaki bosluklari (delikleri) yakalar,
+zamanlama sorunlarini, bolgeler arasindaki bosluklari (delikler) ve sinirdan
+iceri giren acik bosluklari (girintiler) yakalar,
 ayrica gozle kontrol icin bir kontak sayfasi (kontrol.png) uretir.
 
     python harita.py --senaryo roma --kontrol
@@ -93,32 +94,32 @@ def yapisal(S, MAKAMLAR):
     return H, U
 
 
-def delikler(A, esik_km2=600.0):
-    """Bolgelerin arasinda kalmis, ulasilmamis kara parcalari (adalar haric).
-
-    Bir parca, cevresinin en az %30'u devlet topragiyla cevriliyse 'delik' sayilir;
-    yalnizca denizle cevrili parcalar (adalar) raporlanmaz.
-    """
+def _devlet_maskesi(A):
+    """Son anda devlete ait kara pikselleri (bolge halkalari icinde ve fethedilmis)."""
     from PIL import Image, ImageDraw
-    from scipy import ndimage as nd
 
-    S = A.S
     img = Image.new("L", (A.W, A.H), 0)
     d = ImageDraw.Draw(img)
-    for _, _, _, hs, _ in S.bolge_isleri():
+    for _, _, _, hs, _ in A.S.bolge_isleri():
         for h in hs:
             gx = (h[:, 0] - A.x0) / A.COZ
             gy = (A.y1 - h[:, 1]) / A.COZ
             d.polygon(list(zip(gx.tolist(), gy.tolist())), fill=1)
-    U = np.asarray(img, bool)
-    devlet = U & A.kara & (np.minimum(A.Fd, A.Fv) < 1e8)
-    dolu = nd.binary_fill_holes(devlet | ~A.kara)
-    delik = dolu & A.kara & ~devlet
-    lab, _ = nd.label(delik)
+    return np.asarray(img, bool) & A.kara & (np.minimum(A.Fd, A.Fv) < 1e8)
+
+
+def _parcalar(A, maske, devlet, esik_km2, oran_esik):
+    """maske'deki bagli parcalar -> [(alan_km2, boylam, enlem, oran)], buyukten kucuge.
+
+    oran: parcanin cevresinin devlet topragi olan kesri; oran_esik altindakiler atlanir.
+    """
+    from scipy import ndimage as nd
+
+    lab, _ = nd.label(maske)
     lon = np.linspace(VERI_KUTUSU[0], VERI_KUTUSU[2], 1521)
     lat = np.linspace(VERI_KUTUSU[1], VERI_KUTUSU[3], 705)
     LO, LA = np.meshgrid(lon, lat)
-    PX, PY = S.PROJ.ileri(LO, LA)
+    PX, PY = A.S.PROJ.ileri(LO, LA)
     sonuc = []
     for i, sl in enumerate(nd.find_objects(lab), 1):
         m = lab[sl] == i
@@ -131,7 +132,7 @@ def delikler(A, esik_km2=600.0):
         mm = lab[r0:r1, c0:c1] == i
         cevre = nd.binary_dilation(mm, iterations=1) & ~mm
         oran = (cevre & devlet[r0:r1, c0:c1]).sum() / max(1, cevre.sum())
-        if oran < 0.3:
+        if oran < oran_esik:
             continue
         ys, xs = np.nonzero(m)
         X = A.x0 + (xs.mean() + sl[1].start + 0.5) * A.COZ
@@ -139,6 +140,38 @@ def delikler(A, esik_km2=600.0):
         j = np.argmin((PX - X) ** 2 + (PY - Y) ** 2)
         sonuc.append((alan, float(LO.flat[j]), float(LA.flat[j]), oran))
     return sorted(sonuc, reverse=True)
+
+
+def delikler(A, esik_km2=600.0):
+    """Bolgelerin arasinda kalmis, ulasilmamis kara parcalari (adalar haric).
+
+    Bir parca, cevresinin en az %30'u devlet topragiyla cevriliyse 'delik' sayilir;
+    yalnizca denizle cevrili parcalar (adalar) raporlanmaz.
+    """
+    from scipy import ndimage as nd
+
+    devlet = _devlet_maskesi(A)
+    dolu = nd.binary_fill_holes(devlet | ~A.kara)
+    return _parcalar(A, dolu & A.kara & ~devlet, devlet, esik_km2, 0.3)
+
+
+def girintiler(A, yaricap_km=300.0, esik_km2=100000.0, oran_esik=0.6):
+    """Sinirdan iceri derin giren, devlete ait olmayan kara parcalari (koy gibi acik bosluklar).
+
+    delikler() yalnizca her yani kapali bosluklari bulur. Burada devlet topragi
+    'yaricap_km' yaricapli bir diskle kapatilir (morfolojik kapanis); kapanisin
+    icinde kalan ve cevresinin en az 'oran_esik' kadari devlet topragi olan kara
+    parcalari raporlanir. Ornek: iki bolgenin arasinda unutulmus, kuzeye acik bir
+    vadi. Coller ve tarihen gercek sinir boylari da cikabilir: kontrol.png'de bakin.
+    """
+    from scipy import ndimage as nd
+
+    devlet = _devlet_maskesi(A)
+    r = yaricap_km / A.COZ
+    genis = nd.distance_transform_edt(~devlet) <= r
+    kapanis = nd.distance_transform_edt(genis) > r
+    delik = nd.binary_fill_holes(devlet | ~A.kara) & ~devlet       # delikler()'in buldugu
+    return _parcalar(A, kapanis & A.kara & ~devlet & ~delik, devlet, esik_km2, oran_esik)
 
 
 def kontak_sayfasi(C, yol, olcek=0.32):
