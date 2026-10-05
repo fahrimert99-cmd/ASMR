@@ -51,37 +51,65 @@ python birlestir.py --klasor klipler --sure 3600  # 60 dk
 
 ---
 
-## 3) Osmanlı haritası animasyonu (20 sn, sesli) — `osmanli.py`
+## 3) Tarihi harita Shorts'ları (20 sn, sesli, otonom yayın) — `harita.py`
 
-Osmanlı'nın **kuruluşundan (1299, Söğüt) en geniş sınırlarına (1683)** kadar
-olan dönemi **20 saniyelik** bir harita animasyonuyla anlatır. Görüntü de ses
-de **tamamen kodla** üretilir (telifsiz, API anahtarı ya da GPU gerekmez).
+Bir devletin **kuruluşundan en geniş sınırlarına** büyümesini 20 saniyelik bir
+harita animasyonuyla anlatır: yıl sayacı, olay başlıkları, canlı yüzölçümü,
+sentez müzik ve efektler. Görüntü de ses de **tamamen kodla** üretilir
+(telifsiz; API anahtarı ya da GPU gerekmez). Her konu `senaryolar/` altında bir
+veri dosyasıdır.
 
 ```bash
-python osmanli.py                      # yatay 1920x1080 + dikey 1080x1920 (Shorts/Reels)
-python osmanli.py --format yatay       # yalnızca YouTube yatay
-python osmanli.py --format dikey --fps 60
-python osmanli.py --onizleme 7.0       # 7. saniyenin tek kare PNG önizlemesi
+python harita.py --liste                          # senaryolar + yayın kuyruğu
+python harita.py --senaryo osmanli                # dikey (Shorts) + yatay video
+python harita.py --senaryo mogol --format dikey   # yalnızca Shorts
+python harita.py --senaryo roma --onizleme 9      # tek kare PNG
+python harita.py --senaryo timur --kontrol        # doğrulama + kontak sayfası
+python harita.py --siradaki --format dikey --yukle   # kuyruktaki konu → YouTube (zamanlı)
 ```
 
-- **Harita:** Natural Earth kıyı/göl/nehir verisi, Lambert konik projeksiyon,
-  parşömen dokulu kara + koyu deniz. Sınırlar fetih sırasına göre **mevcut
-  sınırdan ya da fethedilen şehirden dışa doğru yayılır**; vasal devletler
-  taralı gösterilir.
-- **Anlatım:** yıl sayacı, 11 dönüm noktası (Kuruluş, Bursa, Edirne, I. Kosova,
-  İstanbul, Mısır, Mohaç, Preveze, Kıbrıs, Girit, 1683), padişah/komutan adı,
-  canlı yüzölçümü sayacı (1683'te ≈ 5 milyon km²), başkent yıldızı, zaman çizelgesi.
-- **Sentez ses (`src/osmanli_ses.py`):** mehter davulu (düyek usulü) ve zil,
-  Hicaz makamında ney ezgisi, Re demi, top atışları (İstanbul, Mohaç, Girit),
-  kılıç şakırtısı ve savaş narası (Kosova), dalga + top (Preveze), gong,
-  kamera "whoosh"ları, yıl sayacı tıkırtısı, sınırlar büyüdükçe artan gürleme,
-  final öncesi yükselen gerilim ve büyük vuruş. Ses −14 LUFS'a normalize edilir.
-- **Çıktı:** `cikti/osmanli/osmanli_1299_1683_{yatay,dikey}.mp4`
-  (hazır örnekler: `videolar/`).
-- **Veri:** Tarihsel bölgeler/olaylar `src/osmanli_veri.py` içinde; harita verisi
-  `veri/osmanli/harita.json` (yenilemek için `scripts/osmanli_veri_hazirla.py`).
-  Sınırlar 20 saniyelik anlatım için özetlenmiştir (1402 Fetret kayıpları ve
-  1683'te elde olmayan geçici fetihler gösterilmez).
+**Hazır senaryolar:** Osmanlı (1299–1683), Roma (MÖ 509–MS 117), Büyük İskender
+(MÖ 336–323), Moğol (1206–1279), Büyük Selçuklu (1037–1092), İslam devleti
+(622–743), Timur (1370–1405). Örnek video: `videolar/`.
+
+- **Harita:** Natural Earth kıyı/göl/nehir verisi, senaryoya özel Lambert konik
+  projeksiyon. Sınırlar mevcut sınırdan ya da fethedilen şehirden dışa doğru
+  yayılır; vasal devletler taralı gösterilir.
+- **Ses (`src/harita_ses.py`):** mehter usulü davul ve zil, senaryonun makamında
+  (hicaz, uşşak, saba, kürdi, nihavend, pentatonik…) otomatik bestelenen ney ezgisi,
+  dem, top / kuşatma / ok yağmuru / kılıç / nara / dalga efektleri, sınır büyüdükçe
+  artan gürleme, final vuruşu. −14 LUFS.
+- **Yeni konu yazmak:** [`senaryolar/YAZIM_REHBERI.md`](senaryolar/YAZIM_REHBERI.md),
+  konu havuzu: [`senaryolar/KONULAR.md`](senaryolar/KONULAR.md).
+
+### 🤖 Otonom yayın (her gün 1 Shorts)
+
+- **`Harita Shorts (günlük)`** iş akışı her gün ~17:40'ta (TR) `senaryolar/sira.json`
+  kuyruğundaki ilk konuyu üretir, YouTube'a **gizli** yükler ve **ertesi gün 19:00'da
+  otomatik yayınlanacak** şekilde zamanlar. Arada YouTube Studio'dan kontrol edip
+  yayını iptal edebilirsiniz. Elle çalıştırırken senaryo ve yayın modu
+  (`zamanli`, `hemen`, `gizli`, `yukleme-yok`) seçilebilir.
+- **`Harita senaryo önizleme`** iş akışı, senaryo değiştiren her PR'da tüm
+  senaryoları doğrular ve yeni senaryoların videosunu Artifacts'e koyar.
+- **Haftalık Claude rutini** kuyruk azaldıkça `KONULAR.md`'deki sıradaki konuları
+  senaryoya döker ve PR açar; siz önizleme videosunu izleyip birleştirirsiniz.
+
+**Kurulum (bir kez):**
+
+1. Bu dalı `main`'e birleştirin (zamanlanmış iş akışları yalnızca varsayılan dalda çalışır).
+2. Google Cloud Console'da **YouTube Data API v3**'ü açın, *OAuth istemcisi (Masaüstü
+   uygulaması)* oluşturun ve `client_secret.json`'ı indirin. *OAuth izin ekranı*nı
+   **"Üretimde" (In production)** durumuna alın — "Test" durumundaki uygulamaların
+   yenileme anahtarı 7 günde geçersiz olur.
+3. Yerel bilgisayarınızda `python scripts/youtube_token_al.py` çalıştırın; oluşan
+   `token.json` içeriğini repo → *Settings → Secrets and variables → Actions* altına
+   **`YOUTUBE_TOKEN_JSON`** olarak, `client_secret.json` içeriğini **`YOUTUBE_OAUTH_JSON`** olarak ekleyin.
+4. *Settings → Actions → General → Workflow permissions* → **Read and write** (kuyruk dosyası güncellenebilsin).
+5. **Önemli:** Google, denetimden geçmemiş API projelerinden yüklenen videoları
+   **"gizli (kilitli)"** tutar. Herkese açık / zamanlı yayın için projeniz adına
+   *YouTube API Services – Audit and Quota Extension* formunu doldurun. Onay
+   gelene kadar iş akışını `yukleme-yok` modunda çalıştırıp videoyu Artifacts'ten
+   indirerek elle yükleyebilirsiniz.
 
 ## 🚀 Kurulum
 
@@ -116,21 +144,25 @@ Eklemezseniz video her zaman Artifacts'te hazır bekler.
 .
 ├── asmr.py                  # Sıfırdan ASMR orkestratörü
 ├── birlestir.py             # Kliplerden uzun ASMR birleştirici
-├── osmanli.py               # Osmanlı 1299–1683 harita animasyonu (20 sn)
+├── harita.py                # Tarihi harita Shorts'ları (senaryolar/ + otonom yayın)
+├── senaryolar/              # Konu başına bir veri dosyası + sira.json yayın kuyruğu
 ├── requirements.txt
 ├── config/
 │   └── ayarlar.ornek.yaml   # Örnek ayar dosyası (asmr / klip bölümleri)
 ├── klipler/                 # Günlük yüklediğiniz video klipleri (otomatik işlenir)
 ├── scripts/                 # YouTube token alma + yükleme
 ├── .github/workflows/
+│   ├── harita-shorts.yml    # Günlük harita Shorts'u (otomatik + manuel)
+│   ├── harita-onizleme.yml  # Senaryo PR'ları için doğrulama + önizleme
 │   ├── asmr.yml             # Sıfırdan ASMR (günlük otomatik + manuel)
 │   └── klip-birlestir.yml   # Kliplerden ASMR (push ile otomatik)
 └── src/
     ├── asmr_ses.py          # Telifsiz ambient ses üreteci (numpy)
     ├── asmr_montaj.py       # ASMR montajı (Ken Burns + ffmpeg döngü)
-    ├── osmanli_harita.py    # Harita animasyonu render çekirdeği
-    ├── osmanli_ses.py       # Sentez ses efektleri (davul, top, ney...)
-    ├── osmanli_veri.py      # Tarihsel bölgeler, olaylar, kamera
+    ├── harita_motoru.py     # Harita animasyonu render çekirdeği
+    ├── harita_ses.py        # Sentez müzik ve ses efektleri
+    ├── harita_kontrol.py    # Senaryo doğrulayıcı
+    ├── harita_yayin.py      # Yayın kuyruğu + zamanlı YouTube yükleme
     ├── klip_montaj.py       # Klipleri birleştir + ffmpeg döngü
     ├── sahne.py             # Pollinations/Pexels görsel üretimi
     ├── seslendirme.py       # edge-tts anlatım

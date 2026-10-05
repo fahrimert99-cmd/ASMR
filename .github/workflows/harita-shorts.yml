@@ -1,0 +1,98 @@
+# Günlük tarihi harita Shorts'u: kuyruktaki (senaryolar/sira.json) ilk konuyu
+# 1080x1920 sesli video olarak üretir ve YouTube'a ZAMANLI yükler.
+#
+# Akış: her gün ~17:40 (TR) render + gizli yükleme -> YouTube videoyu ertesi gün
+# 19:00'da (TR) kendiliğinden yayınlar. Arada YouTube Studio'dan izleyip
+# isterseniz yayını iptal edebilirsiniz (24 saatlik kontrol penceresi).
+#
+# Gerekli repo sırları (Settings → Secrets and variables → Actions):
+#   YOUTUBE_TOKEN_JSON  (scripts/youtube_token_al.py ile üretilen token.json içeriği)
+#   YOUTUBE_OAUTH_JSON  (opsiyonel; client_secret.json içeriği)
+# Sırlar yoksa video yine üretilir ve "Artifacts" altında bekler; kuyruk ilerlemez.
+name: Harita Shorts (günlük)
+
+on:
+  schedule:
+    - cron: "41 14 * * *"      # 14:41 UTC = 17:41 TR
+  workflow_dispatch:
+    inputs:
+      senaryo:
+        description: "Senaryo kimliği (boş = kuyruktaki sıradaki konu)"
+        required: false
+        default: ""
+      yayin:
+        description: "Yayın modu"
+        type: choice
+        options: [zamanli, hemen, gizli, yukleme-yok]
+        default: zamanli
+
+permissions:
+  contents: write
+
+concurrency:
+  group: harita-shorts
+  cancel-in-progress: false
+
+jobs:
+  uret:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: ffmpeg
+        run: command -v ffmpeg || (sudo apt-get update && sudo apt-get install -y ffmpeg)
+
+      - name: Bağımlılıklar
+        run: pip install numpy scipy pillow google-api-python-client google-auth-oauthlib google-auth-httplib2
+
+      - name: Kuyruk durumu
+        run: python harita.py --liste
+
+      - name: Üret ve yükle
+        id: uret
+        env:
+          YOUTUBE_TOKEN_JSON: ${{ secrets.YOUTUBE_TOKEN_JSON }}
+          YOUTUBE_OAUTH_JSON: ${{ secrets.YOUTUBE_OAUTH_JSON }}
+          SENARYO: ${{ github.event.inputs.senaryo }}
+          YAYIN: ${{ github.event.inputs.yayin || 'zamanli' }}
+        run: |
+          set -euo pipefail
+          if [ -n "${SENARYO}" ]; then
+            [[ "${SENARYO}" =~ ^[a-z0-9_]+$ ]] || { echo "Geçersiz senaryo kimliği"; exit 1; }
+            HEDEF=(--senaryo "${SENARYO}")
+          else
+            HEDEF=(--siradaki)
+          fi
+          if [ "${YAYIN}" = "yukleme-yok" ]; then
+            python harita.py "${HEDEF[@]}" --format dikey
+          else
+            python harita.py "${HEDEF[@]}" --format dikey --yukle --yayin "${YAYIN}"
+          fi
+
+      - name: Videoyu sakla
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: harita-shorts-${{ github.run_number }}
+          path: cikti/harita/**/*_dikey.mp4
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Kuyruğu güncelle
+        if: steps.uret.outputs.yuklendi == '1'
+        env:
+          KIMLIK: ${{ steps.uret.outputs.kimlik }}
+          VIDEO_ID: ${{ steps.uret.outputs.video_id }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add senaryolar/sira.json
+          git commit -m "Yayın kuyruğu: ${KIMLIK} yüklendi (${VIDEO_ID})"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

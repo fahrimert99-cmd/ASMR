@@ -17,6 +17,7 @@ Studio'dan kontrol edip durdurabilirsiniz.
 import importlib.util
 import json
 import os
+import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -80,6 +81,25 @@ def yayin_zamani(saat="19:00", bolge="Europe/Istanbul", en_az_saat=18.0) -> str:
 
 
 # ------------------------------------------------------------------ metin
+def tr_baslik(metin: str) -> str:
+    """Turkce buyuk harfli basligi kelime basi buyuk hale getirir.
+
+    "LATİUM'UN BİRLEŞMESİ" -> "Latium'un Birleşmesi", "I. PÖN SAVAŞI" -> "I. Pön Savaşı"
+    (str.title() Turkce I/İ harflerini ve kesme isaretini bozar).
+    """
+    kelimeler = []
+    for k in metin.split(" "):
+        if re.fullmatch(r"[IVXLC]+\.?", k):              # Roma rakamlari aynen kalir
+            kelimeler.append(k)
+            continue
+        kucuk = k.replace("I", "ı").replace("İ", "i").lower()
+        if kucuk[:1].isalpha():
+            ilk = {"i": "İ", "ı": "I"}.get(kucuk[0], kucuk[0].upper())
+            kucuk = ilk + kucuk[1:]
+        kelimeler.append(kucuk)
+    return " ".join(kelimeler)
+
+
 def _tr_sayi(x, ondalik=0):
     s = f"{x:,.{ondalik}f}"
     return s.replace(",", "§").replace(".", ",").replace("§", ".")
@@ -93,7 +113,7 @@ def youtube_metni(S, alan_km2: float):
         baslik = (baslik + " #Shorts") if len(baslik) <= 92 else baslik
     satirlar = [yt.get("aciklama", "").strip(), "", "📜 Dönüm noktaları:"]
     for o in S.OLAYLAR:
-        satirlar.append(f"• {S.yil_metni(o['yil'])} · {o['baslik'].title()} — {o['alt']}")
+        satirlar.append(f"• {S.yil_metni(o['yil'])} · {tr_baslik(o['baslik'])} — {o['alt']}")
     if alan_km2 >= 1e6:
         alan = f"≈ {_tr_sayi(alan_km2 / 1e6, 2)} milyon km²"
     else:

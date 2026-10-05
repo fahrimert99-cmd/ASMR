@@ -1,0 +1,13 @@
+{
+  "aciklama": "Günlük Shorts yayın sırası. GitHub Actions her gün ilk bekleyen konuyu üretir ve YouTube'a zamanlı yükler; yüklenenler 'yayinlanan' altına işlenir. Yeni senaryo eklerken kimliğini 'sira' listesinin sonuna ekleyin.",
+  "sira": [
+    "osmanli",
+    "mogol",
+    "roma",
+    "selcuklu",
+    "iskender",
+    "timur",
+    "emevi"
+  ],
+  "yayinlanan": {}
+}

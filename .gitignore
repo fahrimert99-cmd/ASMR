@@ -3,3 +3,7 @@ __pycache__/
 cikti/
 config/ayarlar.yaml
 veri/harita/_ne/
+token.json
+client_secret.json
+config/token.json
+config/client_secret.json
