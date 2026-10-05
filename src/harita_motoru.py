@@ -189,6 +189,13 @@ def harita_verisi():
     return json.loads(HARITA_JSON.read_text(encoding="utf-8"))
 
 
+def _derece_alani(halka):
+    """Halkanin boylam/enlem derecesi cinsinden yaklasik alani (shoelace)."""
+    a = np.asarray(halka, dtype=np.float64)
+    x, y = a[:, 0], a[:, 1]
+    return abs(float(np.dot(x, np.roll(y, -1)) - np.dot(y, np.roll(x, -1)))) / 2
+
+
 def _proj_halka(proj, halka):
     a = np.asarray(halka, dtype=np.float64)
     x, y = proj.ileri(a[:, 0], a[:, 1])
@@ -609,8 +616,8 @@ class Cizer:
             self.vasal_a = np.array(S.VASAL_RENK[0], np.float32) / 255
             self.vasal_k = np.array(S.VASAL_RENK[1], np.float32) / 255
         else:                                          # ana rengin acik tonu + koyu tarama
-            self.vasal_a = self.renk * 0.55 + 0.45
-            self.vasal_k = self.renk * 0.9
+            self.vasal_a = self.renk * 0.72 + 0.28
+            self.vasal_k = self.renk * 0.7
         self.parilti = np.clip(self.renk * 1.45 + 0.12, 0, 1)
         self.duzen = duzen
         cfg = DUZENLER[duzen]
@@ -636,6 +643,8 @@ class Cizer:
         self.kara_ince = Katman(PROJ, veri["kara_ince"])
         self.kara_kaba = Katman(PROJ, veri["kara_kaba"])
         self.goller = Katman(PROJ, veri["goller"])
+        # uzak cekimde yalnizca buyuk goller (kucukler bolge icinde leke gibi gorunur)
+        self.goller_buyuk = Katman(PROJ, [g for g in veri["goller"] if _derece_alani(g[0]) > 0.15])
         self.nehirler = Katman(PROJ, cizgiler=veri["nehirler"])
         self.izgara = Katman(PROJ, cizgiler=self._izgara_cizgileri())
 
@@ -712,17 +721,20 @@ class Cizer:
                 ad = sh[0]
         return ad
 
+    def _hud_kutulari(self):
+        """HUD'un kapladigi sabit dikdortgenler (etiketler buralardan kacar)."""
+        W, H = self.W, self.H
+        if self.duzen == "yatay":
+            return [(0, 0, 610, 255), (0, 400, 440, 610), (0, H - 90, W, H)]
+        return [(0, 0, W, 530), (0, H - 380, W, H)]
+
     def _etiket_plani(self, fps=30):
         """Etiket cakismalarini onceden coz: oncelikli, acgozlu yerlesim + zamanda yumusatma.
 
         Kareler paralel cizildigi icin durum tutulamaz; plan tum zaman cizelgesi
         icin bir kez hesaplanir, boylece etiketler kare kare titremez.
         """
-        W, H = self.W, self.H
-        if self.duzen == "yatay":
-            sabit = [(0, 0, 610, 255), (0, 400, 440, 610), (0, H - 90, W, H)]
-        else:
-            sabit = [(0, 0, W, 530), (0, H - 380, W, H)]
+        sabit = self._hud_kutulari()
         S, PROJ = self.S, self.PROJ
         ts = np.arange(0.0, self.SURE + 1e-9, 1.0 / fps)
         vis = np.zeros((len(ts), len(self.sehirler)), np.float32)
@@ -800,7 +812,7 @@ class Cizer:
         cd = ImageDraw.Draw(kiyi)
         kw = 2 if km_px > 3 else 3
         kara_h = katman.ekran(kam, SS, gorus)
-        gol_h = self.goller.ekran(kam, SS, gorus)
+        gol_h = (self.goller if km_px < 2.5 else self.goller_buyuk).ekran(kam, SS, gorus)
         for tip, pts in kara_h:
             kd.polygon(pts, fill=255 if tip == 1 else 0)
         for tip, pts in gol_h:
@@ -910,6 +922,11 @@ class Cizer:
             if boy < 13 or boy > 46:
                 continue
             alfa = min(1.0, (boy - 13) / 6) * min(1.0, (46 - boy) / 8) * 0.55
+            yg = len(ad) * boy * 0.62 + 20                 # yaklasik yazi genisligi
+            kutu = (px - yg / 2, py - boy, px + yg / 2, py + boy)
+            if any(kutu[0] < q[2] and kutu[2] > q[0] and kutu[1] < q[3] and kutu[3] > q[1]
+                   for q in self._hud_kutulari()):
+                continue
             ekran_aci = int(round(aci + self.PROJ.donme(lon))) if aci else 0
             sp = yazi(ad, "EBGaramond-Italic.ttf", int(boy), (190, 214, 222, 255),
                       agirlik=500, aralik=int(boy * 0.35), golge=0.0, hiza="orta", aci=ekran_aci)
