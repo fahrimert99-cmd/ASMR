@@ -12,8 +12,9 @@ Ayarlar (öncelik sırasıyla):
     config/ayarlar.yaml: masal.eleven_api_key, eleven_voice_id, eleven_model,
                          eleven_ayar{stability, similarity_boost, style}, eleven_sesler{keloglan: ...}
 
-Üretilen sesler `cikti/masal/<kimlik>/seslendirme/` altında önbelleğe alınır
-(metin + ses + model + ayar özetine göre); aynı metin ikinci kez ücretlendirilmez.
+Üretilen sesler `veri/seslendirme/<kimlik>/` altında önbelleğe alınır (metin + ses +
+model + ayar özetine göre) ve repoya kaydedilebilir: aynı metin ikinci kez
+sentezlenmez/ücretlendirilmez, render ağ erişimi olmadan da aynı sesle tekrarlanır.
 
 Motorlar:
     elevenlabs : gerçek seslendirme (ücretli anahtar; api.elevenlabs.io erişimi gerekir)
@@ -69,7 +70,7 @@ def ayarlar():
         ayar={**VARSAYILAN_AYAR, **(cfg.get("eleven_ayar") or {})},
         sesler=sesler,
         dil=cfg.get("eleven_dil"),
-        piper_ses=os.environ.get("PIPER_SES", "").strip() or cfg.get("piper_ses") or "tr_TR-fahrettin-medium",
+        piper_ses=os.environ.get("PIPER_SES", "").strip() or cfg.get("piper_ses") or "tr_TR-dfki-medium",
         piper_hiz=float(os.environ.get("PIPER_HIZ", "") or cfg.get("piper_hiz") or 1.12),
     )
 
@@ -258,7 +259,9 @@ def masali_seslendir(masal, motor="elevenlabs", onbellek=None):
     Metin karti olmayan sayfalar (kapak) icin sayfa tanimindaki 'seslendirme' metni okunur.
     """
     from src.masal_motoru import cumlelere_bol
-    onbellek = onbellek or (KOK / "cikti" / "masal" / masal.kimlik / "seslendirme")
+    if onbellek is None:                                  # espeak yalnizca test: repoya girmez
+        onbellek = (KOK / "cikti" / "masal" / masal.kimlik / "seslendirme" if motor == "espeak"
+                    else KOK / "veri" / "seslendirme" / masal.kimlik)
     S = Seslendirici(motor, onbellek)
     plan = {}
     for i, s in enumerate(masal.sayfalar):

@@ -140,7 +140,7 @@ def main():
         from src import masal_seslendirme as SL
         print(f"Seslendiriliyor ({a.seslendirme})...")
         try:
-            plan = SL.masali_seslendir(masal, a.seslendirme, cikti / "seslendirme")
+            plan = SL.masali_seslendir(masal, a.seslendirme)
         except SL.SeslendirmeHatasi as e:
             print(f"HATA: {e}")
             return 3

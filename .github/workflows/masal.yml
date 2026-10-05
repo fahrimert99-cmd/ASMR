@@ -2,6 +2,8 @@
 #  - Masal dosyalarini degistiren PR'larda kendiliginden calisir (Piper Turkce sesiyle;
 #    anahtar gerekmez, ses modeli huggingface.co'dan indirilir).
 #  - Elle de tetiklenebilir: masal ve seslendirme motoru secilir.
+#  - Uretilen seslendirme dosyalari veri/seslendirme/<kimlik>/ altina repoya kaydedilir
+#    (sonraki render'lar yeniden sentezlemez; ElevenLabs kredisi harcanmaz).
 # ElevenLabs icin repo -> Settings -> Secrets and variables -> Actions:
 #   ELEVENLABS_API_KEY  (secret)
 #   ELEVENLABS_VOICE_ID (secret ya da variable: Voice Library'den Turkce bir anlatici sesi)
@@ -26,7 +28,7 @@ on:
         default: piper
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: masal-${{ github.ref }}
@@ -38,6 +40,8 @@ jobs:
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref || github.ref }}
 
       - uses: actions/setup-python@v5
         with:
@@ -50,24 +54,47 @@ jobs:
       - name: Bağımlılıklar
         run: pip install numpy scipy pillow skia-python requests pyyaml piper-tts
 
-      - name: Masali render et
+      - name: Girdileri dogrula
         env:
           MASAL: ${{ inputs.masal || 'keloglan_kapi' }}
           SESLENDIRME: ${{ inputs.seslendirme || 'piper' }}
-          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
-          ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID || vars.ELEVENLABS_VOICE_ID }}
         run: |
-          set -e
           [[ "$MASAL" =~ ^[a-z0-9]+[a-z0-9_]*$ ]] || { echo "gecersiz masal kimligi"; exit 1; }
           [ -f "masallar/$MASAL.py" ] || { echo "masallar/$MASAL.py yok"; exit 1; }
           case "$SESLENDIRME" in piper|elevenlabs|yok) ;; *) echo "gecersiz motor"; exit 1;; esac
-          python masal.py --masal "$MASAL" --seslendirme "$SESLENDIRME"
+          echo "MASAL=$MASAL" >> "$GITHUB_ENV"
+          echo "SESLENDIRME=$SESLENDIRME" >> "$GITHUB_ENV"
+
+      - name: Seslendir (once ses izi)
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID || vars.ELEVENLABS_VOICE_ID }}
+        run: python masal.py --masal "$MASAL" --seslendirme "$SESLENDIRME" --sadece-ses
+
+      - name: Seslendirmeyi repoya kaydet
+        if: env.SESLENDIRME != 'yok' && (github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository)
+        env:
+          DAL: ${{ github.head_ref || github.ref_name }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f "veri/seslendirme/$MASAL"
+          if git diff --cached --quiet; then echo "Seslendirme degismedi."; exit 0; fi
+          git commit -m "Seslendirme onbellegi: $MASAL ($SESLENDIRME)"
+          git pull --rebase origin "$DAL"
+          git push origin "HEAD:$DAL"
+
+      - name: Masali render et
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID || vars.ELEVENLABS_VOICE_ID }}
+        run: python masal.py --masal "$MASAL" --seslendirme "$SESLENDIRME"
 
       - uses: actions/upload-artifact@v4
         with:
           name: masal-video-${{ github.run_number }}
           path: |
             cikti/masal/**/*.mp4
-            cikti/masal/**/seslendirme/*
+            veri/seslendirme/**
           if-no-files-found: error
           retention-days: 14
