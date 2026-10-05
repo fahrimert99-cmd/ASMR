@@ -1,20 +1,24 @@
 """
-Osmanli Imparatorlugu 1299-1683 harita animasyonu — render cekirdegi.
+Tarihi harita animasyonu motoru — bir imparatorlugun kurulustan en genis
+sinirlarina buyumesini ~20 saniyelik sesli bir videoya donusturur.
 
-Akis:
-  1. Projeksiyon : Lambert Konik Konform (Avrupa–Orta Dogu icin dogal gorunum).
+Her konu `senaryolar/<kimlik>.py` icinde VERI olarak tanimlanir (olaylar,
+bolgeler, sehirler, kamera, muzik). Motor bu veriyi okur:
+
+  1. Projeksiyon : Lambert Konik Konform (senaryo kendi merkezini secer).
   2. Alanlar     : Her bolge, "fethedildigi video aninin" yazili oldugu bir zaman
                    alanina (raster, ~1.25 km/piksel) donusturulur. Bolge, verilen
                    yil araliginda mevcut sinirdan ya da tohum sehirden mesafeye
                    gore disa dogru yayilir (organik cephe icin hafif gurultu).
-                   Bir karede "Osmanli mi?" sorusu yalnizca  alan <= t  olur.
+                   Bir karede "devletin mi?" sorusu yalnizca  alan <= t  olur.
   3. Cizer       : Her kare icin kamera (PCHIP), vektor kara/goller/nehirler
                    (2x supersample), zaman alanindan sinir maskesi, HUD
                    (yil sayaci, olay basligi, yuzolcumu, zaman cizelgesi).
 
 Disaridan yalnizca numpy, scipy, Pillow kullanir; veri dosyalari repoda
-(veri/osmanli/harita.json, veri/fontlar/) bulunur, internet gerekmez.
+(veri/harita/harita.json, veri/fontlar/) bulunur, internet gerekmez.
 """
+import importlib
 import json
 import math
 from functools import lru_cache
@@ -23,15 +27,37 @@ from pathlib import Path
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
-from src import osmanli_veri as V
-
 KOK = Path(__file__).resolve().parent.parent
-HARITA_JSON = KOK / "veri" / "osmanli" / "harita.json"
+HARITA_JSON = KOK / "veri" / "harita" / "harita.json"
 FONT_DIR = KOK / "veri" / "fontlar"
 
-SURE = V.SURE
 SONSUZ = np.float32(1e9)
 R_DUNYA = 6371.0
+
+# Senaryo vermezse kullanilan deniz adlari: (metin, boylam, enlem, cografi aci, boy_km)
+# aci: yerel dogu yonune gore derece (projeksiyon donmesi otomatik eklenir);
+# boy_km: yazi yuksekligi ~ boy_km * (piksel/km) — yakin cekimde buyur, uzakta kaybolur.
+VARSAYILAN_DENIZLER = [
+    ("KARADENİZ", 34.6, 43.4, 0, 95),
+    ("AKDENİZ", 18.5, 34.6, 0, 95),
+    ("EGE", 25.1, 38.0, 0, 40),
+    ("MARMARA", 28.15, 40.72, 0, 40),
+    ("ADRİYATİK", 15.6, 42.9, -38, 45),
+    ("KIZILDENİZ", 38.4, 20.6, -66, 95),
+    ("HAZAR DENİZİ", 50.6, 42.2, -95, 95),
+    ("BASRA KÖRFEZİ", 50.4, 27.6, -50, 70),
+    ("ARAL", 59.6, 45.0, 0, 40),
+    ("ARAP DENİZİ", 63.0, 17.0, 0, 120),
+    ("ATLAS OKYANUSU", -19.0, 37.0, 0, 140),
+    ("HİNT OKYANUSU", 72.0, 6.0, 0, 150),
+    ("BENGAL KÖRFEZİ", 89.0, 15.0, 0, 95),
+    ("KUZEY DENİZİ", 3.5, 56.0, 0, 80),
+    ("BALTIK DENİZİ", 19.5, 57.5, 0, 70),
+    ("JAPON DENİZİ", 134.5, 40.5, 35, 90),
+    ("SARI DENİZ", 123.5, 35.8, 0, 60),
+    ("DOĞU ÇİN DENİZİ", 125.5, 29.0, 0, 85),
+    ("GÜNEY ÇİN DENİZİ", 114.0, 14.0, 0, 110),
+]
 
 
 # ================================================================ projeksiyon
@@ -42,6 +68,7 @@ class Projeksiyon:
         r = math.radians
         f0, f1, f2 = r(lat0), r(lat1), r(lat2)
         t = lambda f: math.tan(math.pi / 4 + f / 2)
+        self.lon0_d = lon0
         self.lon0 = r(lon0)
         self.n = math.log(math.cos(f1) / math.cos(f2)) / math.log(t(f2) / t(f1))
         self.F = math.cos(f1) * t(f1) ** self.n / self.n
@@ -54,19 +81,15 @@ class Projeksiyon:
         th = self.n * (lon - self.lon0)
         return rho * np.sin(th), self.rho0 - rho * np.cos(th)
 
+    def donme(self, lon):
+        """Boylamdaki yerel dogu yonunun ekrandaki acisi (derece, saat yonu tersine)."""
+        return math.degrees(self.n * math.radians(lon - self.lon0_d))
+
     def olcek_xy(self, x, y):
         """(x, y) noktasindaki dogrusal olcek carpani k (alan carpani k^2)."""
         rho = np.hypot(x, self.rho0 - y)
         lat = 2 * np.arctan((R_DUNYA * self.F / rho) ** (1 / self.n)) - np.pi / 2
         return rho * self.n / (R_DUNYA * np.cos(lat))
-
-
-PROJ = Projeksiyon()
-
-
-# ================================================================ zaman <-> yil
-_OT = np.array([o["t"] for o in V.OLAYLAR])
-_OY = np.array([o["yil"] for o in V.OLAYLAR], dtype=np.float64)
 
 
 def _kolaylik(u):
@@ -75,29 +98,89 @@ def _kolaylik(u):
     return 0.35 * v + 0.65 * v * v * (3 - 2 * v)
 
 
-def yil(t):
-    """Videonun t. saniyesinde sayacin gosterdigi (kesirli) yil."""
-    t = np.asarray(t, dtype=np.float64)
-    i = np.clip(np.searchsorted(_OT, t, side="right") - 1, 0, len(_OT) - 2)
-    u = (t - _OT[i]) / (_OT[i + 1] - _OT[i])
-    y = _OY[i] + (_OY[i + 1] - _OY[i]) * _kolaylik(u)
-    y = np.where(t <= _OT[0], _OY[0], y)
-    return np.where(t >= _OT[-1], _OY[-1], y)
+# ================================================================ senaryo
+class Senaryo:
+    """`senaryolar/<kimlik>.py` modulunu okur; zaman <-> yil donusumlerini saglar."""
 
+    def __init__(self, kimlik):
+        mod = importlib.import_module(f"senaryolar.{kimlik}")
+        g = lambda ad, vars_=None: getattr(mod, ad, vars_)
+        self.kimlik = kimlik
+        self.mod = mod
+        self.SURE = float(g("SURE", 20.0))
+        self.BASLIK = g("BASLIK")
+        self.ALT_BASLIK = g("ALT_BASLIK", "")
+        self.OLAYLAR = g("OLAYLAR")
+        self.BOLGELER = g("BOLGELER")
+        self.SEHIRLER = g("SEHIRLER", [])
+        self.BASKENTLER = g("BASKENTLER", [])
+        self.KAMERA = g("KAMERA")
+        self.KITALAR = g("KITALAR", [])
+        self.DENIZLER = list(g("DENIZLER", None) or VARSAYILAN_DENIZLER) + list(g("EK_DENIZLER", []))
+        self.RENK = tuple(g("RENK", (176, 22, 30)))
+        self.VASAL_RENK = g("VASAL_RENK", None)          # ((acik), (koyu)) ya da RENK'ten turetilir
+        self.LEJANT = tuple(g("LEJANT", ("Doğrudan yönetim", "Vasal / bağlı devlet")))
+        self.MUZIK = dict(g("MUZIK", {}))
+        self.BARUT = bool(g("BARUT", True))
+        self.YOUTUBE = dict(g("YOUTUBE", {}))
+        self.PROJ = Projeksiyon(**g("PROJEKSIYON", {}))
 
-_TT = np.linspace(0.0, SURE, 40001)
-_YY = yil(_TT)
+        self._OT = np.array([o["t"] for o in self.OLAYLAR], dtype=np.float64)
+        self._OY = np.array([o["yil"] for o in self.OLAYLAR], dtype=np.float64)
+        self.ilk_yil, self.son_yil = int(self._OY[0]), int(self._OY[-1])
+        self.mo = self.ilk_yil < 0                       # MO/MS gosterimi gerekli mi
+        self._TT = np.linspace(0.0, self.SURE, 40001)
+        self._YY = self.yil(self._TT)
+        self._isler = None
 
+    # -- zaman cizelgesi
+    def yil(self, t):
+        """Videonun t. saniyesinde sayacin gosterdigi (kesirli) yil."""
+        _OT, _OY = self._OT, self._OY
+        t = np.asarray(t, dtype=np.float64)
+        i = np.clip(np.searchsorted(_OT, t, side="right") - 1, 0, len(_OT) - 2)
+        u = (t - _OT[i]) / (_OT[i + 1] - _OT[i])
+        y = _OY[i] + (_OY[i + 1] - _OY[i]) * _kolaylik(u)
+        y = np.where(t <= _OT[0], _OY[0], y)
+        return np.where(t >= _OT[-1], _OY[-1], y)
 
-def zaman(y):
-    """Sayacin ilk kez y yilina ulastigi video ani (sn)."""
-    i = int(np.searchsorted(_YY, y, side="left"))
-    return float(_TT[min(i, len(_TT) - 1)])
+    def zaman(self, y):
+        """Sayacin ilk kez y yilina ulastigi video ani (sn)."""
+        i = int(np.searchsorted(self._YY, y, side="left"))
+        return float(self._TT[min(i, len(self._TT) - 1)])
 
+    def aktif_olay(self, t):
+        i = int(np.searchsorted(self._OT, t, side="right")) - 1
+        return max(i, -1)
 
-def aktif_olay(t):
-    i = int(np.searchsorted(_OT, t, side="right")) - 1
-    return max(i, -1)
+    def belirme(self, y):
+        """Sehir/baskent icin belirme ani (kurulus yilindakiler girisle birlikte)."""
+        return self.zaman(y) if y > self.ilk_yil else min(1.0, self._OT[0] - 0.6)
+
+    # -- yil metinleri
+    def yil_parca(self, y):
+        """(onek, sayi): 1453 -> ('', '1453'); -264 -> ('MÖ', '264')."""
+        y = int(y)
+        if not self.mo:
+            return "", str(y)
+        return ("MÖ", str(-y)) if y < 0 else ("MS", str(max(y, 1)))
+
+    def yil_metni(self, y):
+        on, sayi = self.yil_parca(y)
+        return f"{on} {sayi}".strip()
+
+    def yil_araligi(self):
+        a, b = self.yil_metni(self.ilk_yil), self.yil_metni(self.son_yil)
+        if self.mo and self.ilk_yil < 0 and self.son_yil < 0:
+            a = a.replace("MÖ ", "")                      # "MÖ 336 – 323" yerine "336 – MÖ 323" olmasin
+            return f"MÖ {a} – {b.replace('MÖ ', '')}"
+        return f"{a} – {b}"
+
+    # -- bolgeler
+    def bolge_isleri(self):
+        if self._isler is None:
+            self._isler = _bolge_isleri(self)
+        return self._isler
 
 
 # ================================================================ cografya
@@ -106,23 +189,23 @@ def harita_verisi():
     return json.loads(HARITA_JSON.read_text(encoding="utf-8"))
 
 
-def _proj_halka(halka):
+def _proj_halka(proj, halka):
     a = np.asarray(halka, dtype=np.float64)
-    x, y = PROJ.ileri(a[:, 0], a[:, 1])
+    x, y = proj.ileri(a[:, 0], a[:, 1])
     return np.stack([x, y], axis=1)
 
 
 class Katman:
     """Projekte edilmis halkalar: tek dizi + ofsetler + kutu (hizli culling)."""
 
-    def __init__(self, poligonlar=None, cizgiler=None):
+    def __init__(self, proj, poligonlar=None, cizgiler=None):
         halkalar, tip = [], []           # tip: 1 = dis halka, 0 = delik
         for p in poligonlar or []:
             for i, h in enumerate(p):
-                halkalar.append(_proj_halka(h))
+                halkalar.append(_proj_halka(proj, h))
                 tip.append(1 if i == 0 else 0)
         for c in cizgiler or []:
-            halkalar.append(_proj_halka(c))
+            halkalar.append(_proj_halka(proj, c))
             tip.append(2)
         self.tip = tip
         self.ofset = np.cumsum([0] + [len(h) for h in halkalar])
@@ -136,11 +219,14 @@ class Katman:
         x0, y0, x1, y1 = gorus
         g = ((self.kutu[:, 2] >= x0) & (self.kutu[:, 0] <= x1) &
              (self.kutu[:, 3] >= y0) & (self.kutu[:, 1] <= y1))
+        idx = np.nonzero(g)[0]
+        if not len(idx):
+            return []
         px = ((self.xy[:, 0] - cx) * s + ox) * carpan
         py = (oy - (self.xy[:, 1] - cy) * s) * carpan
         pts = np.stack([px, py], axis=1)
         cikis = []
-        for i in np.nonzero(g)[0]:
+        for i in idx:
             a, b = self.ofset[i], self.ofset[i + 1]
             if b - a >= 2:
                 cikis.append((self.tip[i], pts[a:b].ravel().tolist()))
@@ -165,8 +251,8 @@ def _yer_degistir(x, y):
     return dx, dy
 
 
-def bolge_halkasi(halka, adim=5.0):
-    p = _proj_halka(halka)
+def bolge_halkasi(proj, halka, adim=5.0):
+    p = _proj_halka(proj, halka)
     parcalar = []
     for i in range(len(p)):
         a, b = p[i], p[(i + 1) % len(p)]
@@ -181,10 +267,9 @@ def bolge_halkasi(halka, adim=5.0):
     return np.concatenate(parcalar)
 
 
-@lru_cache(maxsize=1)
-def bolge_isleri():
+def _bolge_isleri(S):
     """[(ta, tb, tur, [halka_km], tohum)] — video zamanina gore sirali."""
-    olay_t = sorted(o["t"] for o in V.OLAYLAR)
+    olay_t = sorted(o["t"] for o in S.OLAYLAR)
 
     def pencere(ta, tb):
         if tb - ta < 0.35:                    # cok kisa pencere -> gorunur yayilma
@@ -194,15 +279,15 @@ def bolge_isleri():
         return ta, tb
 
     isler = []
-    for b in V.BOLGELER:
-        halkalar = [bolge_halkasi(h) for h in b["halkalar"]]
-        if b["zaman"]:
+    for b in S.BOLGELER:
+        halkalar = [bolge_halkasi(S.PROJ, h) for h in b["halkalar"]]
+        if b.get("zaman"):
             ta, tb = b["zaman"]
         else:
-            ta, tb = pencere(zaman(b["yil"][0]), zaman(b["yil"][1]))
-        isler.append((ta, tb, b["tur"], halkalar, b["tohum"]))
-        if b["dogrudan"]:
-            ta2, tb2 = pencere(zaman(b["dogrudan"][0]), zaman(b["dogrudan"][1]))
+            ta, tb = pencere(S.zaman(b["yil"][0]), S.zaman(b["yil"][1]))
+        isler.append((ta, tb, b["tur"], halkalar, b.get("tohum")))
+        if b.get("dogrudan"):
+            ta2, tb2 = pencere(S.zaman(b["dogrudan"][0]), S.zaman(b["dogrudan"][1]))
             isler.append((ta2, tb2, "d", halkalar, None))
     isler.sort(key=lambda i: i[0])
     return isler
@@ -212,17 +297,19 @@ def bolge_isleri():
 class Alanlar:
     """Dogrudan (Fd) ve vasal (Fv) zaman alanlari + yuzolcumu egrileri."""
 
-    COZ = 1.25  # km / piksel
-
-    def __init__(self, tohum=7):
+    def __init__(self, senaryo, tohum=7):
         from scipy import ndimage
         self._nd = ndimage
+        self.S = senaryo
+        self.PROJ = senaryo.PROJ
         rng = np.random.default_rng(tohum)
 
-        tum = np.concatenate([h for i in bolge_isleri() for h in i[3]])
+        tum = np.concatenate([h for i in senaryo.bolge_isleri() for h in i[3]])
         m = 60.0
         self.x0, self.y0 = tum[:, 0].min() - m, tum[:, 1].min() - m
         self.x1, self.y1 = tum[:, 0].max() + m, tum[:, 1].max() + m
+        # buyuk imparatorluklarda (Mogol gibi) bellek icin cozunurluk uyarlanir
+        self.COZ = max(1.25, max(self.x1 - self.x0, self.y1 - self.y0) / 5200.0)
         self.W = int(math.ceil((self.x1 - self.x0) / self.COZ))
         self.H = int(math.ceil((self.y1 - self.y0) / self.COZ))
 
@@ -235,14 +322,14 @@ class Alanlar:
 
         self.Fd = np.full((self.H, self.W), SONSUZ, dtype=np.float32)
         self.Fv = np.full((self.H, self.W), SONSUZ, dtype=np.float32)
-        for is_ in bolge_isleri():
+        for is_ in senaryo.bolge_isleri():
             self._yay(*is_)
         del self.gurultu
         self._alan_egrileri()
 
     # -- yardimcilar
     def grid(self, lon, lat):
-        x, y = PROJ.ileri(lon, lat)
+        x, y = self.PROJ.ileri(lon, lat)
         return (x - self.x0) / self.COZ, (self.y1 - y) / self.COZ
 
     def _kara_raster(self):
@@ -252,6 +339,8 @@ class Alanlar:
         for poligon in veri["kara_ince"]:
             for i, h in enumerate(poligon):
                 gx, gy = self.grid(*np.asarray(h).T)
+                if i == 0 and (gx.max() < 0 or gx.min() > self.W or gy.max() < 0 or gy.min() > self.H):
+                    break
                 d.polygon(list(zip(gx.tolist(), gy.tolist())), fill=0 if i else 1)
         for poligon in veri["goller"]:
             gx, gy = self.grid(*np.asarray(poligon[0]).T)
@@ -315,7 +404,7 @@ class Alanlar:
         ys, xs = np.nonzero(self.kara)
         X = self.x0 + (xs + 0.5) * self.COZ
         Y = self.y1 - (ys + 0.5) * self.COZ
-        w = (self.COZ ** 2) / PROJ.olcek_xy(X, Y) ** 2
+        w = (self.COZ ** 2) / self.PROJ.olcek_xy(X, Y) ** 2
         for ad, F in (("toplam", np.minimum(self.Fd, self.Fv)), ("dogrudan", self.Fd)):
             v = F[ys, xs]
             sec = v < SONSUZ
@@ -489,12 +578,7 @@ KARA = np.array([214, 198, 160], np.float32) / 255
 KARA_KOYU = np.array([180, 160, 120], np.float32) / 255
 KIYI = np.array([62, 46, 30], np.float32) / 255
 NEHIR = np.array([88, 132, 150], np.float32) / 255
-OSMANLI = np.array([176, 22, 30], np.float32) / 255
-OSMANLI_SINIR = np.array([92, 6, 12], np.float32) / 255
-VASAL_A = np.array([226, 142, 104], np.float32) / 255
-VASAL_K = np.array([168, 52, 38], np.float32) / 255
 ALTIN = np.array([255, 205, 92], np.float32) / 255
-PARILTI = np.array([255, 70, 40], np.float32) / 255
 
 ALTIN_T = (236, 196, 110, 255)
 KREM_T = (246, 237, 216, 255)
@@ -514,6 +598,20 @@ class Cizer:
         from scipy.interpolate import PchipInterpolator
 
         self.A = alanlar
+        self.S = S = alanlar.S
+        self.PROJ = PROJ = S.PROJ
+        self.SURE = S.SURE
+        self.t0 = S.OLAYLAR[0]["t"]                    # ilk olay: giris basligi biter
+        self.tson = S.OLAYLAR[-1]["t"]                 # son olay: final
+        self.renk = np.array(S.RENK, np.float32) / 255
+        self.renk_sinir = self.renk * 0.45
+        if S.VASAL_RENK:
+            self.vasal_a = np.array(S.VASAL_RENK[0], np.float32) / 255
+            self.vasal_k = np.array(S.VASAL_RENK[1], np.float32) / 255
+        else:                                          # ana rengin acik tonu + koyu tarama
+            self.vasal_a = self.renk * 0.55 + 0.45
+            self.vasal_k = self.renk * 0.9
+        self.parilti = np.clip(self.renk * 1.45 + 0.12, 0, 1)
         self.duzen = duzen
         cfg = DUZENLER[duzen]
         self.W, self.H = cfg["en"], cfg["boy"]
@@ -523,7 +621,7 @@ class Cizer:
 
         # kamera anahtar kareleri -> (log s, cx, cy)
         ts, ls, cxs, cys = [], [], [], []
-        for t, (b, g, d, k) in V.KAMERA:
+        for t, (b, g, d, k) in S.KAMERA:
             lon = np.concatenate([np.linspace(b, d, 30), np.full(30, d), np.linspace(d, b, 30), np.full(30, b)])
             lat = np.concatenate([np.full(30, g), np.linspace(g, k, 30), np.full(30, k), np.linspace(k, g, 30)])
             x, y = PROJ.ileri(lon, lat)
@@ -535,28 +633,28 @@ class Cizer:
         self._kam = [PchipInterpolator(ts, v) for v in (ls, cxs, cys)]
 
         veri = harita_verisi()
-        self.kara_ince = Katman(veri["kara_ince"])
-        self.kara_kaba = Katman(veri["kara_kaba"])
-        self.goller = Katman(veri["goller"])
-        self.nehirler = Katman(cizgiler=veri["nehirler"])
-        self.izgara = Katman(cizgiler=self._izgara_cizgileri())
+        self.kara_ince = Katman(PROJ, veri["kara_ince"])
+        self.kara_kaba = Katman(PROJ, veri["kara_kaba"])
+        self.goller = Katman(PROJ, veri["goller"])
+        self.nehirler = Katman(PROJ, cizgiler=veri["nehirler"])
+        self.izgara = Katman(PROJ, cizgiler=self._izgara_cizgileri())
 
         self.Fd_img = Image.fromarray(alanlar.Fd, "F")
         self.Fv_img = Image.fromarray(alanlar.Fv, "F")
 
         self._statik()
         self.sehirler = []
-        for ad, lon, lat, y, tur in V.SEHIRLER:
+        for ad, lon, lat, y, tur in S.SEHIRLER:
             x, yy = PROJ.ileri(lon, lat)
-            self.sehirler.append((ad, float(x), float(yy), zaman(y) if y > 1299 else 1.0, tur))
-        self.olay_xy = [tuple(float(v) for v in PROJ.ileri(*o["yer"])) for o in V.OLAYLAR]
+            self.sehirler.append((ad, float(x), float(yy), S.belirme(y), tur))
+        self.olay_xy = [tuple(float(v) for v in PROJ.ileri(*o["yer"])) for o in S.OLAYLAR]
         self.baskent = []
-        for y, ad in V.BASKENTLER:
+        for y, ad in S.BASKENTLER:
             s = next(s for s in self.sehirler if s[0] == ad)
-            self.baskent.append((zaman(y) if y > 1299 else 1.0, s))
-        self.toplam_alan = float(alanlar.alan(SURE))
+            self.baskent.append((S.belirme(y), s))
+        self.toplam_alan = float(alanlar.alan(self.SURE))
         self.bolge_vektor = []
-        for ta, tb, tur, halkalar, _ in bolge_isleri():
+        for ta, tb, tur, halkalar, _ in S.bolge_isleri():
             hepsi = np.concatenate(halkalar)
             kutu = (hepsi[:, 0].min(), hepsi[:, 1].min(), hepsi[:, 0].max(), hepsi[:, 1].max())
             self.bolge_vektor.append((ta, tur, halkalar, kutu))
@@ -566,10 +664,10 @@ class Cizer:
     @staticmethod
     def _izgara_cizgileri():
         cizgiler = []
-        for lon in range(-30, 81, 10):
-            cizgiler.append([[lon, lat] for lat in np.linspace(-5, 65, 80)])
-        for lat in range(0, 61, 10):
-            cizgiler.append([[lon, lat] for lon in np.linspace(-40, 90, 160)])
+        for lon in range(-40, 171, 10):
+            cizgiler.append([[lon, lat] for lat in np.linspace(-10, 80, 100)])
+        for lat in range(-10, 81, 10):
+            cizgiler.append([[lon, lat] for lon in np.linspace(-50, 180, 280)])
         return cizgiler
 
     def _statik(self):
@@ -625,13 +723,14 @@ class Cizer:
             sabit = [(0, 0, 610, 255), (0, 400, 440, 610), (0, H - 90, W, H)]
         else:
             sabit = [(0, 0, W, 530), (0, H - 380, W, H)]
-        ts = np.arange(0.0, SURE + 1e-9, 1.0 / fps)
+        S, PROJ = self.S, self.PROJ
+        ts = np.arange(0.0, self.SURE + 1e-9, 1.0 / fps)
         vis = np.zeros((len(ts), len(self.sehirler)), np.float32)
         for k, t in enumerate(ts):
             kam = self.kamera(t)
             bas = self._baskent_ad(t)
-            i_olay = aktif_olay(t)
-            olay_yer = V.OLAYLAR[i_olay]["yer"] if i_olay >= 0 else None
+            i_olay = S.aktif_olay(t)
+            olay_yer = S.OLAYLAR[i_olay]["yer"] if i_olay >= 0 else None
             adaylar = []
             for i, (ad, x, y, tb, tur) in enumerate(self.sehirler):
                 if t < tb - 0.05:
@@ -648,7 +747,7 @@ class Cizer:
                 adaylar.append((sira, -tb, i))
             yerlesen = list(sabit)
             if self.duzen == "yatay" and i_olay >= 0:
-                o = V.OLAYLAR[i_olay]
+                o = S.OLAYLAR[i_olay]
                 bb = self._baslik_sprite(o["baslik"], 46, 820)
                 f = _font("Cinzel.ttf", bb, 700)
                 gen = max(_metin_genislik(f, o["baslik"], int(bb * 0.08)),
@@ -676,7 +775,7 @@ class Cizer:
 
     # ---------------------------------------------------------- kamera
     def kamera(self, t):
-        t = min(max(t, 0.0), SURE)
+        t = min(max(t, 0.0), self.SURE)
         s = math.exp(float(self._kam[0](t)))
         return (s, float(self._kam[1](t)), float(self._kam[2](t)), self.ox, self.oy)
 
@@ -735,7 +834,7 @@ class Cizer:
         img += (kara_renk - img) * kara[..., None]
         img += (NEHIR - img) * (nehir * 0.65)[..., None]
 
-        # --- Osmanli alanlari
+        # --- devletin alanlari
         a = 1.0 / (s * self.A.COZ)
         c = (cx - ox / s - self.A.x0) / self.A.COZ
         f = (self.A.y1 - cy - oy / s) / self.A.COZ
@@ -764,22 +863,22 @@ class Cizer:
         Av = np.asarray(Vimg, np.float32) / 255.0 * kara * vek_v * (1 - Ad)
 
         if Av.any():
-            vr = VASAL_A + (VASAL_K - VASAL_A) * (self.tarama * 0.55)[..., None]
+            vr = self.vasal_a + (self.vasal_k - self.vasal_a) * (self.tarama * 0.55)[..., None]
             img += (vr - img) * (Av * 0.72)[..., None]
             Av_img = Image.fromarray((Av * 255).astype(np.uint8))
             ve = Av - np.asarray(Av_img.filter(ImageFilter.MinFilter(3)), np.float32) / 255.0
-            img += (VASAL_K - img) * (np.clip(ve, 0, 1) * 0.8)[..., None]
+            img += (self.vasal_k - img) * (np.clip(ve, 0, 1) * 0.8)[..., None]
 
         if Ad.any():
             Ad_img = Image.fromarray((Ad * 255).astype(np.uint8))
             parilti = np.asarray(Ad_img.filter(ImageFilter.GaussianBlur(7)), np.float32) / 255.0
             dis = np.clip(parilti - Ad, 0, 1)
-            img += (PARILTI - img) * (dis * 0.45)[..., None]
-            img += (OSMANLI * (0.92 + 0.08 * self.doku[..., None]) - img) * (Ad * 0.84)[..., None]
+            img += (self.parilti - img) * (dis * 0.45)[..., None]
+            img += (self.renk * (0.92 + 0.08 * self.doku[..., None]) - img) * (Ad * 0.84)[..., None]
             taze = np.clip(1.0 - (t - Fd) / 0.5, 0.0, 1.0) * Ad
             img += (ALTIN - img) * (taze ** 1.6 * 0.5)[..., None]
             kenar = Ad - np.asarray(Ad_img.filter(ImageFilter.MinFilter(5)), np.float32) / 255.0
-            img += (OSMANLI_SINIR - img) * (np.clip(kenar, 0, 1) * 0.85)[..., None]
+            img += (self.renk_sinir - img) * (np.clip(kenar, 0, 1) * 0.85)[..., None]
 
         # kiyi cizgisi en ustte (adalar okunur kalsin)
         img += (KIYI - img) * (kiyi_a * 0.55)[..., None]
@@ -788,7 +887,7 @@ class Cizer:
         self._denizler(img, kam, t)
         self._sehirler(img, kam, t)
         self._nabizlar(img, kam, t)
-        if t > 15.9:
+        if t > self.tson + 0.2:
             self._kitalar(img, kam, t)
 
         img *= self.vinyet
@@ -796,30 +895,31 @@ class Cizer:
         self._hud(img, t)
 
         # giris / cikis kararmasi
-        k = min(_ss(t / 0.45), 1.0 - _ss((t - (SURE - 0.75)) / 0.75))
+        k = min(_ss(t / 0.45), 1.0 - _ss((t - (self.SURE - 0.75)) / 0.75))
         img *= k
         return (np.clip(img, 0, 1) * 255 + 0.5).astype(np.uint8)
 
     # ---------------------------------------------------------- katmanlar
     def _denizler(self, img, kam, t):
-        for ad, lon, lat, aci in V.DENIZLER:
-            x, y = PROJ.ileri(lon, lat)
+        for ad, lon, lat, aci, boy_km in self.S.DENIZLER:
+            x, y = self.PROJ.ileri(lon, lat)
             px, py = self.ekran(kam, float(x), float(y))
-            boy = kam[0] * (95 if len(ad) > 6 else 70)
-            if ad in ("MARMARA", "EGE"):
-                boy = kam[0] * 40
+            if not (-300 < px < self.W + 300 and -300 < py < self.H + 300):
+                continue
+            boy = kam[0] * boy_km
             if boy < 13 or boy > 46:
                 continue
             alfa = min(1.0, (boy - 13) / 6) * min(1.0, (46 - boy) / 8) * 0.55
+            ekran_aci = int(round(aci + self.PROJ.donme(lon))) if aci else 0
             sp = yazi(ad, "EBGaramond-Italic.ttf", int(boy), (190, 214, 222, 255),
-                      agirlik=500, aralik=int(boy * 0.35), golge=0.0, hiza="orta", aci=aci)
+                      agirlik=500, aralik=int(boy * 0.35), golge=0.0, hiza="orta", aci=ekran_aci)
             yapistir(img, sp, px, py, alfa * _ss(t / 0.8))
 
     def _kitalar(self, img, kam, t):
-        alfa = _ss((t - 15.9) / 0.9) * 0.82
+        alfa = _ss((t - self.tson - 0.2) / 0.9) * 0.82
         boy = 46 if self.duzen == "yatay" else 40
-        for ad, lon, lat, _ in V.KITALAR:
-            x, y = PROJ.ileri(lon, lat)
+        for ad, lon, lat, _ in self.S.KITALAR:
+            x, y = self.PROJ.ileri(lon, lat)
             px, py = self.ekran(kam, float(x), float(y))
             sp = yazi(ad, "Cinzel.ttf", boy, (248, 236, 205, 255), agirlik=700,
                       aralik=int(boy * 0.55), golge=0.85, hiza="orta")
@@ -851,12 +951,12 @@ class Cizer:
             yapistir(img, sp, px + 12, py - fs * 0.62, ea)
 
     def _nabizlar(self, img, kam, t):
-        for o, (x, y) in zip(V.OLAYLAR, self.olay_xy):
+        for o, (x, y) in zip(self.S.OLAYLAR, self.olay_xy):
             dt = t - o["t"]
             if not (-0.05 < dt < 1.6):
                 continue
             px, py = self.ekran(kam, x, y)
-            buyuk = o["ses"] in ("top", "final", "kurulus")
+            buyuk = o["ses"] in ("top", "final", "kurulus", "kusatma")
             for k, gecikme in enumerate((0.0, 0.22, 0.44) if buyuk else (0.0, 0.25)):
                 u = (dt - gecikme) / 1.1
                 if 0 < u < 1:
@@ -867,24 +967,38 @@ class Cizer:
 
     # ---------------------------------------------------------- HUD
     def _yil_metni(self, img, t, x, y, boyut, hiza):
-        yl = int(math.floor(float(yil(t)) + 1e-6))
-        rakamlar = str(yl)
+        S = self.S
+        on, rakamlar = S.yil_parca(math.floor(float(S.yil(t)) + 1e-6))
         f = _font("Cinzel.ttf", boyut, 800)
         hucre = max(f.getlength(str(d)) for d in range(10)) * 0.96
-        top = hucre * len(rakamlar)
+        on_boy = int(boyut * 0.42)
+        on_gen = (_font("Cinzel.ttf", on_boy, 700).getlength(on) + boyut * 0.12) if on else 0
+        top = hucre * len(rakamlar) + on_gen
         bx = x if hiza == "sol" else x - top / 2
         # olay aninda altin parlama
-        i = aktif_olay(t)
+        i = S.aktif_olay(t)
         flas = 0.0
         if i >= 0:
-            flas = max(0.0, 1.0 - (t - V.OLAYLAR[i]["t"]) / 0.6)
+            flas = max(0.0, 1.0 - (t - S.OLAYLAR[i]["t"]) / 0.6)
         renk = tuple(int(KREM_T[k] + (ALTIN_T[k] - KREM_T[k]) * flas) for k in range(3)) + (255,)
+        ha = self._hud_a(t)
+        if on:
+            sp = yazi(on, "Cinzel.ttf", on_boy, ALTIN_T, agirlik=700, golge=0.85)
+            yapistir(img, sp, bx, y + boyut * 0.52, ha)
+            bx += on_gen
         for j, ch in enumerate(rakamlar):
             sp = yazi(ch, "Cinzel.ttf", boyut, renk, agirlik=800, golge=0.85, hiza="orta")
-            yapistir(img, sp, bx + hucre * (j + 0.5), y, self._hud_a(t))
+            yapistir(img, sp, bx + hucre * (j + 0.5), y, ha)
 
     def _hud_a(self, t):
-        return _ss((t - 1.25) / 0.45)
+        return _ss((t - (self.t0 - 0.35)) / 0.45)
+
+    def _sigdir(self, metin, font_ad, boyut, agirlik, aralik_oran, maks):
+        while boyut > 14:
+            if _metin_genislik(_font(font_ad, boyut, agirlik), metin, int(boyut * aralik_oran)) <= maks:
+                break
+            boyut -= 2
+        return boyut
 
     def _baslik_sprite(self, metin, boyut, maks):
         while boyut > 18:
@@ -899,18 +1013,18 @@ class Cizer:
         W, H = self.W, self.H
         ha = self._hud_a(t)
 
+        S = self.S
         # --- giris basligi
-        if t < 1.75:
-            ga = _ss(t / 0.35) * (1 - _ss((t - 1.15) / 0.5))
+        if t < self.t0 + 0.15:
+            ga = _ss(t / 0.35) * (1 - _ss((t - (self.t0 - 0.45)) / 0.5))
             cy = H * (0.44 if yatay else 0.40)
-            b1 = 92 if yatay else 74
-            while _metin_genislik(_font("Cinzel.ttf", b1, 800), "OSMANLI İMPARATORLUĞU", 6) > W - 80:
-                b1 -= 2
-            s1 = yazi("OSMANLI İMPARATORLUĞU", "Cinzel.ttf", b1, KREM_T,
-                      agirlik=800, aralik=6, golge=0.9, hiza="orta")
-            s2 = yazi("Kuruluştan En Geniş Sınırlara", "EBGaramond-Italic.ttf", 44 if yatay else 46,
+            b1 = self._sigdir(S.BASLIK, "Cinzel.ttf", 92 if yatay else 74, 800, 0.065, W - 80)
+            s1 = yazi(S.BASLIK, "Cinzel.ttf", b1, KREM_T,
+                      agirlik=800, aralik=int(b1 * 0.065), golge=0.9, hiza="orta")
+            b2 = self._sigdir(S.ALT_BASLIK, "EBGaramond-Italic.ttf", 44 if yatay else 46, 500, 0, W - 80)
+            s2 = yazi(S.ALT_BASLIK, "EBGaramond-Italic.ttf", b2,
                       ALTIN_T, agirlik=500, golge=0.9, hiza="orta")
-            s3 = yazi("1299 – 1683", "Cinzel.ttf", 40 if yatay else 44, SOLUK_T, agirlik=600,
+            s3 = yazi(S.yil_araligi(), "Cinzel.ttf", 40 if yatay else 44, SOLUK_T, agirlik=600,
                       aralik=8, golge=0.9, hiza="orta")
             yy = np.arange(H, dtype=np.float32)[:, None, None]
             bant = np.exp(-((yy - (cy + 20)) / (H * 0.2)) ** 2)
@@ -925,16 +1039,18 @@ class Cizer:
         # --- ust baslik + yil
         if yatay:
             bx, by = 64, 46
-            yapistir(img, yazi("OSMANLI İMPARATORLUĞU", "Cinzel.ttf", 28, ALTIN_T, agirlik=700,
-                               aralik=5, golge=0.8), bx, by, ha)
+            ub = self._sigdir(S.BASLIK, "Cinzel.ttf", 28, 700, 0.18, 760)
+            yapistir(img, yazi(S.BASLIK, "Cinzel.ttf", ub, ALTIN_T, agirlik=700,
+                               aralik=int(ub * 0.18), golge=0.8), bx, by + (28 - ub) * 0.5, ha)
             img[by + 46:by + 48, bx:bx + 470] = img[by + 46:by + 48, bx:bx + 470] * (1 - 0.8 * ha) + \
                 np.array(ALTIN_T[:3], np.float32) / 255 * 0.8 * ha
             self._yil_metni(img, t, bx - 4, by + 50, 132, "sol")
             tx, ty, maks, hz = bx, by + 228, 820, "sol"
             alt_boy, bas_boy = 34, 46
         else:
-            yapistir(img, yazi("OSMANLI İMPARATORLUĞU", "Cinzel.ttf", 38, ALTIN_T, agirlik=700,
-                               aralik=6, golge=0.8, hiza="orta"), W / 2, 70, ha)
+            ub = self._sigdir(S.BASLIK, "Cinzel.ttf", 38, 700, 0.16, W - 90)
+            yapistir(img, yazi(S.BASLIK, "Cinzel.ttf", ub, ALTIN_T, agirlik=700,
+                               aralik=int(ub * 0.16), golge=0.8, hiza="orta"), W / 2, 70 + (38 - ub) * 0.5, ha)
             img[124:126, W // 2 - 300:W // 2 + 300] = img[124:126, W // 2 - 300:W // 2 + 300] * (1 - 0.8 * ha) + \
                 np.array(ALTIN_T[:3], np.float32) / 255 * 0.8 * ha
             self._yil_metni(img, t, W / 2, 128, 176, "orta")
@@ -942,13 +1058,13 @@ class Cizer:
             alt_boy, bas_boy = 40, 54
 
         # --- olay basligi (gecisli)
-        i = aktif_olay(t)
+        i = S.aktif_olay(t)
         for j in (i - 1, i):
             if j < 0:
                 continue
-            o = V.OLAYLAR[j]
+            o = S.OLAYLAR[j]
             giris = _ss((t - o["t"]) / 0.28)
-            sonraki = V.OLAYLAR[j + 1]["t"] if j + 1 < len(V.OLAYLAR) else 99
+            sonraki = S.OLAYLAR[j + 1]["t"] if j + 1 < len(S.OLAYLAR) else 99
             cikis = 1 - _ss((t - (sonraki - 0.2)) / 0.18)
             a = giris * cikis * ha
             if a <= 0.01:
@@ -958,7 +1074,8 @@ class Cizer:
             sp = yazi(o["baslik"], "Cinzel.ttf", bb, ALTIN_T, agirlik=700,
                       aralik=int(bb * 0.08), golge=0.9, hiza=hz)
             yapistir(img, sp, tx, ty + kay, a)
-            sp2 = yazi(o["alt"], "EBGaramond-Italic.ttf", alt_boy, KREM_T, agirlik=500,
+            ab = self._sigdir(o["alt"], "EBGaramond-Italic.ttf", alt_boy, 500, 0, maks)
+            sp2 = yazi(o["alt"], "EBGaramond-Italic.ttf", ab, KREM_T, agirlik=500,
                        golge=0.9, hiza=hz)
             yapistir(img, sp2, tx + (2 if hz == "sol" else 0), ty + bb * 1.22 + kay, a)
 
@@ -984,7 +1101,7 @@ class Cizer:
     def _lejant(self, img, x, y, hz, a, yatay):
         boy = 22 if yatay else 28
         kare = 22 if yatay else 28
-        ogeler = [("Doğrudan yönetim", "d"), ("Vasal / bağlı devlet", "v")]
+        ogeler = [(self.S.LEJANT[0], "d"), (self.S.LEJANT[1], "v")]
         sp = [yazi(m, "EBGaramond.ttf", boy, KREM_T, agirlik=500, golge=0.8) for m, _ in ogeler]
         if yatay:
             konum = [(x, y), (x, y + kare + 14)]
@@ -997,11 +1114,10 @@ class Cizer:
             px, py = int(px), int(py)
             blok = img[py:py + kare, px:px + kare]
             if tur == "d":
-                renk = OSMANLI
-                blok += (renk - blok) * a
+                blok += (self.renk - blok) * a
             else:
                 tar = self.tarama[py:py + kare, px:px + kare, None]
-                renk = VASAL_A + (VASAL_K - VASAL_A) * tar * 0.55
+                renk = self.vasal_a + (self.vasal_k - self.vasal_a) * tar * 0.55
                 blok += (renk - blok) * a
             img[py:py + 2, px:px + kare] *= 1 - 0.6 * a
             img[py + kare - 2:py + kare, px:px + kare] *= 1 - 0.6 * a
@@ -1009,30 +1125,40 @@ class Cizer:
 
     def _cizelge(self, img, t, a, yatay):
         W, H = self.W, self.H
+        S = self.S
         if yatay:
             x0, x1, y = 64, W - 64, H - 46
         else:
             x0, x1, y = 90, W - 90, H - 120
-        y0, y1 = 1299.0, 1683.0
+        y0, y1 = float(S.ilk_yil), float(S.son_yil)
         X = lambda yy: x0 + (x1 - x0) * (yy - y0) / (y1 - y0)
-        cur = float(yil(t))
+        cur = float(S.yil(t))
         kalin = 2
         img[y - 1:y + 1, x0:x1] = img[y - 1:y + 1, x0:x1] * (1 - 0.45 * a) + 0.85 * 0.45 * a
         xc = int(X(cur))
         altin = np.array(ALTIN_T[:3], np.float32) / 255
         img[y - kalin:y + kalin, x0:xc] += (altin - img[y - kalin:y + kalin, x0:xc]) * a
-        for yy in (1300, 1400, 1500, 1600):
+        fs = 20 if yatay else 24
+        for yy in cizelge_adimlari(y0, y1):
             xx = int(X(yy))
             img[y - 7:y - 2, xx - 1:xx + 1] += (0.85 - img[y - 7:y - 2, xx - 1:xx + 1]) * 0.6 * a
-            sp = yazi(str(yy), "EBGaramond.ttf", 20 if yatay else 24, SOLUK_T, agirlik=500,
+            sp = yazi(S.yil_metni(yy), "EBGaramond.ttf", fs, SOLUK_T, agirlik=500,
                       golge=0.8, hiza="orta")
             yapistir(img, sp, xx, y + 6, a * 0.9)
-        sp = yazi("1683", "EBGaramond.ttf", 20 if yatay else 24, SOLUK_T, agirlik=700,
+        sp = yazi(S.yil_metni(S.son_yil), "EBGaramond.ttf", fs, SOLUK_T, agirlik=700,
                   golge=0.8, hiza="orta")
-        yapistir(img, sp, x1, y + 6, a * 0.9)
-        for o in V.OLAYLAR:
+        yapistir(img, sp, x1 - (sp.w / 2 - sp.ax - 10 if sp.w > 90 else 0), y + 6, a * 0.9)
+        for o in S.OLAYLAR:
             xx = X(o["yil"])
             gecti = t >= o["t"] - 0.02
             ik = _ikon("nokta", 7 if gecti else 4)
             yapistir(img, ik, xx, y, a * (1.0 if gecti else 0.55))
         _halka_ciz(img, xc, y, 5, 3.5, (255, 225, 150), 0.9 * a)
+
+
+def cizelge_adimlari(y0, y1):
+    """Zaman cizelgesi icin yuvarlak yil isaretleri (en fazla ~6, sona cok yakin olan atlanir)."""
+    aralik = y1 - y0
+    adim = next((a for a in (1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000) if aralik / a <= 6), 1000)
+    ilk = math.floor(y0 / adim) * adim + adim
+    return [v for v in np.arange(ilk, y1, adim) if y1 - v > 0.45 * adim and v - y0 > 0.1 * adim]

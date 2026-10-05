@@ -1,21 +1,24 @@
 """
-Osmanli harita animasyonu — sentez ses tasarimi (telifsiz, tamamen kod).
+Harita animasyonu — sentez ses tasarimi (telifsiz, tamamen kod).
 
 Hicbir ses dosyasi/ornek kullanilmaz; her sey numpy/scipy ile uretilir:
 
-  * Muzik yatagi : Re (D) uzerine dem (drone) — finalde Hicaz rengi akor.
-  * Ney          : nefesli, vibratolu Hicaz ezgisi (portamento ile).
-  * Mehter davulu: duyek usulu (DUM . TEK TEK DUM . TEK .) + zil.
-  * Efektler     : top atisi, kilic carpismasi, savas narasi, dalga/su,
-                   gong, kamera "whoosh"u, yil sayaci tikirtisi, final
-                   oncesi yukselen gerilim (riser) ve buyuk vurus.
+  * Muzik yatagi : senaryonun kok perdesinde dem (drone) — finalde akor.
+  * Ney          : nefesli, vibratolu ezgi; senaryo ezgi vermezse secilen
+                   makamdan (hicaz, nihavend, kurdi, ussak, saba, rast,
+                   dorian, pentatonik...) olay anlarina gore otomatik bestelenir.
+  * Davul        : mehter usulu duyek (DUM . TEK TEK DUM . TEK .) + zil.
+  * Efektler     : top atisi (barut cagi), kusatma vurusu, ok yagmuru, kilic
+                   carpismasi, savas narasi, dalga/su, gong, kamera "whoosh"u,
+                   yil sayaci tikirtisi, final oncesi yukselen gerilim ve vurus.
   * Genisleme    : haritadaki yuzolcumu artis hizi (dA/dt) ile suren alcak
                    bir gurleme -> sinirlarin buyumesi "duyulur".
   * Mastering    : sentetik oda yankisi (konvolusyon), yumusak sinirlayici.
 
 Kullanim:
-    from src import osmanli_ses
-    osmanli_ses.uret("ses.wav", olaylar, sure=20.0, buyume=(ts, hiz), panlar=[...])
+    from src import harita_ses
+    harita_ses.uret("ses.wav", olaylar, sure=20.0, buyume=(ts, hiz, yillar),
+                    panlar=[...], muzik=dict(makam="hicaz", kok="D"), barut=True)
 """
 import math
 import wave
@@ -181,6 +184,52 @@ def whoosh(rng, sure=0.9, f_bas=400, f_tepe=2800, guc=1.0):
     return np.stack([mono * np.cos(a), mono * np.sin(a)])
 
 
+def kusatma(rng, guc=1.0, kuyruk=2.2):
+    """Mancinik/koc vurusu: agir darbe + alt bas + dokulen tas molozu (barutsuz cag)."""
+    t = _t(kuyruk)
+    f = 48 + 30 * np.exp(-t / 0.06)
+    alt = np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t / 0.42) * 1.2
+    darbe = _filtre(_gurultu(rng, kuyruk), "lp", 380, 3) * np.exp(-t / 0.10) * 1.8
+    moloz = np.zeros_like(t)
+    n = len(t)
+    for _ in range(70):
+        i = int(rng.uniform(0.03, 0.9) * SR * (rng.uniform() ** 0.6))
+        L = int(rng.uniform(0.004, 0.03) * SR)
+        if i + L >= n:
+            continue
+        tt = np.arange(L) / SR
+        moloz[i:i + L] += rng.standard_normal(L) * np.exp(-tt / 0.006) * rng.uniform(.2, 1)
+    moloz = _filtre(moloz, "bp", (250, 3500)) * np.exp(-t / 0.7) * 0.9
+    gurleme = _filtre(_kahve(rng, kuyruk), "lp", 140) * np.exp(-t / 0.8) * (1 - np.exp(-t / 0.05))
+    return np.tanh((alt + darbe + moloz + gurleme) * 1.1) * guc
+
+
+def ok_yagmuru(rng, adet=16, guc=1.0):
+    """Islik calan ok yagmuru (inen perde) + hedefe saplanma tokurtulari."""
+    sure = 1.8
+    n = int(sure * SR)
+    x = np.zeros((2, n))
+    for _ in range(adet):
+        bas = rng.uniform(0.0, 0.75)
+        L = rng.uniform(0.35, 0.65)
+        tt = _t(L)
+        u = tt / L
+        f = rng.uniform(2300, 4200) * (1 - 0.38 * u)
+        faz = 2 * np.pi * np.cumsum(f) / SR
+        islik = (np.sin(faz) * 0.25 + _filtre(rng.standard_normal(len(tt)), "bp", (1800, 5200)) * 0.6)
+        islik *= np.sin(np.pi * u) ** 2
+        vur_t = _t(0.12)
+        vurus = _filtre(rng.standard_normal(len(vur_t)), "bp", (300, 1600)) * np.exp(-vur_t / 0.02)
+        sig = np.concatenate([islik, vurus * 0.8])
+        i0 = int(bas * SR)
+        m = min(len(sig), n - i0)
+        pan = rng.uniform(-0.8, 0.8)
+        a = (pan + 1) * np.pi / 4
+        x[0, i0:i0 + m] += sig[:m] * math.cos(a)
+        x[1, i0:i0 + m] += sig[:m] * math.sin(a)
+    return x / max(4.0, adet / 3) * guc
+
+
 def riser(rng, sure=1.5, guc=1.0):
     t = _t(sure)
     u = t / sure
@@ -216,35 +265,78 @@ def parsomen(rng, sure=1.2, guc=1.0):
 
 
 # ================================================================ muzik
-HICAZ = {"D4": 293.66, "Eb4": 311.13, "F#4": 369.99, "G4": 392.00, "A4": 440.00,
-         "Bb4": 466.16, "C5": 523.25, "D5": 587.33, "Eb5": 622.25, "F#5": 739.99,
-         "G5": 783.99, "A5": 880.00}
-
-# (baslangic sn, sure sn, nota) — Re Hicaz
-NEY_EZGI = [
-    (1.55, 0.85, "A4"), (2.40, 0.30, "Bb4"), (2.70, 0.40, "A4"), (3.10, 0.35, "G4"),
-    (3.45, 0.70, "F#4"),
-    (4.25, 0.40, "G4"), (4.65, 0.45, "A4"), (5.10, 0.30, "Bb4"), (5.40, 0.40, "C5"),
-    (5.80, 0.85, "D5"), (6.65, 0.20, "C5"), (6.85, 0.20, "Bb4"),
-    (7.05, 0.95, "A4"), (8.00, 0.45, "D5"), (8.45, 0.30, "Eb5"), (8.75, 0.40, "D5"),
-    (9.15, 0.30, "C5"), (9.45, 0.30, "Bb4"), (9.75, 0.85, "A4"),
-    (10.60, 0.35, "Bb4"), (10.95, 0.35, "C5"), (11.30, 0.55, "D5"), (11.85, 0.30, "Eb5"),
-    (12.15, 0.60, "F#5"), (12.75, 0.40, "G5"), (13.15, 0.30, "F#5"), (13.45, 0.30, "Eb5"),
-    (13.75, 0.75, "D5"),
-    (15.75, 1.55, "D5"), (17.30, 0.25, "C5"), (17.55, 0.25, "Bb4"), (17.80, 0.45, "A4"),
-    (18.25, 1.60, "D5"),
-]
+# Makamlar/diziler: kok perdeye gore yarim ton (ceyrek sesler icin kesirli).
+MAKAMLAR = {
+    "hicaz": [0, 1, 4, 5, 7, 8, 10],
+    "nihavend": [0, 2, 3, 5, 7, 8, 10],
+    "kurdi": [0, 1, 3, 5, 7, 8, 10],
+    "ussak": [0, 1.5, 3, 5, 7, 8, 10],
+    "saba": [0, 1.5, 3, 4, 7, 8, 10],
+    "rast": [0, 2, 3.5, 5, 7, 9, 10.5],
+    "dorian": [0, 2, 3, 5, 7, 9, 10],
+    "pentatonik": [0, 3, 5, 7, 10],
+}
+KOKLER = {"C": 261.63, "D": 293.66, "E": 329.63, "F": 349.23, "G": 196.00 * 2, "A": 220.00, "B": 246.94}
 
 
-def ney(rng, sure, ezgi=NEY_EZGI):
+def kok_hz(ad):
+    """Ney icin 4. oktav kok perdesi (A ve B bir alt oktavda kalir)."""
+    return KOKLER.get(ad, 293.66)
+
+
+def ezgi_uret(olay_t, makam="hicaz", tohum=1):
+    """Olay anlarina oturan, makam dizisinde dolasan bir ney ezgisi besteler.
+
+    Her olay araligi bir cumle: olay aninda uzun bir hedef perde, ardindan
+    adim adim (cogunlukla ikinci araliklarla) gezinen notalar. Finalden once
+    sessizlik (riser), finalde tize cikip kokte biten bir kapanis.
+    """
+    rng = np.random.default_rng(tohum)
+    dizi = MAKAMLAR.get(makam, MAKAMLAR["hicaz"])
+    n = len(dizi)
+    besli = 4 if n == 7 else 3
+    st = lambda d: dizi[d % n] + 12 * (d // n)
+    notalar = []
+    hedefler = [besli, n, besli + 1, n + 2, besli, n + besli - 2, n + 1]
+    son_cumle = olay_t[-1] - 1.55
+    d = besli
+    for k in range(len(olay_t) - 1):
+        t0, t1 = olay_t[k], min(olay_t[k + 1], son_cumle)
+        if t1 - t0 < 0.3:
+            continue
+        hedef = hedefler[k % len(hedefler)]
+        ust = n + 3 + int(3 * k / max(1, len(olay_t) - 2))
+        uzun = min(0.85, (t1 - t0) * 0.45)
+        notalar.append((t0 - 0.05, uzun, st(hedef)))
+        d = hedef
+        t = t0 - 0.05 + uzun
+        while t < t1 - 0.32:
+            sure = float(rng.choice([0.25, 0.3, 0.35, 0.45, 0.6], p=[.25, .25, .2, .2, .1]))
+            sure = min(sure, t1 - 0.05 - t)
+            adim = int(rng.choice([-2, -1, -1, 1, 1, 2]))
+            d = int(np.clip(d + adim, 0, ust))
+            notalar.append((t, sure, st(d)))
+            t += sure
+    tf = olay_t[-1] + 0.05
+    for bas, sure, d in [(0.0, 1.55, n), (1.6, 0.25, n - 1), (1.85, 0.25, n - 2),
+                         (2.1, 0.45, besli), (2.6, 1.6, n)]:
+        notalar.append((tf + bas, sure, st(d)))
+    return notalar
+
+
+def ney(rng, sure, ezgi, kok=293.66):
+    """ezgi: [(baslangic sn, sure sn, koke gore yarim ton)]"""
     n = int(sure * SR)
     t = np.arange(n) / SR
-    hedef_f = np.full(n, HICAZ[ezgi[0][2]])
+    perde = lambda yt: kok * 2 ** (yt / 12)
+    hedef_f = np.full(n, perde(ezgi[0][2]))
     genlik = np.zeros(n)
     vib_derin = np.zeros(n)
-    for bas, dur, nota in ezgi:
+    for bas, dur, yt in ezgi:
         i0, i1 = int(bas * SR), min(int((bas + dur) * SR), n)
-        hedef_f[i0:] = HICAZ[nota]
+        if i0 >= n:
+            continue
+        hedef_f[i0:] = perde(yt)
         tt = np.arange(i1 - i0) / SR
         atak = 1 - np.exp(-tt / 0.05)
         birak = np.clip((dur - tt) / 0.12, 0, 1)
@@ -263,8 +355,8 @@ def ney(rng, sure, ezgi=NEY_EZGI):
     return (ton * 0.8 + nefes * (0.6 + 0.4 * np.sin(2 * np.pi * 7 * t) ** 2)) * genlik
 
 
-def dem(rng, sure, akor_t=15.7):
-    """Re demi: testere dalgalar + iki filtre arasi gecis (gittikce parlar)."""
+def dem(rng, sure, akor_t=15.7, kok=293.66, makam="hicaz"):
+    """Kok demi: testere dalgalar + iki filtre arasi gecis (gittikce parlar)."""
     n = int(sure * SR)
     t = np.arange(n) / SR
 
@@ -279,8 +371,12 @@ def dem(rng, sure, akor_t=15.7):
                 x += testere(f, d) * a
         return x
 
-    once = ses([(73.42, 1.0), (110.0, 0.7), (146.83, 0.45), (220.0, 0.18)])
-    sonra = ses([(73.42, 1.0), (110.0, 0.7), (146.83, 0.5), (185.0, 0.32), (220.0, 0.3), (293.66, 0.16)])
+    k2 = kok / 4                                     # dem iki oktav asagida
+    dizi = MAKAMLAR.get(makam, MAKAMLAR["hicaz"])
+    ucuncu = dizi[2] if len(dizi) == 7 else dizi[1]  # finalde akora renk veren derece
+    p = lambda yt: k2 * 2 ** (yt / 12)
+    once = ses([(p(0), 1.0), (p(7), 0.7), (p(12), 0.45), (p(19), 0.18)])
+    sonra = ses([(p(0), 1.0), (p(7), 0.7), (p(12), 0.5), (p(12 + ucuncu), 0.32), (p(19), 0.3), (p(24), 0.16)])
     gecis = np.clip((t - (akor_t - 0.05)) / 0.4, 0, 1)
     x = once * (1 - gecis) + sonra * gecis
     x = _filtre(x, "hp", 45)
@@ -318,7 +414,11 @@ def _wav_yaz(yol, stereo):
 
 
 # ================================================================ ana uretim
-def uret(yol, olaylar, sure=20.0, buyume=None, panlar=None, tohum=1683):
+def uret(yol, olaylar, sure=20.0, buyume=None, panlar=None, muzik=None, barut=True,
+         whooshlar=None, tohum=1683):
+    muzik = dict(muzik or {})
+    makam = muzik.get("makam", "hicaz")
+    kok = kok_hz(muzik.get("kok", "D"))
     rng = np.random.default_rng(tohum)
     M = Mikser(sure)
     panlar = panlar or [0.0] * len(olaylar)
@@ -326,8 +426,9 @@ def uret(yol, olaylar, sure=20.0, buyume=None, panlar=None, tohum=1683):
     final_t = olay_t[-1]
 
     # --- muzik yatagi + ney
-    M.ekle(dem(rng, sure, final_t), 0.0, kazanc=1.0, yanki=0.2)
-    M.ekle(ney(rng, sure), 0.0, pan=0.12, kazanc=0.17, yanki=0.55)
+    ezgi = muzik.get("ezgi") or ezgi_uret(olay_t, makam, tohum=muzik.get("tohum", 1))
+    M.ekle(dem(rng, sure, final_t, kok, makam), 0.0, kazanc=1.0, yanki=0.2)
+    M.ekle(ney(rng, sure, ezgi, kok), 0.0, pan=0.12, kazanc=0.17, yanki=0.55)
 
     # --- giris: parsomen + derin sisme + ters zil
     M.ekle(parsomen(rng, 1.3), 0.0, pan=-0.2, kazanc=0.5, yanki=0.15)
@@ -336,7 +437,7 @@ def uret(yol, olaylar, sure=20.0, buyume=None, panlar=None, tohum=1683):
     M.ekle(ters, olay_t[0] - 1.1, kazanc=0.18, yanki=0.3)
 
     # --- mehter davulu (duyek: DUM . TEK TEK DUM . TEK .)
-    sekizlik = 0.25
+    sekizlik = float(muzik.get("sekizlik", 0.25))
     desen = {0: "D", 2: "T", 3: "T", 4: "D", 6: "T"}
     t = olay_t[0]
     k = 0
@@ -364,6 +465,8 @@ def uret(yol, olaylar, sure=20.0, buyume=None, panlar=None, tohum=1683):
     # --- olay efektleri
     for o, pan in zip(olaylar, panlar):
         t0, tur = o["t"], o["ses"]
+        if tur == "top" and not barut:               # barut oncesi cag: top yerine kusatma
+            tur = "kusatma"
         if tur != "kurulus":
             M.ekle(whoosh(rng, 0.55, 500, 3200, 1.0), t0 - 0.5, kazanc=0.30, yanki=0.15)
         if tur == "kurulus":
@@ -380,6 +483,16 @@ def uret(yol, olaylar, sure=20.0, buyume=None, panlar=None, tohum=1683):
                 M.ekle(kilic(rng), t0 + d, pan=pan + rng.uniform(-.3, .3), kazanc=0.32 - 0.05 * j, yanki=0.3)
             M.ekle(nara(rng, 1.8), t0 - 0.15, pan=pan, kazanc=1.6, yanki=0.35)
             M.ekle(davul_dum(rng, 1.3), t0, pan=pan, kazanc=0.6, yanki=0.3)
+        elif tur == "kusatma":
+            for j, d in enumerate((-0.35, 0.0)):
+                M.ekle(kusatma(rng, 1.0), t0 + d, pan=np.clip(pan + (j - 0.5) * 0.5, -1, 1),
+                       kazanc=0.42 + 0.12 * j, yanki=0.35)
+            M.ekle(davul_dum(rng, 1.3), t0, pan=pan, kazanc=0.5, yanki=0.3)
+            M.ekle(zil(rng, 2.0), t0, pan=pan, kazanc=0.14, yanki=0.3)
+        elif tur == "ok":
+            M.ekle(ok_yagmuru(rng, 18), t0 - 0.55, kazanc=1.0, yanki=0.3)
+            M.ekle(nara(rng, 1.6), t0 - 0.1, pan=pan, kazanc=1.2, yanki=0.35)
+            M.ekle(davul_dum(rng, 1.3), t0, pan=pan, kazanc=0.55, yanki=0.3)
         elif tur == "top":
             for j, d in enumerate((-0.42, -0.2, 0.0)):
                 M.ekle(top_atisi(rng, 1.0, 2.4), t0 + d, pan=np.clip(pan + (j - 1) * 0.35, -1, 1),
@@ -389,22 +502,26 @@ def uret(yol, olaylar, sure=20.0, buyume=None, panlar=None, tohum=1683):
         elif tur == "deniz":
             M.ekle(dalga(rng, 2.2), t0 - 0.6, pan=pan - 0.2, kazanc=0.35, yanki=0.3)
             for d in (-0.25, 0.0):
-                M.ekle(top_atisi(rng, 0.9, 2.6), t0 + d, pan=pan + d, kazanc=0.4, yanki=0.5)
+                sig = top_atisi(rng, 0.9, 2.6) if barut else kusatma(rng, 0.8, 2.2)
+                M.ekle(sig, t0 + d, pan=pan + d, kazanc=0.4, yanki=0.5)
             M.ekle(dalga(rng, 1.4), t0 + 0.05, pan=pan + 0.2, kazanc=0.3, yanki=0.3)
             M.ekle(davul_dum(rng, 1.2), t0, pan=pan, kazanc=0.45, yanki=0.3)
         elif tur == "final":
             M.ekle(riser(rng, 1.45, 1.0), t0 - 1.45, kazanc=0.32, yanki=0.3)
-            M.ekle(top_atisi(rng, 1.3, 3.2), t0, kazanc=0.6, yanki=0.45)
-            M.ekle(gong(rng, 73.4, 5.0, 1.0), t0, kazanc=0.6, yanki=0.5)
+            if barut:
+                M.ekle(top_atisi(rng, 1.3, 3.2), t0, kazanc=0.6, yanki=0.45)
+            else:
+                M.ekle(kusatma(rng, 1.3, 3.0), t0, kazanc=0.6, yanki=0.45)
+            M.ekle(gong(rng, kok / 4, 5.0, 1.0), t0, kazanc=0.6, yanki=0.5)
             M.ekle(zil(rng, 3.4), t0, pan=-0.3, kazanc=0.22, yanki=0.45)
             M.ekle(zil(rng, 3.4), t0 + 0.01, pan=0.3, kazanc=0.22, yanki=0.45)
             M.ekle(davul_dum(rng, 1.4), t0, kazanc=0.75, yanki=0.35)
             for d in (1.0, 1.25, 2.4):
                 M.ekle(davul_dum(rng, 1.0), t0 + d, kazanc=0.32, yanki=0.35)
 
-    # --- kamera hareketleri (buyuk uzaklasmalar)
-    for tt, g in ((7.55, 0.45), (8.3, 0.35), (10.55, 0.35), (11.9, 0.25)):
-        M.ekle(whoosh(rng, 1.1, 300, 2200, 1.0), tt, kazanc=g, yanki=0.2)
+    # --- kamera hareketleri (buyuk uzaklasmalar; zamanlar kameradan hesaplanir)
+    for tt, g in (whooshlar or []):
+        M.ekle(whoosh(rng, 1.1, 300, 2200, 1.0), tt - 0.55, kazanc=g, yanki=0.2)
 
     # --- yil sayaci tikirtisi (yil degistikce, en fazla ~14/sn)
     if buyume is not None:

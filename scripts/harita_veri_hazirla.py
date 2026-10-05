@@ -1,15 +1,15 @@
 """
-Osmanli harita animasyonu icin cografi veri hazirlayici (tek seferlik).
+Harita animasyonu icin cografi veri hazirlayici (tek seferlik).
 
-Natural Earth (kamu malı / public domain) katmanlarini indirir, Osmanli
-haritasinin gorunen bolgesine kirpar, sadelestirir ve renderer'in internetsiz
-okuyacagi kucuk bir JSON uretir:
+Natural Earth (kamu malı / public domain) katmanlarini indirir, Avrupa–Afrika–
+Asya'yi kapsayan kutuya kirpar, sadelestirir ve motorun internetsiz okuyacagi
+tek bir JSON uretir:
 
-    veri/osmanli/harita.json
+    veri/harita/harita.json
         kara_ince : 10m kara poligonlari (yakin cekim icin, ~0.4 km sadelestirme)
         kara_kaba : ayni kara, kaba (uzak cekim icin, ~3 km sadelestirme)
-        goller    : dogal goller (baraj gölleri haric — 1683'te yoklardi)
-        nehirler  : buyuk nehirler (Tuna, Nil, Firat, Dicle, Dinyeper ...)
+        goller    : dogal goller (baraj golleri haric; Aral Golu tarihi kiyisiyla)
+        nehirler  : buyuk nehirler (Tuna, Nil, Firat, Dicle, Ren, Indus, Amu Derya ...)
 
 Ayrica baslik yazi tiplerini (Cinzel, EB Garamond — SIL OFL) indirir:
 
@@ -17,7 +17,7 @@ Ayrica baslik yazi tiplerini (Cinzel, EB Garamond — SIL OFL) indirir:
 
 Kullanim (yalnizca veri yenilenecekse; hazir JSON repoda bulunur):
     pip install shapely requests
-    python scripts/osmanli_veri_hazirla.py
+    python scripts/harita_veri_hazirla.py
 """
 import json
 import sys
@@ -28,16 +28,18 @@ from shapely.geometry import box, shape
 from shapely.ops import unary_union
 
 KOK = Path(__file__).resolve().parent.parent
-HEDEF = KOK / "veri" / "osmanli" / "harita.json"
+HEDEF = KOK / "veri" / "harita" / "harita.json"
 FONT_KLASOR = KOK / "veri" / "fontlar"
 NE = "https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/"
 GF = "https://raw.githubusercontent.com/google/fonts/main/ofl/"
 
-# Haritanin hicbir kamera acisinda disina cikilmayan genis kutu (boylam/enlem)
-KUTU = box(-22.0, 2.0, 74.0, 60.0)
+# Senaryolarin kamera kutulari bu alanin icinde kalmalidir (boylam/enlem)
+KUTU = box(-30.0, -10.0, 160.0, 78.0)
 
-# 1683'te var olmayan / yapay su kutleleri
-HARIC_GOLLER = {"Lake Razazah", "Lake Nasser", "Buhayrat ath Tharthar"}
+# Tarihte var olmayan / yapay su kutleleri; kuculmus modern Aral parcalari
+# (yerine ne_10m_lakes_historic'teki tarihi Aral Golu kullanilir)
+HARIC_GOLLER = {"Lake Razazah", "Lake Nasser", "Buhayrat ath Tharthar", "North Aral Sea",
+                "South Aral Sea", "Barsakelmes Lake", "Aral Sea"}
 
 # Natural Earth 50m nehir adlari -> cizilecek buyuk nehirler
 NEHIRLER = {
@@ -45,12 +47,16 @@ NEHIRLER = {
     "Bratul Sfintu Gheorghe", "Nile", "Rosetta Branch", "Damietta Branch",
     "Euphrates", "Al Furat", "Firat", "Tigris", "Dicle", "Shatt al Arab",
     "Dniester", "Dnipro", "Dnepre", "Don", "Sava", "Drava", "Tisa", "Tisza",
-    "Jordan", "Volga", "Vistula", "Po", "Rhône",
+    "Jordan", "Volga", "Vistula", "Po", "Rhône", "Rhine", "Rhein", "Rhin", "Elbe", "Oder",
+    "Seine", "Loire", "Garonne", "Ebro", "Tajo", "Tejo", "Duero", "Thames",
+    "Indus", "Ganges", "Amu  Darya", "Syr Darya", "Helmand", "Ural", "Kama", "Ob",
+    "Irtysh", "Ertis", "Huang", "Chang Jiang", "Yangtze", "Amur", "Heilong Jiang",
+    "Selenge (Selenga)", "Tarim", "Kura",
 }
 
 
 def _indir(ad: str) -> dict:
-    onbellek = KOK / "veri" / "osmanli" / "_ne" / f"{ad}.geojson"
+    onbellek = KOK / "veri" / "harita" / "_ne" / f"{ad}.geojson"
     if not onbellek.exists():
         onbellek.parent.mkdir(parents=True, exist_ok=True)
         print(f"  indiriliyor: {ad}")
@@ -96,8 +102,8 @@ def kara_hazirla():
         if g.intersects(KUTU):
             parcalar.append(g.intersection(KUTU))
     kara = unary_union(parcalar)
-    return (_poligonlar(kara, 0.004, 0.0004),   # ince: ~0.4 km, ~4 km2 alti adalar atilir
-            _poligonlar(kara, 0.03, 0.01))      # kaba
+    return (_poligonlar(kara, 0.005, 0.0006),   # ince: ~0.5 km, ~6 km2 alti adalar atilir
+            _poligonlar(kara, 0.035, 0.012))    # kaba
 
 
 def goller_hazirla():
@@ -113,6 +119,9 @@ def goller_hazirla():
         if not g.intersects(KUTU) or g.area < 0.008:
             continue
         cikis.extend(_poligonlar(g.intersection(KUTU), 0.004, 0.004))
+    for f in _indir("ne_10m_lakes_historic")["features"]:
+        if f["properties"].get("name") == "Aral Sea":
+            cikis.extend(_poligonlar(shape(f["geometry"]), 0.004, 0.004))
     return cikis
 
 

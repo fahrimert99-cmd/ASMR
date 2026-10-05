@@ -1,24 +1,39 @@
 """
-Osmanli Imparatorlugu 1299-1683 harita animasyonu — tarihsel veri.
+Senaryo: Osmanli Imparatorlugu 1299-1683 — kurulustan en genis sinirlara.
 
-Bu dosya yalnizca VERI icerir (kod yok denecek kadar az):
-
-  * OLAYLAR   : 20 saniyelik videonun donum noktalari (zaman, yil, baslik).
-  * BOLGELER  : fetih/baglanma bolgeleri. Her bolge boylam/enlem halkasi ile
-                yaklasik cizilmistir; kiyilar Natural Earth kara verisi ile
-                kirpildigi icin halkalar denize tasabilir. Bir bolge, verilen
-                YIL araliginda sinirdan (ya da 'tohum' sehirden) disa dogru
-                yayilarak "fethedilir".
-                tur: "d" = dogrudan yonetim, "v" = vasal / bagli devlet.
-                dogrudan=(a, b): vasal bolge bu yillarda dogrudan yonetime gecer.
-  * SEHIRLER  : olay sirasinda beliren sehir/savas isaretleri.
-  * KAMERA    : (zaman, bbox) anahtar kareleri; renderer bbox'i ekrana sigdirir.
-
-Sinirlar ozet niteligindedir (YouTube Shorts/Reels icin 20 sn'lik anlatim):
-1402 Ankara Savasi sonrasi gecici kayiplar ve Venedik/Ceneviz kiyi kaleleri
-gibi kucuk ayrintilar gosterilmez; 1683'te elde olmayan (Yemen, Tebriz,
-Lahsa gibi) gecici fetihler haritaya hic eklenmez.
+Sinirlar ozet niteligindedir (20 sn'lik anlatim): 1402 Ankara Savasi sonrasi
+gecici kayiplar ve Venedik/Ceneviz kiyi kaleleri gibi kucuk ayrintilar
+gosterilmez; 1683'te elde olmayan (Yemen, Tebriz, Lahsa gibi) gecici
+fetihler haritaya hic eklenmez.
 """
+from senaryolar._ortak import b as _b
+
+BASLIK = "OSMANLI İMPARATORLUĞU"
+ALT_BASLIK = "Kuruluştan En Geniş Sınırlara"
+PROJEKSIYON = dict(lon0=24.0, lat0=35.0, lat1=25.0, lat2=47.0)
+RENK = (176, 22, 30)
+VASAL_RENK = ((226, 142, 104), (168, 52, 38))
+BARUT = True
+
+YOUTUBE = dict(
+    baslik="Osmanlı İmparatorluğu 1299–1683: Kuruluştan En Geniş Sınırlara #Shorts",
+    aciklama=("Söğüt'te kurulan küçük bir beylikten üç kıtaya yayılan bir cihan devletine: "
+              "Osmanlı İmparatorluğu'nun 384 yıllık yükselişi 20 saniyede harita üzerinde."),
+    etiketler=["Osmanlı", "Osmanlı İmparatorluğu", "tarih", "harita", "Fatih Sultan Mehmed",
+               "Kanuni", "İstanbul'un Fethi", "Shorts"],
+)
+
+# Ney ezgisi: (baslangic sn, sure sn, Re4'e gore yarim ton) — Re Hicaz
+MUZIK = dict(makam="hicaz", kok="D", ezgi=[
+    (1.55, 0.85, 7), (2.40, 0.30, 8), (2.70, 0.40, 7), (3.10, 0.35, 5), (3.45, 0.70, 4),
+    (4.25, 0.40, 5), (4.65, 0.45, 7), (5.10, 0.30, 8), (5.40, 0.40, 10), (5.80, 0.85, 12),
+    (6.65, 0.20, 10), (6.85, 0.20, 8),
+    (7.05, 0.95, 7), (8.00, 0.45, 12), (8.45, 0.30, 13), (8.75, 0.40, 12), (9.15, 0.30, 10),
+    (9.45, 0.30, 8), (9.75, 0.85, 7),
+    (10.60, 0.35, 8), (10.95, 0.35, 10), (11.30, 0.55, 12), (11.85, 0.30, 13), (12.15, 0.60, 16),
+    (12.75, 0.40, 17), (13.15, 0.30, 16), (13.45, 0.30, 13), (13.75, 0.75, 12),
+    (15.75, 1.55, 12), (17.30, 0.25, 10), (17.55, 0.25, 8), (17.80, 0.45, 7), (18.25, 1.60, 12),
+])
 
 SURE = 20.0
 
@@ -80,13 +95,6 @@ SEHIRLER = [
 
 
 # ---------------------------------------------------------------- bolgeler
-def _b(ad, tur, yil, halkalar, tohum=None, dogrudan=None, zaman=None):
-    if isinstance(halkalar[0][0], (int, float)):
-        halkalar = [halkalar]
-    return dict(ad=ad, tur=tur, yil=yil, halkalar=halkalar, tohum=tohum,
-                dogrudan=dogrudan, zaman=zaman)
-
-
 BOLGELER = [
     # ---- 1299: Kurulus (intro sirasinda Sogut'ten buyur)
     _b("Söğüt Beyliği", "d", None,
@@ -380,14 +388,5 @@ KAMERA = [
     (20.0, (-5.0, 13.8, 52.0, 51.2)),
 ]
 
-# Finalde beliren kita adlari ve sabit deniz adlari: (metin, boylam, enlem, aci)
+# Finalde beliren kita adlari: (metin, boylam, enlem, aci)
 KITALAR = [("AVRUPA", 12.0, 51.0, 0), ("ASYA", 47.0, 45.5, 0), ("AFRİKA", 1.0, 24.0, 0)]
-DENIZLER = [
-    ("KARADENİZ", 34.6, 43.4, 0),
-    ("AKDENİZ", 18.5, 34.6, 0),
-    ("EGE", 25.1, 38.0, 0),
-    ("KIZILDENİZ", 38.4, 20.6, -58),
-    ("HAZAR", 50.6, 42.2, -80),
-    ("BASRA KÖRFEZİ", 50.4, 27.6, -35),
-    ("MARMARA", 28.15, 40.72, 0),
-]

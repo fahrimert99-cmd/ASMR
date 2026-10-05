@@ -2,4 +2,4 @@ __pycache__/
 *.pyc
 cikti/
 config/ayarlar.yaml
-veri/osmanli/_ne/
+veri/harita/_ne/
