@@ -1,0 +1,54 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Shorts: 1) Kurulum",
+      "type": "shell",
+      "command": "${command:python.interpreterPath}",
+      "args": ["shorts/kurulum.py"],
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true }
+    },
+    {
+      "label": "Shorts: 2) Klip uret",
+      "type": "shell",
+      "command": "${command:python.interpreterPath}",
+      "args": [
+        "shorts/shorts.py",
+        "${input:kaynak}",
+        "--klip-sayisi", "${input:klipSayisi}",
+        "--oran", "${input:oran}"
+      ],
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated", "clear": true }
+    },
+    {
+      "label": "Shorts: Cikti klasorunu ac",
+      "type": "shell",
+      "command": "${command:python.interpreterPath}",
+      "args": ["-c", "import pathlib,webbrowser; p=pathlib.Path('shorts/cikti').resolve(); p.mkdir(parents=True, exist_ok=True); webbrowser.open(p.as_uri())"],
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "kaynak",
+      "type": "promptString",
+      "description": "YouTube linki veya video dosyasinin tam yolu (or. C:\\Videolar\\podcast.mp4)"
+    },
+    {
+      "id": "klipSayisi",
+      "type": "pickString",
+      "description": "Kac klip uretilsin?",
+      "options": ["3", "5", "8"],
+      "default": "3"
+    },
+    {
+      "id": "oran",
+      "type": "pickString",
+      "description": "Format",
+      "options": ["9:16", "1:1", "4:5"],
+      "default": "9:16"
+    }
+  ]
+}

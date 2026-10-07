@@ -51,6 +51,17 @@ python birlestir.py --klasor klipler --sure 3600  # 60 dk
 
 ---
 
+## 3) Uzun videodan altyazılı dikey klipler — `shorts/`
+
+YouTube linki veya video dosyasından en iyi anları bulup **altyazılı 9:16
+klipler** (Shorts / Reels / TikTok) üretir. Bilgisayarınızda çalışır, **API
+anahtarı gerektirmez** (Ollama + Whisper). VS Code'da tek tıkla:
+**Terminal → Run Task → `Shorts: 1) Kurulum`**, ardından **`Shorts: 2) Klip uret`**.
+
+- Ayrıntılı kurulum ve kullanım: [`shorts/README.md`](shorts/README.md)
+
+---
+
 ## 🚀 Kurulum
 
 ```bash
