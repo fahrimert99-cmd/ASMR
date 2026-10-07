@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Ayarlar / anahtarlar (repoya gitmez)
+config/ayarlar.yaml
+shorts/.env
+
+# Shorts uretici: indirilen motor, ffmpeg kopyasi ve ciktilar
+shorts/motor/
+shorts/.bin/
+shorts/cikti/

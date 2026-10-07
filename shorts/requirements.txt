@@ -1,0 +1,14 @@
+# Shorts uretici - Python bagimliliklari (kurulum.py bunlari kurar)
+
+# --- Motor (AI-Youtube-Shorts-Generator yerel mod) ---
+requests
+python-dotenv
+yt-dlp                   # YouTube indirme
+faster-whisper           # konusma -> metin (yerel, anahtarsiz)
+openai                   # Ollama'nin OpenAI uyumlu arayuzune baglanir
+opencv-python>=4.8,<5     # yuz takipli dikey kadraj (5.x CascadeClassifier'i kaldirdi)
+
+# --- Altyazi + ffmpeg ---
+Pillow                   # altyazi cizimi
+numpy
+imageio-ffmpeg           # sistemde ffmpeg yoksa ffmpeg saglar
