@@ -85,6 +85,11 @@ masal:
   eleven_model: "eleven_multilingual_v2"     # Turkce destekli, ifadeli model
   # eleven_dil: "tr"          # (ops.) yalnizca turbo/flash v2.5 modelleri telaffuzu zorlar
   # eleven_api_key: ""        # veya ELEVENLABS_API_KEY ortam degiskeni (secret)
+  # masal.py karakter sesleri (bos olanlari anlatici okur; ortamda ELEVENLABS_SES_<KARAKTER>):
+  # eleven_sesler:
+  #   keloglan: ""
+  #   ana: ""
+  #   harami: ""
   # Masal anlatimi tonu (bos birakilirsa asagidaki masalsi varsayilanlar kullanilir):
   # eleven_ayar:
   #   stability: 0.40         # dusuk -> daha ifadeli/vurgulu (masal gibi)

@@ -98,8 +98,14 @@ def video_yukle(
     etiketler: list[str],
     kategori_id: str = "22",        # 22 = People & Blogs
     gizlilik: str = "public",
+    yayin_zamani: str | None = None,  # "2026-10-05T16:00:00Z" -> gizli yükle, o an yayınla
+    cocuklara_ozel: bool = False,     # YouTube "çocuklara özel" (COPPA) beyanı
 ) -> str:
-    """Videoyu YouTube'a yükler, video ID'sini döndürür."""
+    """Videoyu YouTube'a yükler, video ID'sini döndürür.
+
+    yayin_zamani verilirse video GİZLİ yüklenir ve YouTube onu belirtilen anda
+    (UTC, ISO 8601) kendiliğinden herkese açık yapar (status.publishAt).
+    """
 
     if not Path(video_yolu).exists():
         print(f"❌ HATA: Video dosyası bulunamadı: {video_yolu}")
@@ -119,9 +125,12 @@ def video_yukle(
         },
         "status": {
             "privacyStatus": gizlilik,
-            "selfDeclaredMadeForKids": False,
+            "selfDeclaredMadeForKids": bool(cocuklara_ozel),
         },
     }
+    if yayin_zamani:
+        govde["status"]["privacyStatus"] = "private"   # publishAt yalnızca gizli videoda geçerli
+        govde["status"]["publishAt"] = yayin_zamani
 
     medya = MediaFileUpload(
         video_yolu,
@@ -139,7 +148,8 @@ def video_yukle(
     print(f"\n🎬 YouTube yüklemesi başlıyor...")
     print(f"   Dosya : {video_yolu}")
     print(f"   Başlık: {baslik}")
-    print(f"   Gizlilik: {gizlilik}")
+    print(f"   Gizlilik: {govde['status']['privacyStatus']}"
+          + (f"  (yayın: {yayin_zamani})" if yayin_zamani else ""))
     print()
 
     yanit = None
@@ -182,6 +192,9 @@ def main():
     p.add_argument("--gizlilik", default="public",
                    choices=["public", "private", "unlisted"],
                    help="Gizlilik ayarı (varsayılan: public)")
+    p.add_argument("--yayin-zamani", default=None,
+                   help="Zamanlı yayın, UTC ISO 8601 (örn. 2026-10-05T16:00:00Z)")
+    p.add_argument("--kategori", default="22", help="YouTube kategori kimliği (27 = Eğitim)")
     args = p.parse_args()
 
     etiket_listesi = [e.strip() for e in args.etiketler.split(",") if e.strip()]
@@ -190,7 +203,9 @@ def main():
         baslik=args.baslik,
         aciklama=args.aciklama,
         etiketler=etiket_listesi,
+        kategori_id=args.kategori,
         gizlilik=args.gizlilik,
+        yayin_zamani=args.yayin_zamani,
     )
 
     # GitHub Actions için video ID'sini GITHUB_OUTPUT'a yaz

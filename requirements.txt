@@ -2,9 +2,13 @@
 
 # --- Ambient ses + montaj (cekirdek) ---
 numpy                    # telifsiz ambient ses uretimi (asmr_ses / uyku_muzik)
+scipy                    # osmanli.py: zaman alanlari, filtreler, yanki
 moviepy                  # video montaj / birlestirme
 imageio-ffmpeg           # ffmpeg saglar
 Pillow                   # gorsel isleme
+
+# --- Masal videolari (masal.py): vektor cizim; Linux'ta libegl1 gerekir ---
+skia-python
 
 # --- Sahne / gorsel (asmr.py sifirdan uretim icin) ---
 requests                 # Pollinations.ai / Pexels cagrilari
@@ -19,3 +23,6 @@ pyyaml
 google-api-python-client
 google-auth-oauthlib
 google-auth-httplib2
+
+# --- Osmanli harita verisini yenilemek icin (opsiyonel; hazir JSON repoda) ---
+# shapely

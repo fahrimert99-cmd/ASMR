@@ -1,0 +1,70 @@
+# Senaryo PR'larının (ör. haftalık Claude rutininin açtığı PR) otomatik kontrolü:
+# tüm senaryoları doğrular, değişen/eklenen senaryoların dikey videosunu render
+# eder ve kontak sayfalarıyla birlikte "Artifacts" olarak ekler. Birleştirmeden
+# önce videoları buradan izleyebilirsiniz.
+name: Harita senaryo önizleme
+
+on:
+  pull_request:
+    paths:
+      - "senaryolar/**"
+      - "src/harita_*.py"
+      - "harita.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  onizleme:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: ffmpeg
+        run: command -v ffmpeg || (sudo apt-get update && sudo apt-get install -y ffmpeg)
+
+      - name: Bağımlılıklar
+        run: pip install numpy scipy pillow
+
+      - name: Tüm senaryoları doğrula
+        run: |
+          set -e
+          for k in $(python -c "from senaryolar import tum_kimlikler; print(' '.join(tum_kimlikler()))"); do
+            echo "::group::$k"
+            python harita.py --senaryo "$k" --kontrol
+            echo "::endgroup::"
+          done
+
+      - name: Değişen senaryoları render et
+        env:
+          TABAN: ${{ github.base_ref }}
+        run: |
+          set -e
+          if [ -n "${TABAN}" ]; then
+            DEGISEN=$(git diff --name-only "origin/${TABAN}...HEAD" -- 'senaryolar/*.py' | xargs -r -n1 basename | sed 's/\.py$//')
+          else
+            DEGISEN=$(python -c "from src.harita_yayin import bekleyenler; print(' '.join(bekleyenler()[:1]))")
+          fi
+          for k in ${DEGISEN}; do
+            [[ "$k" =~ ^[a-z0-9]+[a-z0-9_]*$ ]] || continue
+            [ -f "senaryolar/$k.py" ] || continue
+            python harita.py --senaryo "$k" --format dikey
+          done
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: senaryo-onizleme
+          path: |
+            cikti/harita/**/kontrol.png
+            cikti/harita/**/*_dikey.mp4
+          if-no-files-found: ignore
+          retention-days: 14
