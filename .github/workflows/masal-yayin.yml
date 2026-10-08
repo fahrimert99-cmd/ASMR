@@ -11,8 +11,11 @@
 # veri/seslendirme/<kimlik>/ altına kaydettiği için burada yeniden sentezlenmez.
 #
 # Gerekli repo sırları (Settings → Secrets and variables → Actions):
-#   YOUTUBE_TOKEN_JSON  (scripts/youtube_token_al.py ile üretilen token.json içeriği)
-#   YOUTUBE_OAUTH_JSON  (opsiyonel; client_secret.json içeriği)
+#   YOUTUBE_TOKEN_JSON_MASAL  (önerilen; masallar ayrı kanala gitsin diye
+#                              scripts/youtube_token_al.py çalıştırılırken masal kanalı
+#                              seçilerek üretilen token.json içeriği)
+#   YOUTUBE_TOKEN_JSON        (yoksa bu kullanılır: harita Shorts'larıyla aynı kanal)
+#   YOUTUBE_OAUTH_JSON        (opsiyonel; client_secret.json içeriği)
 # Sırlar yoksa videolar yine üretilir ve "Artifacts" altında bekler; kuyruk ilerlemez.
 name: Masal yayını (haftalık)
 
@@ -69,8 +72,9 @@ jobs:
       - name: Üret ve yükle
         id: uret
         env:
-          YOUTUBE_TOKEN_JSON: ${{ secrets.YOUTUBE_TOKEN_JSON }}
+          YOUTUBE_TOKEN_JSON: ${{ secrets.YOUTUBE_TOKEN_JSON_MASAL || secrets.YOUTUBE_TOKEN_JSON }}
           YOUTUBE_OAUTH_JSON: ${{ secrets.YOUTUBE_OAUTH_JSON }}
+          AYRI_KANAL: ${{ secrets.YOUTUBE_TOKEN_JSON_MASAL != '' }}
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
           ELEVENLABS_VOICE_ID: ${{ secrets.ELEVENLABS_VOICE_ID || vars.ELEVENLABS_VOICE_ID }}
           MASAL: ${{ github.event.inputs.masal }}
@@ -78,6 +82,11 @@ jobs:
           SESLENDIRME: ${{ github.event.inputs.seslendirme || 'piper' }}
         run: |
           set -uo pipefail
+          if [ "${AYRI_KANAL}" = "true" ]; then
+            echo "YouTube: masal kanalı (YOUTUBE_TOKEN_JSON_MASAL)"
+          else
+            echo "YouTube: ortak kanal (YOUTUBE_TOKEN_JSON)"
+          fi
           case "$SESLENDIRME" in piper|elevenlabs|yok) ;; *) echo "Geçersiz motor"; exit 1;; esac
           if [ -n "${MASAL}" ]; then
             [[ "${MASAL}" =~ ^[a-z0-9]+[a-z0-9_]*$ ]] || { echo "Geçersiz masal kimliği"; exit 1; }

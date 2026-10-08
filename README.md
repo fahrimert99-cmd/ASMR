@@ -175,6 +175,16 @@ python masal.py --masal keloglan_kapi --seslendirme piper --format ikisi   # anl
 Kurulum, harita hattıyla aynıdır (yukarıdaki *Kurulum (bir kez)* adımları: `main`'e
 birleştirme, `YOUTUBE_TOKEN_JSON`, OAuth "Üretimde", iş akışı yazma izni, API denetimi).
 
+**Ayrı masal kanalı (önerilir):** Masallar "çocuklara özel" işaretlendiği için tarih
+haritalarından ayrı bir kanalda yayınlanmaları daha iyidir; iki kitle aynı kanalda
+olunca YouTube ikisini de daha az önerir. `scripts/youtube_token_al.py`'yi bir kez daha
+çalıştırın, Google giriş ekranında masal kanalını (marka hesabını) seçin ve oluşan
+`token.json` içeriğini **`YOUTUBE_TOKEN_JSON_MASAL`** sırrı olarak ekleyin. Aynı
+`client_secret.json` (aynı Google Cloud projesi ve API denetimi) iki kanal için de
+kullanılır. Bu sır yoksa masallar `YOUTUBE_TOKEN_JSON`'ın kanalına yüklenir. Yalnızca
+`YOUTUBE_TOKEN_JSON_MASAL`'ı eklerseniz harita Shorts'ları yüklenmez; harita yayını
+beklemede kalırken masallar yayınlanır.
+
 ## 🚀 Kurulum
 
 ```bash

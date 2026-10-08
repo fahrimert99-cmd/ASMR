@@ -77,6 +77,7 @@ def token_al():
     print("3. GitHub → Repo → Settings → Secrets and variables → Actions")
     print("4. 'New repository secret' tıklayın")
     print("   Ad:    YOUTUBE_TOKEN_JSON")
+    print("          (masal kanalını seçtiyseniz: YOUTUBE_TOKEN_JSON_MASAL)")
     print("   Değer: token.json içeriği (tam metin)")
     print("5. 'Add secret' ile kaydedin")
     print()
