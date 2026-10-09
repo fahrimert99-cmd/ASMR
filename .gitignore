@@ -1,0 +1,10 @@
+# Uretim ciktilari ve indirilen modeller
+cikti/
+modeller/
+
+# Yerel ayarlar / anahtarlar
+config/ayarlar.yaml
+config/client_secret.json
+
+__pycache__/
+*.pyc

@@ -5,7 +5,7 @@ ASMR / rahatlama / uyku videoları üreten sistem. **Hiçbir API anahtarı
 gerektirmez** — ambient ses `numpy` ile telifsiz üretilir, görseller
 Pollinations (anahtarsız) ile gelir.
 
-İki bağımsız üretim yolu vardır:
+Üç bağımsız üretim yolu vardır:
 
 ---
 
@@ -51,6 +51,35 @@ python birlestir.py --klasor klipler --sure 3600  # 60 dk
 
 ---
 
+## 3) Avatar ile 1 dakikalık video — `avatar.py`
+
+Tek bir avatar görselinden **dikey 9:16 (YouTube Shorts uyumlu), 60 saniyelik
+"Nefes Molası"** videosu. Avatar izleyiciyle birlikte **nefes alır** (göğüs
+yükselir, omuzlar genişler), doğal aralıklarla **göz kırpar**, son döngülerde
+nefes verirken gözlerini huzurla kapatır. Ekrandaki **nefes halkası**
+AL (4 sn) → TUT (2 sn) → VER (6 sn) ritmini, geri sayımı ve döngüyü gösterir.
+
+```bash
+python avatar.py                                 # avatar/avatar.jpg, 60 sn
+python avatar.py --sure 90                       # daha uzun (döngü sayısı artar)
+python avatar.py --ses-motoru piper              # tamamen çevrimdışı Türkçe ses
+python avatar.py --ambient okyanus               # arka plan ambient değiştir
+python avatar.py --gorsel foto.jpg --profil yok  # başka görsel (göz kırpmasız)
+```
+
+- **Akış:** 6 sn giriş (başlık + karşılama) · 4 × 12 sn nefes döngüsü · 6 sn kapanış.
+- **Ses:** her replik ayrı seslendirilip zamanına konur — `edge-tts` (internet) →
+  yoksa **Piper** (`sherpa-onnx`, çevrimdışı; model ilk sefer `modeller/` altına
+  iner) → yoksa anlatımsız. Altına döngülere hizalı yumuşak akor pad'i, faz
+  başlarında çan, hava akışına göre nefes sesi ve hafif yağmur (hepsi `numpy`, telifsiz).
+- **Avatar profili** (`avatar/avatar.yaml`): yüz odağı, göğüs çizgisi ve göz
+  kapağı eğrileri. Başka bir avatar için görseli değiştirip bu koordinatları
+  güncelleyin; `gozler: []` bırakılırsa avatar yalnızca göz kırpmaz.
+- **Çıktı:** `cikti/avatar-nefes-molasi/video/avatar_nefes_molasi.mp4`
+  (+ `kapak.jpg`). Ayarlar: `config/ayarlar.ornek.yaml` → **`avatar`** bölümü.
+
+---
+
 ## 🚀 Kurulum
 
 ```bash
@@ -84,6 +113,8 @@ Eklemezseniz video her zaman Artifacts'te hazır bekler.
 .
 ├── asmr.py                  # Sıfırdan ASMR orkestratörü
 ├── birlestir.py             # Kliplerden uzun ASMR birleştirici
+├── avatar.py                # Avatarlı 1 dk nefes molası videosu
+├── avatar/                  # Avatar görseli + profili (göz/odak koordinatları)
 ├── requirements.txt
 ├── config/
 │   └── ayarlar.ornek.yaml   # Örnek ayar dosyası (asmr / klip bölümleri)
@@ -94,6 +125,9 @@ Eklemezseniz video her zaman Artifacts'te hazır bekler.
 │   └── klip-birlestir.yml   # Kliplerden ASMR (push ile otomatik)
 └── src/
     ├── asmr_ses.py          # Telifsiz ambient ses üreteci (numpy)
+    ├── avatar_senaryo.py    # Nefes molası zaman çizelgesi (fazlar + replikler)
+    ├── avatar_ses.py        # Seslendirme (edge/Piper) + müzik/çan/nefes karışımı
+    ├── avatar_montaj.py     # Nefes alan, göz kırpan avatar render'ı (numpy + ffmpeg)
     ├── asmr_montaj.py       # ASMR montajı (Ken Burns + ffmpeg döngü)
     ├── klip_montaj.py       # Klipleri birleştir + ffmpeg döngü
     ├── sahne.py             # Pollinations/Pexels görsel üretimi

@@ -139,6 +139,32 @@ klip:
   ambient_tip: "yagmur"      # ses ambient_* ise: yagmur | okyanus | ates | gece | ruzgar | beyaz
   loop_sure: 120             # ambient loop uzunlugu (sn)
 
+# --- Avatar videosu (1 dk rehberli nefes molasi; python avatar.py) ---
+# Tek bir avatar gorselinden dikey 9:16 (Shorts uyumlu) video: avatar nefes
+# alir, goz kirpar; nefes halkasi AL/TUT/VER ritmini gosterir. Avatar
+# profili (yuz odagi, goz kapagi egrileri) avatar/avatar.yaml dosyasindadir.
+avatar:
+  sure: 60                    # sn (6 giris + 4 x 12 nefes dongusu + 6 kapanis)
+  cozunurluk: [720, 1280]     # dikey 9:16 (1080x1920 de olur; daha yavas render)
+  fps: 30
+  crf: 18                     # x264 kalite (dusuk = daha kaliteli/buyuk dosya)
+  # --- anlatim ---
+  ses_motoru: "auto"          # "auto" (edge -> piper) | "edge" | "piper" | "yok"
+  edge_ses: "tr-TR-EmelNeural"
+  edge_hiz: "-10%"
+  piper_ses: "tr_TR-dfki-medium"   # cevrimdisi; ilk calismada modeller/ altina indirilir
+  piper_hiz: 0.88             # <1 daha yavas
+  # --- ses seviyeleri (0-1) ---
+  anlatim_seviye: 1.0
+  muzik_seviye: 0.16          # dongulere hizali yumusak akor pad'i
+  can_seviye: 0.11            # faz baslarindaki can sesi
+  nefes_sesi_seviye: 0.05     # hava akisina gore kabaran yumusak nefes sesi
+  ambient: "yagmur"           # asmr_ses tipi (yagmur | okyanus | gece | ...) ya da "yok"
+  ambient_seviye: 0.07
+  baslik: "1 Dakikalık Nefes Molası"   # YouTube basligi (--yukle)
+  kapak_sn: 8.6               # kapak.jpg bu saniyedeki kareden alinir
+  tohum: 7                    # goz kirpma / parcacik rastgeleligi (tekrarlanabilir)
+
 altyazi:
   aktif: true
   model: "small"               # faster-whisper model boyutu: tiny/base/small/medium

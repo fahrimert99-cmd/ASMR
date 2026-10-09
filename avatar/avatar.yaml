@@ -1,0 +1,26 @@
+# ------------------------------------------------------------------
+# Avatar profili (python avatar.py bu dosyayi okur).
+# Tum koordinatlar avatar.jpg'nin KENDI piksel olcegindedir (720x1280);
+# video cozunurlugu farkliysa otomatik olceklenir.
+# ------------------------------------------------------------------
+gorsel: avatar.jpg
+
+odak: [345, 560]      # yuz merkezi: kamera yaklasma / salinim pivotu
+gogus_y: 860          # bu satirin altindaki govde nefes alirken esner
+
+# Goz kirpma icin goz kapagi egrileri (soldan saga x,y noktalari).
+#   ust: ust kirpik cizgisinin UST kenari
+#   alt: alt goz kapagi (goz acikliginin alt siniri)
+# Iki egri goz koselerinde ayni noktada birlesir. Bos birakilirsa
+# (gozler: []) avatar goz kirpmaz; geri kalan her sey calisir.
+gozler:
+  - ust: [[212,592],[214,576],[220,566],[230,560],[240,557],[250,556],[260,557],
+          [270,559],[280,563],[288,569],[294,579]]
+    alt: [[212,592],[216,597],[220,600],[230,604],[240,606],[250,605],[260,602],
+          [270,597],[280,591],[288,585],[294,579]]
+  - ust: [[391,530],[394,518],[397,511],[400,506],[403,502],[406,499],[409,496],
+          [412,495],[415,493],[418,491],[421,490],[424,488],[430,487],[436,486],
+          [442,485],[448,485],[454,486],[460,485],[466,487],[469,490],[472,503]]
+    alt: [[391,530],[394,533],[397,535],[400,536],[403,537],[410,537],[420,538],
+          [430,537],[436,536],[439,536],[442,534],[445,533],[448,529],[451,527],
+          [454,525],[457,523],[460,520],[463,516],[466,512],[469,509],[472,503]]
