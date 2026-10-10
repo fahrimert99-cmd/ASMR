@@ -1,0 +1,234 @@
+# ------------------------------------------------------------------
+# Ömer Asil ve Kayıp Yıldız (çocuk animasyonu, ~15 dk)
+#
+# Anlatıcı: Ömer Asil (birinci ağızdan, izleyen çocuklarla konuşur).
+# python omer.py bu dosyayı okur.
+#
+# Satır alanları (hepsi isteğe bağlı, yalnızca metin zorunlu):
+#   metin : seslendirilecek ve altyazıda görünecek cümle
+#   ifade : normal | heyecan | sasirma | gulme | fisilti | uzgun | dusunme | uykulu
+#           (yüz ifadesi + ElevenLabs v3 ses etiketi buna göre seçilir)
+#   etiket: ElevenLabs ses etiketini elle belirle, ör. "[whispers]"
+#   bekle : cümleden sonra ek bekleme (sn), çocuğun cevap vermesi için
+#   olay  : kayan_yildiz | pirilti | konfeti | kalpler | piril_gel | piril_mutlu |
+#           piril_git | bulut_gel | bulut_mutlu | bulut_git | baykus_gel |
+#           baykus_git | yagmur_dur | gokkusagi_cik | atesbocegi_cok
+#   ekran : ekranda büyük gösterilecek yazı (sayılar, renkler); renk: [r, g, b]
+# Bölüm ortamları: oda | gunduz | aksam | gece | gece_orman | yagmur |
+#                  gokkusagi | yildizlar | gece_sakin
+# ------------------------------------------------------------------
+baslik: "Ömer Asil"
+alt_baslik: "ve Kayıp Yıldız"
+hedef_sure: 900
+
+bolumler:
+  - ad: "Merhaba, Ben Ömer!"
+    ortam: oda
+    satirlar:
+      - {metin: "Merhaba arkadaşlar! Benim adım Ömer Asil.", ifade: heyecan, olay: pirilti}
+      - {metin: "Bugün sizinle tanıştığıma çok ama çok sevindim!", ifade: gulme}
+      - "Bakın, üzerimde en sevdiğim tişörtüm var. Mavi beyaz çizgili, tıpkı denizin dalgaları gibi."
+      - "Şurada, yanımda gördüğünüz bitki de benim arkadaşım. Onun adı Yeşilcik."
+      - "Yeşilcik'i her sabah suluyorum. O da bana yapraklarıyla gülümsüyor."
+      - {metin: "Bir de kocaman bir hayal gücüm var! Gözlerimi kapattığımda, istediğim her yere gidebilirim.", ifade: heyecan}
+      - {metin: "Peki ya senin adın ne? Hadi, bana kocaman bir sesle söyle!", ifade: heyecan, bekle: 2.6}
+      - {metin: "Ne güzel bir isim! Seninle arkadaş olmayı çok isterim.", ifade: gulme, olay: kalpler}
+      - "Biliyor musun, ben masalları çok severim. Hele de içinde yıldızlar olan masalları."
+      - "Bugün sana, başımdan geçen kocaman bir macerayı anlatacağım."
+      - {metin: "Bu maceranın adı: Ömer Asil ve Kayıp Yıldız!", ifade: heyecan, olay: pirilti}
+      - {metin: "Hazır mısın? Öyleyse rahatça otur, kulaklarını aç ve benimle gel!", ifade: gulme, bekle: 1.0}
+
+  - ad: "Güneşli Bir Gün"
+    ortam: gunduz
+    satirlar:
+      - "O gün, güneş gökyüzünde kocaman bir portakal gibi parlıyordu."
+      - "Ben de bahçede oynuyordum. Koşuyordum, zıplıyordum, top oynuyordum."
+      - {metin: "Sen de zıplamayı sever misin? Hadi, oturduğun yerde bir kere zıpla! Hop!", ifade: heyecan, bekle: 2.2}
+      - {metin: "Aferin sana! Çok güzel zıpladın!", ifade: gulme, olay: kalpler}
+      - "Bahçede minik kuşlar vardı. Cik cik cik diye şarkı söylüyorlardı."
+      - "Kelebekler çiçekten çiçeğe uçuyordu. Arılar da vız vız diye bal topluyordu."
+      - "Kediciğimiz Pamuk ise ağacın gölgesinde mışıl mışıl uyuyordu. Miyav!"
+      - "Annem pencereden seslendi: “Ömer, akşam yemeği hazır olunca seni çağıracağım!”"
+      - "Ben de “Tamam anneciğim!” dedim ve çimenlere uzanıp bulutlara baktım."
+      - {metin: "Bulutlar ne kadar ilginçti! Biri tavşana benziyordu, biri de kocaman bir dondurmaya.", ifade: sasirma}
+      - {metin: "Sen bulutlarda hangi şekilleri görürsün? Belki bir fil, belki de bir gemi?", ifade: dusunme, bekle: 2.6}
+      - "Ben bir tanesinde, kuyruğunu sallayan bir köpek yavrusu gördüm."
+      - {metin: "O gün akşam olunca, çok şaşırtıcı bir şey olacağını henüz bilmiyordum.", ifade: fisilti}
+
+  - ad: "Akşam Oluyor"
+    ortam: aksam
+    satirlar:
+      - "Yavaş yavaş güneş batmaya başladı."
+      - {metin: "Gökyüzü önce turuncu, sonra pembe, sonra da mor oldu. Tıpkı bir boyama kitabı gibi!", ifade: sasirma}
+      - "Kuşlar yuvalarına döndü. Kelebekler çiçeklerin arasında uykuya daldı."
+      - "Ben de eve girip ellerimi sabunla güzelce yıkadım. Köpük köpük oldu!"
+      - "Sonra akşam yemeğimi yedim. Çorbamı sonuna kadar içtim, çünkü çorba beni güçlü yapıyor!"
+      - {metin: "Yemekten sonra dişlerimi fırçaladım. Fırçaladım, fırçaladım, pırıl pırıl oldular!", ifade: gulme}
+      - {metin: "Sen de her akşam dişlerini fırçalıyor musun?", ifade: dusunme, bekle: 2.2}
+      - {metin: "Harikasın! Pırıl pırıl dişler, kocaman gülümsemeler demek.", ifade: gulme, olay: pirilti}
+      - "Sonra pijamalarımı giydim. Onların üzerinde de minik yıldızlar var."
+      - "Yeşilcik'e iyi geceler dedim ve penceremin önüne oturdum."
+      - "Çünkü ben, uyumadan önce gökyüzündeki yıldızları saymayı çok severim."
+
+  - ad: "Yıldızları Sayalım"
+    ortam: gece
+    satirlar:
+      - "Gökyüzü kapkaranlık oldu ve yıldızlar teker teker göz kırpmaya başladı."
+      - {metin: "Ay Dede de gökyüzünde bize gülümsüyordu. Merhaba Ay Dede!", ifade: gulme}
+      - {metin: "Hadi, birlikte yıldızları sayalım. Hazır mısın?", ifade: heyecan, bekle: 1.6}
+      - {metin: "Bir!", ekran: "1", olay: pirilti}
+      - {metin: "İki!", ekran: "2"}
+      - {metin: "Üç!", ekran: "3"}
+      - {metin: "Dört!", ekran: "4"}
+      - {metin: "Beş!", ekran: "5"}
+      - {metin: "Altı!", ekran: "6"}
+      - {metin: "Yedi!", ekran: "7"}
+      - {metin: "Sekiz!", ekran: "8"}
+      - {metin: "Dokuz!", ekran: "9"}
+      - {metin: "On!", ekran: "10", olay: konfeti}
+      - {metin: "Aferin! Tam on tane yıldız saydık! Sen çok akıllı bir çocuksun!", ifade: gulme}
+      - {metin: "Ama tam o sırada, gökyüzünde bir şey dikkatimi çekti...", ifade: fisilti}
+      - {metin: "Bir yıldız kayıyordu! Aşağı, aşağı, daha da aşağı...", ifade: sasirma, olay: kayan_yildiz}
+      - {metin: "Ve tam bizim bahçeye düştü! Pat!", ifade: sasirma}
+
+  - ad: "Minik Yıldız Pırıl"
+    ortam: gece_orman
+    satirlar:
+      - "Hemen terliklerimi giydim ve sessizce bahçeye çıktım. Tıpış tıpış, tıpış tıpış."
+      - "Çimenlerin arasında minicik bir ışık parlıyordu."
+      - {metin: "Yaklaştım ve ne göreyim? Küçücük, sapsarı bir yıldız!", ifade: sasirma, olay: piril_gel}
+      - {metin: "Ama yıldız ağlıyordu. Gözlerinden minik ışık damlaları süzülüyordu.", ifade: uzgun}
+      - {metin: "“Merhaba,” dedim yavaşça. “Neden ağlıyorsun?”", ifade: fisilti}
+      - {metin: "Minik yıldız burnunu çekti ve şöyle dedi: “Benim adım Pırıl. Gökyüzünde oynarken ayağım kaydı ve buraya düştüm.”", ifade: uzgun}
+      - {metin: "“Şimdi evime, gökyüzüne nasıl döneceğimi bilmiyorum. Annem beni çok merak eder.”", ifade: uzgun}
+      - {metin: "Pırıl'a çok üzüldüm. Sen de üzüldün mü?", ifade: uzgun, bekle: 1.8}
+      - "Kalbim bana şöyle fısıldadı: “Ömer, arkadaşına yardım et!”"
+      - {metin: "Ben de dedim ki: “Merak etme Pırıl! Seni evine götüreceğim. Söz veriyorum!”", ifade: heyecan}
+      - {metin: "Pırıl'ın yüzünde minicik bir gülümseme belirdi.", ifade: gulme, olay: [piril_mutlu, kalpler]}
+      - {metin: "Ama gökyüzü çok yüksekti. Oraya nasıl çıkacaktık?", ifade: dusunme, bekle: 1.2}
+
+  - ad: "Ateşböcekleri"
+    ortam: gece_orman
+    satirlar:
+      - {metin: "Tam o sırada, karanlığın içinde minik ışıklar yanıp sönmeye başladı.", ifade: sasirma, olay: atesbocegi_cok}
+      - "Bunlar ateşböcekleriydi! Pırıl gibi onlar da etrafa ışık saçıyordu."
+      - "Ateşböceklerinin lideri Işıltı, kanatlarını çırparak yanımıza geldi."
+      - "“Merhaba Ömer! Merhaba Pırıl! Size yardım edebilir miyiz?” diye sordu."
+      - "Biz de her şeyi anlattık. Işıltı biraz düşündü ve sonra dedi ki:"
+      - {metin: "“Ormanın derinliklerinde Bilge Baykuş yaşar. O her şeyi bilir. Hadi, size yolu gösterelim!”", ifade: heyecan}
+      - "Ormana doğru yürümeye başladık. Ama orman biraz karanlıktı."
+      - {metin: "Biraz korktum, bunu itiraf etmeliyim. Sen de bazen karanlıktan korkar mısın?", ifade: uzgun, bekle: 2.2}
+      - {metin: "Korkmak çok normal. Ama annem bana bir sır söylemişti.", ifade: fisilti}
+      - {metin: "Korktuğunda derin bir nefes al, ve sevdiğin birinin elini tut.", ifade: fisilti}
+      - {metin: "Hadi birlikte deneyelim. Burnundan derin bir nefes al...", ifade: fisilti, bekle: 2.6}
+      - {metin: "Ve yavaşça ver... Oh, ne güzel.", ifade: uykulu, bekle: 1.4}
+      - {metin: "İşte! Artık çok daha cesurum! Ateşböcekleri de etrafımızda dans ediyordu.", ifade: heyecan, olay: pirilti}
+
+  - ad: "Gece Ormanının Sesleri"
+    ortam: gece_orman
+    satirlar:
+      - "Ormanda yürürken kulaklarımızı dikkatle açtık. Gece ormanı sessiz değildi, çok güzel sesleri vardı!"
+      - {metin: "Bak, dinle! Cırcır böcekleri şarkı söylüyordu: Cır cır, cır cır!", ifade: heyecan}
+      - {metin: "Hadi sen de onlar gibi yap: Cır cır, cır cır!", ifade: gulme, bekle: 2.2}
+      - "Sonra küçük bir göletin yanından geçtik. Kurbağalar zıplıyordu: Vrak vrak, vrak vrak!"
+      - {metin: "Sen de bir kurbağa gibi vraklayabilir misin?", ifade: dusunme, bekle: 2.2}
+      - {metin: "Ha ha! Çok güzel oldu! Kurbağalar bile seni alkışladı!", ifade: gulme, olay: kalpler}
+      - "Rüzgâr ağaçların arasında esiyordu: Vuuu, vuuu... Yapraklar hışır hışır sallanıyordu."
+      - "Uzaklarda bir köpek havladı: Hav hav! Galiba o da uyumadan önce Ay Dede'ye iyi geceler diyordu."
+      - {metin: "Peki sence, ormanda başka hangi hayvanlar yaşar?", ifade: dusunme, bekle: 2.6}
+      - "Sincaplar, tavşanlar, kirpiler... Hepsi yuvalarında, sıcacık uyuyorlardı."
+      - {metin: "Minicik bir kirpi, yaprakların altından burnunu çıkardı ve bize göz kırptı.", ifade: gulme}
+      - {metin: "Ve biz ateşböceklerinin peşinden, ormanın derinliklerine doğru yürümeye devam ettik.", ifade: fisilti}
+
+  - ad: "Bilge Baykuş'un Bilmecesi"
+    ortam: gece_orman
+    satirlar:
+      - {metin: "Sonunda kocaman, yaşlı bir ağaca vardık.", olay: baykus_gel}
+      - "Ağacın dalında, iri gözlü bir baykuş oturuyordu. Hu huuu, hu huuu!"
+      - "“Hoş geldiniz çocuklar,” dedi Bilge Baykuş. “Ben gökyüzüne giden yolu bilirim.”"
+      - {metin: "“Ama önce, bilmecemi bilmeniz gerekiyor!”", ifade: dusunme}
+      - {metin: "Ben bilmeceleri çok severim! Sen de sever misin?", ifade: heyecan, bekle: 1.6}
+      - {metin: "Baykuş başladı: “Gündüz saklanırım, gece ortaya çıkarım. Gökyüzünde parlarım ama yıldız değilim. Bazen yuvarlak, bazen de muz gibi incecik olurum. Ben kimim?”", ifade: dusunme}
+      - {metin: "Hmm... Sen bildin mi? Hadi, cevabı söyle!", ifade: dusunme, bekle: 3.2}
+      - {metin: "Evet! Cevap: Ay! Ay Dede!", ifade: heyecan, olay: konfeti}
+      - "Bilge Baykuş kanatlarını açtı ve güldü: “Hu hu! Ne kadar akıllısınız!”"
+      - "“Gökyüzüne çıkmak için Pamuk Bulut'u bulun. O sizi yukarılara taşıyabilir.”"
+      - {metin: "“Ama dikkat edin, Pamuk Bulut bu gece biraz üzgün.”", ifade: uzgun}
+      - {metin: "Baykuşa teşekkür ettik. Teşekkür etmek, dünyanın en sihirli kelimelerinden biridir!", ifade: gulme, olay: [baykus_git, pirilti]}
+
+  - ad: "Ağlayan Bulut"
+    ortam: yagmur
+    satirlar:
+      - {metin: "Biraz yürüdükten sonra, yağmur damlaları üzerimize düşmeye başladı. Pıt, pıt, pıt...", olay: bulut_gel}
+      - {metin: "Başımızı kaldırdık. Kocaman, beyaz bir bulut ağlıyordu! Bu, Pamuk Bulut'tu.", ifade: sasirma}
+      - {metin: "“Neden ağlıyorsun Pamuk Bulut?” diye sordum.", ifade: uzgun}
+      - {metin: "“Kimse benimle oynamıyor,” dedi Pamuk Bulut. “Yağmur yağınca herkes benden kaçıyor.”", ifade: uzgun}
+      - {metin: "Pamuk Bulut'a sarılmak istedim. Ama bulutlara sarılmak biraz zor!", ifade: gulme}
+      - "Onun yerine, onu güldürmeye karar verdim ve bir fıkra anlattım:"
+      - {metin: "“Pamuk Bulut, Pamuk Bulut! Biliyor musun, bulutlar neden hiç şemsiye taşımaz?”", ifade: dusunme, bekle: 1.4}
+      - {metin: "“Çünkü yağmuru zaten kendileri yapıyorlar!”", ifade: gulme}
+      - {metin: "Pamuk Bulut önce gülümsedi, sonra kahkahalarla gülmeye başladı. Ha ha ha!", ifade: gulme, olay: bulut_mutlu}
+      - {metin: "Ve yağmur durdu.", ifade: sasirma, olay: yagmur_dur}
+      - "Bak ne öğrendim: Üzgün birini güldürmek, ona verilebilecek en güzel hediyedir."
+      - {metin: "Pamuk Bulut dedi ki: “Siz benim en iyi arkadaşlarımsınız! Size nasıl teşekkür edebilirim?”", ifade: gulme}
+      - {metin: "Biz de ona Pırıl'ı anlattık. Pamuk Bulut sevinçle kabardı: “Hemen sırtıma binin!”", ifade: heyecan}
+
+  - ad: "Gökkuşağı Köprüsü"
+    ortam: gokkusagi
+    satirlar:
+      - {metin: "Pamuk Bulut bizi yukarı, yukarı, daha da yukarı taşıdı.", ifade: heyecan}
+      - {metin: "Yağmurdan sonra ay ışığında kocaman bir gökkuşağı belirdi!", ifade: sasirma, olay: gokkusagi_cik}
+      - "Bu gökkuşağı, gökyüzüne uzanan rengârenk bir köprüydü."
+      - {metin: "Hadi, gökkuşağının renklerini birlikte söyleyelim!", ifade: heyecan, bekle: 0.8}
+      - {metin: "Kırmızı! Tıpkı çilek gibi.", ekran: {yazi: "KIRMIZI", renk: [236, 64, 64]}}
+      - {metin: "Turuncu! Tıpkı portakal gibi.", ekran: {yazi: "TURUNCU", renk: [255, 150, 40]}}
+      - {metin: "Sarı! Tıpkı güneş gibi.", ekran: {yazi: "SARI", renk: [255, 220, 50]}}
+      - {metin: "Yeşil! Tıpkı Yeşilcik'in yaprakları gibi.", ekran: {yazi: "YEŞİL", renk: [80, 200, 90]}}
+      - {metin: "Mavi! Tıpkı benim tişörtüm gibi.", ekran: {yazi: "MAVİ", renk: [70, 140, 240]}}
+      - {metin: "Lacivert! Tıpkı gece gökyüzü gibi.", ekran: {yazi: "LACİVERT", renk: [80, 90, 200]}}
+      - {metin: "Mor! Tıpkı üzüm gibi.", ekran: {yazi: "MOR", renk: [170, 90, 220]}}
+      - {metin: "Yedi renk! Ne kadar güzel! Sen en çok hangi rengi seversin?", ifade: dusunme, bekle: 2.6}
+      - {metin: "Benim en sevdiğim renk mavi. Ama hepsini çok seviyorum, çünkü birlikte daha güzeller!", ifade: gulme, olay: kalpler}
+      - {metin: "Gökkuşağı köprüsünde yürürken, Pırıl'la birlikte bir tekerleme söyledik:", ifade: heyecan}
+      - {metin: "Gökkuşağı, gökkuşağı, yedi renkli yay. Kırmızıdan mora kadar, ışıl ışıl saray!", ifade: gulme}
+      - {metin: "Adım adım yürüyelim, tutalım el ele. Yıldızlara varalım biz, neşeyle, güle güle!", ifade: gulme, olay: pirilti}
+      - "Her adımda Pırıl'ın ışığı biraz daha parlıyordu. Evine yaklaştığını hissediyordu."
+
+  - ad: "Eve Dönüş"
+    ortam: yildizlar
+    satirlar:
+      - {metin: "Sonunda yıldızların yanına vardık. Gökyüzü, ışıktan bir deniz gibiydi.", ifade: sasirma}
+      - {metin: "Uzaktan bir ses duyduk: “Pırıl! Pırıl, neredesin?” Bu, Pırıl'ın annesiydi!", ifade: sasirma}
+      - {metin: "Pırıl sevinçle bağırdı: “Anneciğim! Buradayım!”", ifade: heyecan}
+      - "Ama Pırıl'ın gökyüzündeki yerine zıplayabilmesi için kocaman bir enerjiye ihtiyacı vardı."
+      - {metin: "Hep birlikte geri sayarsak Pırıl uçabilirdi. Bana yardım eder misin?", ifade: dusunme, bekle: 1.6}
+      - {metin: "Hazır mısın? Kocaman bir sesle sayıyoruz!", ifade: heyecan}
+      - {metin: "Beş!", ekran: "5"}
+      - {metin: "Dört!", ekran: "4"}
+      - {metin: "Üç!", ekran: "3"}
+      - {metin: "İki!", ekran: "2"}
+      - {metin: "Bir!", ekran: "1"}
+      - {metin: "Uç Pırıl, uç!", ifade: heyecan, olay: [piril_git, konfeti]}
+      - {metin: "Ve Pırıl, gökyüzündeki yerine bir ok gibi uçtu! Annesine kocaman sarıldı.", ifade: gulme}
+      - {metin: "Gökyüzündeki bütün yıldızlar sevinçle parladı. Başardık!", ifade: heyecan, olay: pirilti}
+      - {metin: "Sonra bütün yıldızlar bir araya geldi ve bizim için gökyüzünde kocaman bir kalp çizdi!", ifade: sasirma, olay: kalpler}
+      - {metin: "Pırıl bize el salladı: “Teşekkür ederim Ömer! Teşekkür ederim arkadaşlar! Sizi hiç unutmayacağım!”", ifade: gulme}
+      - {metin: "“Her gece, sizin için en parlak şekilde parlayacağım!”", ifade: gulme, olay: kalpler}
+
+  - ad: "İyi Geceler"
+    ortam: gece_sakin
+    satirlar:
+      - {metin: "Pamuk Bulut beni yavaşça evime, penceremin önüne bıraktı.", olay: bulut_git}
+      - "Ateşböcekleri el salladı. Bilge Baykuş da uzaktan “Hu huu, iyi geceler!” dedi."
+      - "Yatağıma girdim ve pencereden gökyüzüne baktım."
+      - {metin: "Bir de ne göreyim? Bir yıldız bana göz kırpıyordu! Bu Pırıl'dı!", ifade: sasirma, olay: pirilti}
+      - {metin: "Bugün çok şey öğrendim, biliyor musun?", ifade: dusunme}
+      - "Bir arkadaşımız zor durumda olduğunda, ona yardım etmeyi."
+      - "Korktuğumuzda derin bir nefes alıp cesur olmayı."
+      - "Üzgün birini güldürmenin, dünyanın en güzel hediyesi olduğunu."
+      - "Ve teşekkür etmenin, sihirli bir kelime olduğunu."
+      - {metin: "Sen de bu akşam gökyüzüne bak. Belki Pırıl sana da göz kırpar.", ifade: fisilti}
+      - {metin: "Benimle bu maceraya geldiğin için çok teşekkür ederim. Sen harika bir arkadaşsın!", ifade: gulme, olay: kalpler}
+      - {metin: "Şimdi gözlerimizi yavaşça kapatma zamanı...", ifade: uykulu}
+      - {metin: "İyi geceler arkadaşlar. İyi geceler Ay Dede. İyi geceler Pırıl.", ifade: uykulu}
+      - {metin: "Yarın yeni bir macerada görüşmek üzere! Ben Ömer Asil. Hoşça kalın!", ifade: gulme, olay: pirilti}

@@ -139,6 +139,60 @@ klip:
   ambient_tip: "yagmur"      # ses ambient_* ise: yagmur | okyanus | ates | gece | ruzgar | beyaz
   loop_sure: 120             # ambient loop uzunlugu (sn)
 
+# --- Avatar videosu (1 dk rehberli nefes molasi; python avatar.py) ---
+# Tek bir avatar gorselinden dikey 9:16 (Shorts uyumlu) video: avatar nefes
+# alir, goz kirpar; nefes halkasi AL/TUT/VER ritmini gosterir. Avatar
+# profili (yuz odagi, goz kapagi egrileri) avatar/avatar.yaml dosyasindadir.
+avatar:
+  sure: 60                    # sn (6 giris + 4 x 12 nefes dongusu + 6 kapanis)
+  cozunurluk: [720, 1280]     # dikey 9:16 (1080x1920 de olur; daha yavas render)
+  fps: 30
+  crf: 18                     # x264 kalite (dusuk = daha kaliteli/buyuk dosya)
+  # --- anlatim ---
+  ses_motoru: "auto"          # "auto" (edge -> piper) | "edge" | "piper" | "yok"
+  edge_ses: "tr-TR-EmelNeural"
+  edge_hiz: "-10%"
+  piper_ses: "tr_TR-dfki-medium"   # cevrimdisi; ilk calismada modeller/ altina indirilir
+  piper_hiz: 0.88             # <1 daha yavas
+  # --- ses seviyeleri (0-1) ---
+  anlatim_seviye: 1.0
+  muzik_seviye: 0.16          # dongulere hizali yumusak akor pad'i
+  can_seviye: 0.11            # faz baslarindaki can sesi
+  nefes_sesi_seviye: 0.05     # hava akisina gore kabaran yumusak nefes sesi
+  ambient: "yagmur"           # asmr_ses tipi (yagmur | okyanus | gece | ...) ya da "yok"
+  ambient_seviye: 0.07
+  baslik: "1 Dakikalık Nefes Molası"   # YouTube basligi (--yukle)
+  kapak_sn: 8.6               # kapak.jpg bu saniyedeki kareden alinir
+  tohum: 7                    # goz kirpma / parcacik rastgeleligi (tekrarlanabilir)
+
+# --- Cocuk animasyonu: "Omer Asil ve Kayip Yildiz" (~15 dk; python omer.py) ---
+# Avatar (avatar/avatar.jpg) konusur, goz kirpar, ifade degistirir; arka plan
+# hikayeye gore degisir. Senaryo: senaryolar/omer_asil_kayip_yildiz.yaml
+cocuk:
+  cozunurluk: [720, 1280]     # dikey 9:16 (avatarin kendi orani)
+  fps: 24
+  crf: 22                     # x264 kalite (dusuk = kaliteli/buyuk)
+  isci: 4                     # paralel render sureci (bos: islemci sayisi)
+  # --- seslendirme ---
+  ses_motoru: "auto"          # auto (dosya -> elevenlabs -> edge -> piper) | dosya | elevenlabs | edge | piper
+  yedek: true                 # secilen motor calismazsa piper'a dus (false: dur)
+  # ElevenLabs: anahtar ELEVENLABS_API_KEY ortam degiskeninden (GitHub secret) okunur.
+  eleven_voice_id: "AtCqglsS9sXaXLbu0Zco"   # Voice Library'den bir COCUK sesi secip ID'sini yazin
+  eleven_model: "eleven_v3"   # v3: [excited] [whispers] gibi ses etiketlerini anlar
+  eleven_dil: "tr"
+  # eleven_ayar: {stability: 0.5, similarity_boost: 0.8, use_speaker_boost: true}
+  # eleven_etiketler: {gulme: "[laughs]"}    # ifade -> etiket eslemesini degistir
+  ses_klasoru: "sesler/omer_asil"  # dosya motoru: <satir_id>.mp3 (python omer.py --metin-listesi)
+  edge_ses: "tr-TR-EmelNeural"
+  edge_pitch: "+22Hz"         # cocuk tonu
+  piper_ses: "tr_TR-dfki-medium"
+  cocuk_perde: 1.24           # piper sesini cocuksulastirma (perde carpani)
+  # --- ses seviyeleri ---
+  muzik_seviye: 0.13
+  efekt_seviye: 0.30
+  ortam_seviye: 0.10
+  kapak_sn: 4.0               # kapak.jpg bu saniyedeki kareden (baslik karti)
+
 altyazi:
   aktif: true
   model: "small"               # faster-whisper model boyutu: tiny/base/small/medium

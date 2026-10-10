@@ -1,0 +1,74 @@
+# Omer Asil cocuk animasyonunu ElevenLabs sesiyle GitHub'in bedava sunucusunda uretir.
+# Kurulum: Settings -> Secrets and variables -> Actions -> New repository secret
+#          Ad: ELEVENLABS_API_KEY   Deger: ElevenLabs API anahtariniz
+# Calistirma: Actions -> "Omer Asil - Cocuk Animasyonu" -> Run workflow
+# Cikti: calismanin Artifacts bolumunde "omer-asil-video" (mp4 + kapak.jpg)
+name: Omer Asil - Cocuk Animasyonu
+
+on:
+  workflow_dispatch:
+    inputs:
+      ses_motoru:
+        description: "Ses motoru: elevenlabs | auto | piper"
+        default: "elevenlabs"
+      ses_id:
+        description: "ElevenLabs voice ID (bos: config'teki eleven_voice_id)"
+        default: ""
+      model:
+        description: "ElevenLabs modeli"
+        default: "eleven_v3"
+      onizleme:
+        description: "Yalnizca bir aralik (ornek 0:60). Bos = tam 15 dk"
+        default: ""
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Sistem paketleri (ffmpeg + yazi tipleri)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg fonts-dejavu-core unzip
+          curl -sSL -o /tmp/inter.zip https://github.com/rsms/inter/releases/download/v4.0/Inter-4.0.zip \
+            && mkdir -p /tmp/inter && unzip -q /tmp/inter.zip -d /tmp/inter \
+            && sudo mkdir -p /usr/share/fonts/opentype/inter \
+            && sudo find /tmp/inter -name "*.otf" -exec cp {} /usr/share/fonts/opentype/inter/ \; \
+            || echo "Inter indirilemedi, DejaVu kullanilacak"
+
+      - name: Python paketleri
+        run: pip install numpy Pillow pyyaml requests edge-tts sherpa-onnx imageio-ffmpeg
+
+      - name: ElevenLabs onbellegi (ayni satir tekrar ucretlendirilmesin)
+        uses: actions/cache@v4
+        with:
+          path: cikti/omer-asil/ses/onbellek
+          key: eleven-${{ github.run_id }}
+          restore-keys: eleven-
+
+      - name: Animasyonu uret
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          ELEVENLABS_VOICE_ID: ${{ inputs.ses_id }}
+          ELEVENLABS_MODEL: ${{ inputs.model }}
+          SES_MOTORU: ${{ inputs.ses_motoru }}
+          ONIZLEME: ${{ inputs.onizleme }}
+        run: |
+          ARGS=(--ses-motoru "$SES_MOTORU")
+          if [ "$SES_MOTORU" = "elevenlabs" ]; then ARGS+=(--yedeksiz); fi
+          if [ -n "$ONIZLEME" ]; then ARGS+=(--onizleme "$ONIZLEME"); fi
+          python omer.py "${ARGS[@]}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: omer-asil-video
+          path: |
+            cikti/omer-asil/video/*.mp4
+            cikti/omer-asil/video/kapak.jpg
+          retention-days: 14
