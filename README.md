@@ -5,7 +5,7 @@ ASMR / rahatlama / uyku videoları üreten sistem. **Hiçbir API anahtarı
 gerektirmez** — ambient ses `numpy` ile telifsiz üretilir, görseller
 Pollinations (anahtarsız) ile gelir.
 
-Üç bağımsız üretim yolu vardır:
+Dört bağımsız üretim yolu vardır:
 
 ---
 
@@ -80,6 +80,47 @@ python avatar.py --gorsel foto.jpg --profil yok  # başka görsel (göz kırpmas
 
 ---
 
+## 4) Çocuk animasyonu: "Ömer Asil ve Kayıp Yıldız" — `omer.py`
+
+Avatar görselinden (`avatar/avatar.jpg`) **15 dakikalık** konuşan bir çizgi film.
+Anlatıcı **Ömer Asil**: konuşurken ağzı sese göre açılıp kapanır, göz kırpar,
+heyecanlanınca kaşları kalkar, fısıldarken kamera yaklaşır. Avatarın duvarı
+ayrıştırılır ve **arka plan hikâyeye göre değişir** (oda → güneşli gün → gün batımı →
+yıldızlı gece → gece ormanı → yağmur → gökkuşağı → yıldızlar → sakin gece).
+Minik yıldız **Pırıl**, **Pamuk Bulut** ve **Bilge Baykuş** hikâyeye katılır.
+
+```bash
+python omer.py                                   # 15 dk (ses: auto)
+python omer.py --ses-motoru elevenlabs --yedeksiz  # ElevenLabs sesiyle (ELEVENLABS_API_KEY)
+python omer.py --onizleme 0:60                   # yalnızca ilk dakikayı render et
+python omer.py --metin-listesi                   # satır listesini (id + metin) yaz
+```
+
+- **Senaryo** (`senaryolar/omer_asil_kayip_yildiz.yaml`): 12 bölüm, 163 satır.
+  Çocuklarla etkileşimli: yıldız sayma (1–10), bilmece, gökkuşağı renkleri,
+  hayvan sesleri, nefes egzersizi, geri sayım; değerler: yardımlaşma, cesaret,
+  nezaket, teşekkür. Her satırda `ifade` (heyecan, gülme, fısıltı...), `olay`
+  (pırıltı, konfeti, kayan yıldız...) ve `ekran` (büyük sayı/renk) alanları var.
+- **Süre**: satırlar seslendirildikten sonra zaman çizelgesi otomatik olarak
+  hedef süreye (15:00) oturtulur.
+- **Ses (ElevenLabs)**: `ELEVENLABS_API_KEY` tanımlıysa her satır ElevenLabs'te
+  (`eleven_v3`, ifadeye göre `[excited]`, `[whispers]` gibi etiketlerle)
+  seslendirilir. Kelime zamanları karaoke altyazıyı yönetir. Yanıtlar
+  önbelleğe yazılır, aynı satır **ikinci kez ücretlendirilmez**. Senaryo yaklaşık
+  9.400 karakterdir. Ses: `config` → `cocuk.eleven_voice_id` (Voice Library'den bir
+  çocuk sesi seçin).
+- **Kendi ses dosyalarınız**: `--metin-listesi` ile satır listesini alın,
+  her satırı `sesler/omer_asil/<satır_id>.mp3` olarak koyun, `--ses-motoru dosya`.
+- **Yedek ses**: internet/anahtar yoksa çevrimdışı Piper (çocuksu perde) ile
+  önizleme üretilir.
+- **GitHub Actions**: `Omer Asil - Cocuk Animasyonu` iş akışı (secret:
+  `ELEVENLABS_API_KEY`) videoyu ElevenLabs sesiyle bedava sunucuda üretir;
+  çıktı Artifacts → `omer-asil-video`.
+- **Çıktı**: `cikti/omer-asil/video/omer_asil_kayip_yildiz.mp4` (+ `kapak.jpg`),
+  dikey 720×1280, 24 fps. Render 4 çekirdekte paralel, ~25 dk.
+
+---
+
 ## 🚀 Kurulum
 
 ```bash
@@ -114,6 +155,8 @@ Eklemezseniz video her zaman Artifacts'te hazır bekler.
 ├── asmr.py                  # Sıfırdan ASMR orkestratörü
 ├── birlestir.py             # Kliplerden uzun ASMR birleştirici
 ├── avatar.py                # Avatarlı 1 dk nefes molası videosu
+├── omer.py                  # Ömer Asil 15 dk çocuk animasyonu
+├── senaryolar/              # Çocuk animasyonu senaryoları (YAML)
 ├── avatar/                  # Avatar görseli + profili (göz/odak koordinatları)
 ├── requirements.txt
 ├── config/
@@ -121,6 +164,7 @@ Eklemezseniz video her zaman Artifacts'te hazır bekler.
 ├── klipler/                 # Günlük yüklediğiniz video klipleri (otomatik işlenir)
 ├── scripts/                 # YouTube token alma + yükleme
 ├── .github/workflows/
+│   ├── omer-asil.yml        # Ömer Asil animasyonu (ElevenLabs, manuel)
 │   ├── asmr.yml             # Sıfırdan ASMR (günlük otomatik + manuel)
 │   └── klip-birlestir.yml   # Kliplerden ASMR (push ile otomatik)
 └── src/
@@ -128,6 +172,10 @@ Eklemezseniz video her zaman Artifacts'te hazır bekler.
     ├── avatar_senaryo.py    # Nefes molası zaman çizelgesi (fazlar + replikler)
     ├── avatar_ses.py        # Seslendirme (edge/Piper) + müzik/çan/nefes karışımı
     ├── avatar_montaj.py     # Nefes alan, göz kırpan avatar render'ı (numpy + ffmpeg)
+    ├── cocuk_senaryo.py     # Senaryo okuma + 15 dk'ya zamanlama
+    ├── cocuk_ses.py         # ElevenLabs / dosya / edge / Piper seslendirme (önbellekli)
+    ├── cocuk_muzik.py       # Sahneye göre müzik, efekt sesleri, karışım, ağız zarfı
+    ├── cocuk_montaj.py      # Konuşan avatar, sahneler, karakterler, paralel render
     ├── asmr_montaj.py       # ASMR montajı (Ken Burns + ffmpeg döngü)
     ├── klip_montaj.py       # Klipleri birleştir + ffmpeg döngü
     ├── sahne.py             # Pollinations/Pexels görsel üretimi

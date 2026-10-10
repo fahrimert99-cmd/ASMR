@@ -24,3 +24,27 @@ gozler:
     alt: [[391,530],[394,533],[397,535],[400,536],[403,537],[410,537],[420,538],
           [430,537],[436,536],[439,536],[442,534],[445,533],[448,529],[451,527],
           [454,525],[457,523],[460,520],[463,516],[466,512],[469,509],[472,503]]
+
+# --- Konusma / ifade (python omer.py cocuk animasyonu kullanir) ---
+# Agiz: gulumseme cizgisi (soldan saga). Konusurken bu cizgi acilir; ust dudak
+# sabit kalir, alt dudak ve cene asagi iner.
+agiz:
+  cizgi: [[318,712],[330,714],[350,714],[370,712],[390,708],[400,705],[410,700],
+          [420,694],[430,688],[440,683],[450,677],[460,670],[470,662]]
+  acilma_sol: 326     # aciklik bu x'ten baslar
+  acilma_sag: 464     # ... bu x'te biter
+  tepe_x: 388         # en genis acildigi x
+  acik_max: 21        # en fazla acilma (px)
+  cene_y: 795         # cene alt siniri
+
+# Kaslar: [merkez_x, merkez_y, yari_genislik, yari_yukseklik]; heyecan/sasirmada kalkar.
+kaslar:
+  - [226, 518, 52, 9]
+  - [415, 462, 62, 11]
+
+# Duvar ayrimi: duvar yalnizca bu cizginin USTUNDE aranir (omuz/tisort siniri).
+# Arka plan bolum ortamina gore degisir (gunduz, gece, yagmur ...).
+duvar_alt: [[0,1140],[30,1090],[50,1040],[65,990],[80,940],[95,900],[110,870],
+            [125,840],[140,800],[160,775],[200,748],[240,728],[300,720],[530,668],
+            [560,672],[580,674],[620,688],[640,698],[660,699],[680,705],[700,713],
+            [720,722]]
