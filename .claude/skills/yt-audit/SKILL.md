@@ -12,11 +12,13 @@ An audit that lists twenty problems is a way of avoiding the one that matters. T
 
 ## Before you write
 
-1. Read `~/.claude/youtube/voice.md` if it exists. That is the user's voice profile: how they talk
-   on camera, the words they never use, who they are talking to, what they will not claim. If it
-   does not exist, ask for **three of their own videos**, read or transcribe them, infer the voice,
-   and write the file. A script in the wrong voice is worse than no script, because they have to
-   read it out loud.
+1. Read `.claude/youtube/voice.md` at the repository root. That is the user's voice profile: how
+   they talk on camera, the words they never use, who they are talking to, what they will not
+   claim. A section that still reads `_(doldurulacak)_` is unfilled. If the file is missing or the
+   section you need is unfilled, ask for **three of their own videos**, read or transcribe them,
+   infer the voice, and write the answer into that file in the repository (not under `~/`), so
+   the profile survives between sessions. A script in the wrong voice is worse than no script,
+   because they have to read it out loud.
 2. Never invent a number, a result or a source. If a figure would strengthen it and you do not have
    one, ask for it or write the line without it.
 
