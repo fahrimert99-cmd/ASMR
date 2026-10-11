@@ -16,18 +16,17 @@ _(doldurulacak)_
 
 ## Kanal dili
 
-Başlıklar, açıklamalar ve yorum cevapları hangi dilde? (Türkçe / İngilizce / ikisi)
-Not: `title.py` ve `hookscore.py` İngilizce kelime listeleriyle puanlıyor; Türkçe başlıklarda
-puanlar yol gösterici değildir.
-
-_(doldurulacak)_
+**İngilizce.** Başlıklar, küçük resim yazıları, açıklamalar ve yorum cevapları İngilizce yazılır.
+(`title.py` ve `hookscore.py` İngilizce kelime listeleriyle puanladığı için puanlar tam anlamlıdır.)
 
 ## Nasıl konuşuyorum
 
 Varsa en iyi performans gösteren videonuzun açıklamasını, başlıklarını veya anlatım metnini
 buraya yapıştırın. Olmak istediğiniz değil, olduğunuz gibi.
 
-_(doldurulacak)_
+Kanal yeni, henüz yayınlanmış video yok. İlk videolar yayınlandıktan sonra en iyi giden 3 videonun
+başlık/açıklaması buraya eklenmeli. O zamana kadar üslup "Formatım" bölümünden çıkarılır.
+_(doldurulacak: ilk 3 videodan sonra)_
 
 ## Asla kullanmadığım kelimeler
 
@@ -59,12 +58,13 @@ Aşağıdakiler repodaki üretim hattından alınmıştır; yanlış veya eksiks
   kendi ürettiğim kısa kliplerin yumuşak geçişlerle birleştirilip hedef süreye döngülenmesi.
 - **Ses:** Kodla üretilen telifsiz ambient ses (yağmur, okyanus, şömine/ateş, gece/orman,
   rüzgâr, beyaz/pembe/kahverengi gürültü) veya kendi kliplerimin sesi.
-- **Anlatım:** Çoğu videoda yok. Varsa edge-tts ile çok yavaş, yumuşak Türkçe anlatım
-  (`tr-TR-EmelNeural`, `-12%` tempo). Anlatım sentetik sesle okunduğu için metin "kameraya
-  okunacak" değil, TTS'e uygun, kısa ve sakin cümlelerle yazılmalı.
+- **Anlatım:** Ambient videolarda çoğunlukla yok. Tarih serilerinde (ör. Moskova) yumuşak
+  İngilizce anlatım var. Üretim hattının varsayılan anlatımı edge-tts (`-12%` tempo, yavaş).
+  Anlatım sentetik sesle okunduğu için metin "kameraya okunacak" değil, TTS'e uygun, kısa ve
+  sakin cümlelerle yazılmalı.
 - **Yayın:** YouTube'a yükleme `scripts/youtube_yukle.py` ile. Yayın sıklığı ve günü:
   _(doldurulacak)_
 - **Konular:** Temalar yukarıdaki ambient türleri. Repoda ayrıca Moskova tarihini anlatan 59
-  sahnelik bir görsel seti var (tarih temalı uyku videosu). Bu seri kanal formatına dahil mi:
-  _(doldurulacak)_
+  sahnelik bir görsel seti var: yumuşak İngilizce anlatımlı tarih temalı uyku videosu ("history
+  for sleep" türü). Video süresi henüz belli değil; süre başlıkta belirtilmez.
 - **Giriş / kapanış, küçük resim stili, küfür vb.:** _(doldurulacak)_
