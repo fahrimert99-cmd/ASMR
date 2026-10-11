@@ -1,4 +1,4 @@
-"""Cizgi Film Otonom Uretim Sistemi - ortak yardimcilar."""
+"""ASMR Otonom Uretim Sistemi - ortak yardimcilar."""
 import json
 import os
 from pathlib import Path

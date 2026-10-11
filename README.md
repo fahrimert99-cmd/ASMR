@@ -54,7 +54,7 @@ python birlestir.py --klasor klipler --sure 3600  # 60 dk
 ## 🚀 Kurulum
 
 ```bash
-git clone https://github.com/asilmertkimya-png/ASMR.git
+git clone https://github.com/fahrimert99-cmd/ASMR.git
 cd ASMR
 pip install -r requirements.txt
 
