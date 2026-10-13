@@ -11,6 +11,7 @@ requests                 # Pollinations.ai / Pexels cagrilari
 
 # --- Anlatim (opsiyonel yumusak anlatim) ---
 edge-tts                 # Microsoft ucretsiz TTS (Turkce sesler)
+sherpa-onnx              # cevrimdisi Piper/VITS Turkce TTS (srt_seslendir.py)
 
 # --- Ayar dosyasi ---
 pyyaml
