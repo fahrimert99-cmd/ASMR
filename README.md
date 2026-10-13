@@ -51,6 +51,28 @@ python birlestir.py --klasor klipler --sure 3600  # 60 dk
 
 ---
 
+## 3) Hazır videoyu SRT'ye göre seslendir — `srt_seslendir.py`
+
+Müzikli hazır bir videoyu alır; `.srt` satırlarını Türkçe TTS ile seslendirip
+her satırı kendi zaman aralığına yerleştirir (sığmazsa hızı otomatik artırır),
+video girişine **kodla üretilen foley** ekler (`src/giris_sfx.py`: ahşap kapak
+gıcırtısı, toz/saman, boş ambar rezonansı, başlığa whoosh + darbe), müziği
+anlatımın altında kısar (ducking), −15 LUFS'a normalize eder ve altyazıyı
+yumuşak iz olarak gömer. Görüntü yeniden kodlanmaz.
+
+```bash
+python srt_seslendir.py --video film.mp4 --srt film.srt                 # çevrimdışı Piper sesi
+python srt_seslendir.py --video film.mp4 --srt film.srt --motor edge    # edge-tts (internet)
+python srt_seslendir.py ... --ses tr_TR-fahrettin-medium --giris-yok
+```
+
+- **Motor `piper`** (varsayılan): `sherpa-onnx` ile çevrimdışı Türkçe VITS sesi;
+  model ilk çalıştırmada GitHub'dan `modeller/` altına iner.
+- Yabancı özel adların okunuşu `TELAFFUZ` sözlüğünden düzeltilir; SRT metni değişmez.
+- Giriş olaylarının zamanları `src/giris_sfx.py` → `ZAMANLAMA` sözlüğündedir.
+
+---
+
 ## 🚀 Kurulum
 
 ```bash
@@ -84,6 +106,7 @@ Eklemezseniz video her zaman Artifacts'te hazır bekler.
 .
 ├── asmr.py                  # Sıfırdan ASMR orkestratörü
 ├── birlestir.py             # Kliplerden uzun ASMR birleştirici
+├── srt_seslendir.py         # Hazır videoyu SRT'ye göre seslendir + giriş foley
 ├── requirements.txt
 ├── config/
 │   └── ayarlar.ornek.yaml   # Örnek ayar dosyası (asmr / klip bölümleri)
@@ -94,6 +117,7 @@ Eklemezseniz video her zaman Artifacts'te hazır bekler.
 │   └── klip-birlestir.yml   # Kliplerden ASMR (push ile otomatik)
 └── src/
     ├── asmr_ses.py          # Telifsiz ambient ses üreteci (numpy)
+    ├── giris_sfx.py         # Kodla üretilen giriş foley / ses efektleri (numpy)
     ├── asmr_montaj.py       # ASMR montajı (Ken Burns + ffmpeg döngü)
     ├── klip_montaj.py       # Klipleri birleştir + ffmpeg döngü
     ├── sahne.py             # Pollinations/Pexels görsel üretimi
