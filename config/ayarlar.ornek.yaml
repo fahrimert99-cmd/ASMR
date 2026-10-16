@@ -24,6 +24,7 @@ sahne:
   # "yerel_sd"     : yerel Stable Diffusion (diffusers, GPU onerilir, sabit)
   # "pexels_foto"  : Pexels stok FOTOGRAFI (sabit, gercek foto)
   # "pexels_video" : Pexels stok VIDEOSU (HAREKETLI arka plan)
+  # "muapi"        : MuAPI (https://muapi.ai) 400+ AI modeli (ucretli/kredili)
   motor: "pollinations"
   cozunurluk: "1280x720"
   stil: "3D Pixar animation movie style background, soft cinematic lighting, colorful, highly detailed, no text, high quality"
@@ -32,6 +33,15 @@ sahne:
   # degiskeni de kullanilabilir; GitHub Actions'ta secret olarak ekleyin).
   # Pexels basarisiz olursa/anahtar yoksa otomatik Pollinations'a duser.
   pexels_api_key: ""
+  # --- yalnizca motor: "muapi" icin (Open-Generative-AI'nin kullandigi API) ---
+  # Anahtar: https://muapi.ai  (MUAPI_API_KEY ortam degiskeni / GitHub secret
+  # da kullanilabilir). Anahtar yoksa, kredi biterse veya hata olursa otomatik
+  # Pollinations'a duser.
+  muapi_api_key: ""
+  muapi_model: "flux-dev-image"  # MuAPI uc noktasi (orn. flux-schnell-image)
+  # muapi_params:                # (ops.) modele ozel ekstra parametreler
+  #   num_images: 1
+  # muapi_zaman_asimi: 300       # (ops.) sonucu bekleme suresi (sn)
   # --- yalnizca motor: "yerel_sd" icin ---
   sd_model: "stabilityai/stable-diffusion-xl-base-1.0"  # HF model kimligi
   adim: 30                     # cikarim adimi (yuksek = kaliteli/yavas)
